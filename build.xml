@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Tools-Web" default="copy-files-and-jar" basedir=".">
+
+	<property name="project.name" value="Security"/>
+	<property name="it.java.dir" value="../../.."/>
+	<property name="project.jar.name" value="it-security-web"/>
+	<property name="classes.dir" value="web/WEB-INF/classes"/>
+	
+  <!--
+    base-build.xml is included here which defines all the necessary common
+    properties and tasks needed to build and deploy this project.
+  -->
+  <import file="${it.java.dir}/Common/java/Core/base-build.xml"/>
+	
+	<!-- This is the fileset of com.savvis.it jars that this project requires -->
+	<target name="copy-required-jars">
+		<copy todir="tmp/lib" overwrite="true">
+			<fileset dir="${it.java.dir}/Common/java/Core/dist" includes="*.jar"/>
+			<fileset dir="${it.java.dir}/Common/java/DB/dist" includes="*.jar"/>
+			<fileset dir="${it.java.dir}/Common/java/Web/dist" includes="*.jar"/>
+			<fileset dir="${it.java.dir}/Tools/java/DB/dist" includes="*.jar"/>
+		</copy>
+	</target>
+	
+	<target name="copy-files-and-jar" depends="copy-common-metagui,copy-common-web,jar"/>
+	
+	<!--
+		This task creates the distributable file for this project.  
+		Call this task indirectly by using dist-dev, dist-stage or dist-prod.
+		Currently this task assumes all classes have been compiled to the build/classes directory.
+		This task should call either war, jar, ear, a custom task, or a combination 
+		of them to create the desired distributable.
+	-->
+	<target name="dist" description="Creates the environment specific file for distribution"
+				depends="copy-common-metagui,copy-common-web">
+		<antcall target="war"/>
+	</target>
+		
+</project>

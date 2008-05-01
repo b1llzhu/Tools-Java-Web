@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="com.genuitec.eclipse.j2eedt.core.J2EE14_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Common-Core"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Common-DB"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Common-Web"/>
+	<classpathentry kind="output" path="web/WEB-INF/classes"/>
+</classpath>

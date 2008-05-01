@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib version="2.0" xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd">
+	<tlib-version>1.0</tlib-version>
+	<short-name>mg</short-name>
+	<uri>/WEB-INF/mg</uri>
+	<function>
+		<description>
+			This function escapes single quotes
+		</description>
+		<name>escapeString</name>
+		<function-class>com.savvis.it.mg.util.TagLibFunctionUtil</function-class>
+		<function-signature>
+			java.lang.String escapeString( java.lang.String )
+		</function-signature>
+	</function>
+	<function>
+		<description>
+			This function increments the internal current row index of a data model 
+		</description>
+		<name>nextRow</name>
+		<function-class>com.savvis.it.mg.util.TagLibFunctionUtil</function-class>
+		<function-signature>
+			int nextRow( com.savvis.it.entity.data.DataModel )
+		</function-signature>
+	</function>
+</taglib>
