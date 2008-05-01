@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Tools-Web" default="copy-files-and-jar" basedir=".">
 
-	<property name="project.name" value="Security"/>
+	<property name="project.name" value="Tools"/>
 	<property name="it.java.dir" value="../../.."/>
-	<property name="project.jar.name" value="it-security-web"/>
+	<property name="project.jar.name" value="it-tools-web"/>
 	<property name="classes.dir" value="web/WEB-INF/classes"/>
 	
   <!--
@@ -18,11 +18,10 @@
 			<fileset dir="${it.java.dir}/Common/java/Core/dist" includes="*.jar"/>
 			<fileset dir="${it.java.dir}/Common/java/DB/dist" includes="*.jar"/>
 			<fileset dir="${it.java.dir}/Common/java/Web/dist" includes="*.jar"/>
-			<fileset dir="${it.java.dir}/Tools/java/DB/dist" includes="*.jar"/>
 		</copy>
 	</target>
 	
-	<target name="copy-files-and-jar" depends="copy-common-metagui,copy-common-web,jar"/>
+	<target name="copy-files-and-jar" depends="copy-common-web,jar"/>
 	
 	<!--
 		This task creates the distributable file for this project.  
@@ -32,7 +31,7 @@
 		of them to create the desired distributable.
 	-->
 	<target name="dist" description="Creates the environment specific file for distribution"
-				depends="copy-common-metagui,copy-common-web">
+				depends="copy-common-web">
 		<antcall target="war"/>
 	</target>
 		
