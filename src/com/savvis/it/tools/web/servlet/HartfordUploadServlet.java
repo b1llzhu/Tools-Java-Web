@@ -26,11 +26,11 @@ import com.savvis.it.util.StringUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: HartfordUploadServlet.java,v 1.1 2008/05/01 19:53:00 dyoung Exp $
+ * @version $Id: HartfordUploadServlet.java,v 1.2 2008/05/02 14:15:25 dyoung Exp $
  */
 public class HartfordUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(HartfordUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.1 2008/05/01 19:53:00 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.2 2008/05/02 14:15:25 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager(
 	"/properties/fileUpload.properties");
@@ -52,41 +52,46 @@ public class HartfordUploadServlet extends SavvisServlet {
 		
 		String jspPage = "hartfordUpload.jsp";
 		
-		if (hartfordDir == null) {
-			request.setAttribute("message", "ERROR!  Cannot determine correct Hartford destination directory.  Please contact Technical Support.");
-		} else {
-			// Create a factory for disk-based file items
-			FileItemFactory factory = new DiskFileItemFactory();
-	
-			// Create a new file upload handler
-			ServletFileUpload upload = new ServletFileUpload(factory);
-	
-			// Check that we have a file upload request
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-			
-			if (isMultipart) {
-				logger.info("isMultipart: " + isMultipart);
-				List items = upload.parseRequest(request);
-				
-				// Process the uploaded items
-				Iterator iter = items.iterator();
-				while (iter.hasNext()) {
-				    FileItem item = (FileItem) iter.next();
+		try {
+			if (hartfordDir == null) {
+				request.setAttribute("message", "ERROR!  Cannot determine correct Hartford destination directory.  Please contact Technical Support.");
+			} else {
+				// Create a factory for disk-based file items
+				FileItemFactory factory = new DiskFileItemFactory();
 		
-				 // Process a file upload
-				    if (!item.isFormField()) {
-				        String fullFileName = item.getName();
-				        String fileName = StringUtil.getLastToken(fullFileName, '\\');
-				        String contentType = item.getContentType();
-				        long sizeInBytes = item.getSize();
-				        
-				        File uploadedFile = new File(hartfordDir + fileName);
-				        item.write(uploadedFile);
-				        
-				        request.setAttribute("message", "The local file (" + fullFileName + ") has been uploaded to the directory: " + hartfordDir);
-				    }
+				// Create a new file upload handler
+				ServletFileUpload upload = new ServletFileUpload(factory);
+		
+				// Check that we have a file upload request
+				boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+				
+				if (isMultipart) {
+					logger.info("isMultipart: " + isMultipart);
+					List items = upload.parseRequest(request);
+					
+					// Process the uploaded items
+					Iterator iter = items.iterator();
+					while (iter.hasNext()) {
+					    FileItem item = (FileItem) iter.next();
+			
+					 // Process a file upload
+					    if (!item.isFormField()) {
+					        String fullFileName = item.getName();
+					        String fileName = StringUtil.getLastToken(fullFileName, '\\');
+					        String contentType = item.getContentType();
+					        long sizeInBytes = item.getSize();
+					        
+					        File uploadedFile = new File(hartfordDir + fileName);
+					        item.write(uploadedFile);
+					        
+					        request.setAttribute("message", "The local file (" + fullFileName + ") has been successfully uploaded.");
+					    }
+					}
 				}
 			}
+		} catch (Exception e) {			
+			request.setAttribute("message", "ERROR:  There was an unforeseen error during the upload of the file.  Please advise Technical Support.");
+			logger.error("", e);
 		}
 		
 		// forward to the page
