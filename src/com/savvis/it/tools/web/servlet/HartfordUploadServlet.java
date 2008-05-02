@@ -30,11 +30,11 @@ import com.savvis.it.util.StringUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: HartfordUploadServlet.java,v 1.3 2008/05/02 17:51:39 dyoung Exp $
+ * @version $Id: HartfordUploadServlet.java,v 1.4 2008/05/02 17:58:12 dyoung Exp $
  */
 public class HartfordUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(HartfordUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.3 2008/05/02 17:51:39 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.4 2008/05/02 17:58:12 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager(
 	"/properties/fileUpload.properties");
@@ -111,9 +111,11 @@ public class HartfordUploadServlet extends SavvisServlet {
 						Map fileMap = new HashMap();
 						File file = files[i];
 						
-						fileMap.put("name", file.getName());
-						fileMap.put("lastModified", df.format(file.lastModified()));
-						fileList.add(fileMap);
+						if (!file.isDirectory()) {
+							fileMap.put("name", file.getName());
+							fileMap.put("lastModified", df.format(file.lastModified()));
+							fileList.add(fileMap);
+						}
 					}
 				}
 				request.setAttribute("fileList", fileList);
