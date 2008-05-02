@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: hartfordUpload.jsp,v 1.1 2008/05/01 19:53:00 dyoung Exp $
+	@version $Id: hartfordUpload.jsp,v 1.2 2008/05/02 17:51:39 dyoung Exp $
 
 --%>
 
@@ -50,7 +50,31 @@
 		</tr>
 		<tr height="25"><td></td></tr>
 		<tr>
-			<td>Messages: <em>${message}</em></td>
+			<td>Pending files:<br/>
+				<table class="listTbl" width="60%" cellspacing="0" cellpadding="2" border="1">
+					<tr>
+						<td>Filename</td>
+						<td>Last Modified</td>
+					</tr>
+									
+					<c:forEach items="${fileList}" var="file">
+						<tr>
+							<td>${file.name}</td>
+							<td>${file.lastModified}</td>
+						</tr>
+					</c:forEach>
+				</table>
+			</td>
+		</tr>
+		<tr height="25"><td></td></tr>
+		<tr>
+			<td>Messages:<br/>
+				<table class="listTbl" width="100%" cellspacing="0" cellpadding="4">
+					<tr>
+						<td><em>${message}</em></td>
+					</tr>
+				</table>
+			</td>
 		</tr>
 	</table>			
 </form>

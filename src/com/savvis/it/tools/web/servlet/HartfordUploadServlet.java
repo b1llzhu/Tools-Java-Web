@@ -4,8 +4,12 @@
 package com.savvis.it.tools.web.servlet;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,11 +30,11 @@ import com.savvis.it.util.StringUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: HartfordUploadServlet.java,v 1.2 2008/05/02 14:15:25 dyoung Exp $
+ * @version $Id: HartfordUploadServlet.java,v 1.3 2008/05/02 17:51:39 dyoung Exp $
  */
 public class HartfordUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(HartfordUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.2 2008/05/02 14:15:25 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.3 2008/05/02 17:51:39 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager(
 	"/properties/fileUpload.properties");
@@ -82,12 +86,37 @@ public class HartfordUploadServlet extends SavvisServlet {
 					        long sizeInBytes = item.getSize();
 					        
 					        File uploadedFile = new File(hartfordDir + fileName);
-					        item.write(uploadedFile);
 					        
-					        request.setAttribute("message", "The local file (" + fullFileName + ") has been successfully uploaded.");
+					        // check to see if the file already exists
+					        if (uploadedFile.exists()) {
+					        	request.setAttribute("message", "ERROR!  That file already exists and is waiting to be processed!  The file was not uploaded again.");
+					        } else {
+					        	item.write(uploadedFile);
+						        request.setAttribute("message", "The local file (" + fullFileName + ") has been successfully uploaded.");
+					        }
+					        
 					    }
 					}
 				}
+				
+				File dir = new File(hartfordDir);
+				File[] files = null;
+
+				List<Map> fileList = new ArrayList<Map>();
+				SimpleDateFormat df = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+
+				if (dir.exists()) {
+					files = dir.listFiles();
+					for (int i = 0; i < files.length; i++) {
+						Map fileMap = new HashMap();
+						File file = files[i];
+						
+						fileMap.put("name", file.getName());
+						fileMap.put("lastModified", df.format(file.lastModified()));
+						fileList.add(fileMap);
+					}
+				}
+				request.setAttribute("fileList", fileList);
 			}
 		} catch (Exception e) {			
 			request.setAttribute("message", "ERROR:  There was an unforeseen error during the upload of the file.  Please advise Technical Support.");
