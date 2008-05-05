@@ -30,11 +30,11 @@ import com.savvis.it.util.StringUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: HartfordUploadServlet.java,v 1.4 2008/05/02 17:58:12 dyoung Exp $
+ * @version $Id: HartfordUploadServlet.java,v 1.5 2008/05/05 19:50:49 dyoung Exp $
  */
 public class HartfordUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(HartfordUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.4 2008/05/02 17:58:12 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.5 2008/05/05 19:50:49 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager(
 	"/properties/fileUpload.properties");
@@ -82,8 +82,9 @@ public class HartfordUploadServlet extends SavvisServlet {
 					    if (!item.isFormField()) {
 					        String fullFileName = item.getName();
 					        String fileName = StringUtil.getLastToken(fullFileName, '\\');
-					        String contentType = item.getContentType();
-					        long sizeInBytes = item.getSize();
+					        
+					        // replace any spaces with an underscore
+					        fileName = fileName.replace(" ", "_");
 					        
 					        File uploadedFile = new File(hartfordDir + fileName);
 					        
@@ -92,7 +93,7 @@ public class HartfordUploadServlet extends SavvisServlet {
 					        	request.setAttribute("message", "ERROR!  That file already exists and is waiting to be processed!  The file was not uploaded again.");
 					        } else {
 					        	item.write(uploadedFile);
-						        request.setAttribute("message", "The local file (" + fullFileName + ") has been successfully uploaded.");
+						        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
 					        }
 					        
 					    }
