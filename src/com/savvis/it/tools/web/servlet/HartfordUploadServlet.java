@@ -30,11 +30,11 @@ import com.savvis.it.util.StringUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: HartfordUploadServlet.java,v 1.5 2008/05/05 19:50:49 dyoung Exp $
+ * @version $Id: HartfordUploadServlet.java,v 1.6 2008/05/06 14:46:02 dyoung Exp $
  */
 public class HartfordUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(HartfordUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.5 2008/05/05 19:50:49 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/HartfordUploadServlet.java,v 1.6 2008/05/06 14:46:02 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager(
 	"/properties/fileUpload.properties");
@@ -82,9 +82,6 @@ public class HartfordUploadServlet extends SavvisServlet {
 					    if (!item.isFormField()) {
 					        String fullFileName = item.getName();
 					        String fileName = StringUtil.getLastToken(fullFileName, '\\');
-					        
-					        // replace any spaces with an underscore
-					        fileName = fileName.replace(" ", "_");
 					        
 					        File uploadedFile = new File(hartfordDir + fileName);
 					        
