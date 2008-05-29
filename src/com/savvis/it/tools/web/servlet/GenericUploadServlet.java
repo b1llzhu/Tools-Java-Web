@@ -35,11 +35,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.1 2008/05/29 15:24:42 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.2 2008/05/29 15:42:35 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.1 2008/05/29 15:24:42 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.2 2008/05/29 15:42:35 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -58,7 +58,7 @@ public class GenericUploadServlet extends SavvisServlet {
 		String configFileExt = ".xml";
 		String configFileDefaultDir = "etc/";
 		
-		String baseDir = properties.getProperty("basedir");
+		String baseDir = properties.getProperty("baseDir");
 		logger.info("baseDir: " + baseDir);
 		if (!baseDir.endsWith("/"))
 			baseDir = baseDir.concat("/");
