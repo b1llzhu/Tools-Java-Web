@@ -1,10 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
+<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
 	http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+	<filter>
+		<filter-name>authenticate</filter-name>
+		<filter-class>com.savvis.it.filter.WindowsAuthenticationFilter</filter-class>
+		<init-param>
+			<param-name>bss.windows.http.authFailurePage</param-name>
+			<param-value>/winLogin</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+  		<filter-name>authenticate</filter-name> 
+  		<url-pattern>/genericUpload</url-pattern> 
+  	</filter-mapping>
+
+	<!-- need to have this in here to handle the generic windows login -->
+	<servlet>
+		<servlet-name>WinLogin</servlet-name>
+		<servlet-class>
+			com.savvis.it.servlet.WindowsLoginServlet
+		</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>WinLogin</servlet-name>
+		<url-pattern>/winLogin</url-pattern>
+	</servlet-mapping>
+	<!--  -->
+
+	<servlet>
+		<servlet-name>GenericUpload</servlet-name>
+		<servlet-class>
+			com.savvis.it.tools.web.servlet.GenericUploadServlet
+		</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>GenericUpload</servlet-name>
+		<url-pattern>/genericUpload</url-pattern>
+	</servlet-mapping>
 
 	<servlet>
 		<servlet-name>PasswordResetServlet</servlet-name>
-		<servlet-class>com.savvis.it.tools.web.servlet.PasswordResetServlet</servlet-class>
+		<servlet-class>
+			com.savvis.it.tools.web.servlet.PasswordResetServlet
+		</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>PasswordResetServlet</servlet-name>
@@ -12,6 +53,6 @@
 	</servlet-mapping>
 
 	<welcome-file-list>
-		<welcome-file>passwordReset</welcome-file>
+		<welcome-file>genericUpload</welcome-file>
 	</welcome-file-list>
 </web-app>
