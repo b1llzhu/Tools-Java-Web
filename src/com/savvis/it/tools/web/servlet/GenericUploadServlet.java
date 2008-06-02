@@ -35,11 +35,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.3 2008/06/02 15:33:53 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.4 2008/06/02 16:46:41 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.3 2008/06/02 15:33:53 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.4 2008/06/02 16:46:41 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -58,21 +58,25 @@ public class GenericUploadServlet extends SavvisServlet {
 		String configFileExt = ".xml";
 		String configFileDefaultDir = "etc/";
 		
-		String baseDir = properties.getProperty("baseDir");
-		logger.info("baseDir: " + baseDir);
-		if (!baseDir.endsWith("/"))
-			baseDir = baseDir.concat("/");
-		
 		String uploadAppl = null;
 		String uploadCfg = null;
 		String uploadKey = null;
 		String fatalMsg = "";
 
-		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = 
-			(WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);
+		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
 		try {
+
+			String basedir = properties.getProperty("basedir");
+			if (basedir == null)
+				throw new Exception("BASEDIR not set in properties file");
+				
+			logger.info("baseDir: " + basedir);
+			if (!basedir.endsWith("/"))
+				basedir = basedir.concat("/");
 			
+			winPrincipal = (WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);
+					
 			// pull things off of the URL and validate as need be
 			
 			File fileUploadCfg = null;
@@ -89,7 +93,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 			// test to make sure we can find the config file that was handed to us
 			if (StringUtil.hasValue(uploadCfg)) {
-				fileUploadCfg = new File(baseDir + uploadAppl + "/" + configFileDefaultDir + uploadCfg + configFileExt);
+				fileUploadCfg = new File(basedir + uploadAppl + "/" + configFileDefaultDir + uploadCfg + configFileExt);
 				if (!fileUploadCfg.exists())
 					fatalMsg = fatalMsg.concat("ERROR:  The supplied config file doesn't exist (" + fileUploadCfg.getAbsolutePath() + ").");
 			}
