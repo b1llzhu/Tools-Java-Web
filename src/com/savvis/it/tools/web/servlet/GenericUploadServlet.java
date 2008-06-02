@@ -35,11 +35,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.2 2008/05/29 15:42:35 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.3 2008/06/02 15:33:53 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.2 2008/05/29 15:42:35 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.3 2008/06/02 15:33:53 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -71,8 +71,6 @@ public class GenericUploadServlet extends SavvisServlet {
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = 
 			(WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);
 		
-		String queryString = request.getQueryString();
-		
 		try {
 			
 			// pull things off of the URL and validate as need be
@@ -97,7 +95,6 @@ public class GenericUploadServlet extends SavvisServlet {
 			}
 			
 			// if we have a fatal message - stop processing and skip to the end
-			logger.info("fatalMsg: (" + fatalMsg + ")");
 			if (!"".equals(fatalMsg)) {
 				request.setAttribute("fatalMsg", fatalMsg);
 			}
@@ -108,8 +105,6 @@ public class GenericUploadServlet extends SavvisServlet {
 				
 			// for this section, we'll loop through our config file and build a map that will be used in each processing section
 			// this is also the part where we'll validate the config file has everything we need
-			
-			logger.info("building master uploadKeys map");
 			
 			// need to get a list of all the upload keys in our upload file
 			SimpleNode doc = new SimpleNode(XmlUtil.loadDocumentFromFile(fileUploadCfg.getAbsolutePath()));
@@ -185,8 +180,9 @@ public class GenericUploadServlet extends SavvisServlet {
 						if (!usersFile.exists()) 
 							throw new Exception("[" + cfgUploadType + "]userFile does not exist");
 						String s = FileUtil.loadFile(usersFile.getAbsolutePath());
+						s = s.toLowerCase();
 						cfgAuthUserList = StringUtil.toList(s, "\n ");
-//							logger.info("[" + cfgUploadType + "]cfgAuthUserList: " + cfgAuthUserList);
+	//							logger.info("[" + cfgUploadType + "]cfgAuthUserList: " + cfgAuthUserList);
 					} catch (Exception e) {
 						throw new Exception(e.getMessage());
 					}
@@ -222,7 +218,7 @@ public class GenericUploadServlet extends SavvisServlet {
 				// verify the authorization (a second check - the first one is upon selecting the upload key)
 				Map currentMap = uploadMap.get(uploadKey);
 				List authUserList = (List) currentMap.get("authUserList");
-				if (!authUserList.contains(winPrincipal.getName())) {
+				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
 					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
 					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + uploadKey + ".");
 					request.setAttribute("unauthorized", "true");
