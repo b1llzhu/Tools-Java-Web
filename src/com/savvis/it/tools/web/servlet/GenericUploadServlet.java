@@ -35,11 +35,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.4 2008/06/02 16:46:41 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.5 2008/06/02 17:02:59 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.4 2008/06/02 16:46:41 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.5 2008/06/02 17:02:59 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -184,9 +184,11 @@ public class GenericUploadServlet extends SavvisServlet {
 						if (!usersFile.exists()) 
 							throw new Exception("[" + cfgUploadType + "]userFile does not exist");
 						String s = FileUtil.loadFile(usersFile.getAbsolutePath());
+						logger.info("s: " + s);
 						s = s.toLowerCase();
+						logger.info("s2: " + s);
 						cfgAuthUserList = StringUtil.toList(s, "\n ");
-	//							logger.info("[" + cfgUploadType + "]cfgAuthUserList: " + cfgAuthUserList);
+								logger.info("[" + cfgUploadType + "]cfgAuthUserList: " + cfgAuthUserList);
 					} catch (Exception e) {
 						throw new Exception(e.getMessage());
 					}
@@ -308,7 +310,7 @@ public class GenericUploadServlet extends SavvisServlet {
 				// sure nothing slips through)
 				currentMap = uploadMap.get(uploadKey);
 				List authUserList = (List) currentMap.get("authUserList");
-				if (!authUserList.contains(winPrincipal.getName())) {
+				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
 					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
 					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + uploadKey + ".");
 					request.setAttribute("unauthorized", "true");
