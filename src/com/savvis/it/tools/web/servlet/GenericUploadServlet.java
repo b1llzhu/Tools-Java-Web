@@ -4,6 +4,8 @@
 package com.savvis.it.tools.web.servlet;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +18,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.rpc.encoding.TypeMapping;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
@@ -28,6 +31,7 @@ import org.w3c.dom.NodeList;
 
 import com.savvis.it.db.DBConnection;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
+import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
 import com.savvis.it.servlet.SavvisServlet;
 import com.savvis.it.util.*;
 
@@ -35,11 +39,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.5 2008/06/02 17:02:59 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.6 2008/07/28 19:59:12 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.5 2008/06/02 17:02:59 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.6 2008/07/28 19:59:12 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -51,17 +55,16 @@ public class GenericUploadServlet extends SavvisServlet {
 	 * @param response servlet response
 	 */
 	protected void processRequest(String action, HttpServletRequest request, HttpServletResponse response) throws Exception {
-		logger.info("Entering servlet - action: " + action);
+//		logger.info("Entering servlet - action: " + action);
+		
+		SimpleDateFormat timestampDf = new SimpleDateFormat("yyyyMMdd-HHmm");
 		
 		String jspPage = "genericUpload.jsp";
 		
 		String configFileExt = ".xml";
 		String configFileDefaultDir = "etc/";
 		
-		String uploadAppl = null;
-		String uploadCfg = null;
-		String uploadKey = null;
-		String fatalMsg = "";
+		Map<String, String> pageMap = new HashMap<String, String>();
 
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
@@ -71,162 +74,94 @@ public class GenericUploadServlet extends SavvisServlet {
 			if (basedir == null)
 				throw new Exception("BASEDIR not set in properties file");
 				
-			logger.info("baseDir: " + basedir);
 			if (!basedir.endsWith("/"))
 				basedir = basedir.concat("/");
 			
 			winPrincipal = (WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);
 					
-			// pull things off of the URL and validate as need be
-			
-			File fileUploadCfg = null;
+			//////////////////////////////////////////////////////////////////////////////////////
+			// URL validation
+			//////////////////////////////////////////////////////////////////////////////////////
 			Map<String, Map<String, Object>> uploadMap = new HashMap<String, Map<String, Object>>();
-			List<String> uploadKeys = new ArrayList<String>();
 					
-			uploadAppl = "".equals(request.getParameter("appl")) ? (String)request.getAttribute("appl") : request.getParameter("appl");
-			if ("".equals(uploadAppl) || uploadAppl == null)
-				fatalMsg = "ERROR:  Missing required parameter (APPL) required.";
+			pageMap.put("appl", "".equals(request.getParameter("appl")) ? (String)request.getAttribute("appl") : request.getParameter("appl"));
+			if (ObjectUtil.isEmpty(pageMap.get("appl")))
+				pageMap.put("fatalMsg", "ERROR:  Missing required parameter (APPL) required.<br/>");
 
-			uploadCfg = "".equals(request.getParameter("config")) ? (String)request.getAttribute("config") : request.getParameter("config");
-			if ("".equals(uploadCfg) || uploadCfg == null)
-				fatalMsg = fatalMsg.concat("ERROR:  Missing required parameter (CONFIG) required.");
-
-			// test to make sure we can find the config file that was handed to us
-			if (StringUtil.hasValue(uploadCfg)) {
-				fileUploadCfg = new File(basedir + uploadAppl + "/" + configFileDefaultDir + uploadCfg + configFileExt);
-				if (!fileUploadCfg.exists())
-					fatalMsg = fatalMsg.concat("ERROR:  The supplied config file doesn't exist (" + fileUploadCfg.getAbsolutePath() + ").");
+			pageMap.put("config", "".equals(request.getParameter("config")) ? (String)request.getAttribute("config") : request.getParameter("config"));
+			if (ObjectUtil.isEmpty(pageMap.get("config"))) {
+				pageMap.put("fatalMsg", pageMap.get("fatalMsg").toString().concat("ERROR:  Missing required parameter (CONFIG) required.<br/>"));
+			} else {
+				// test to make sure we can find the config file that was handed to us
+				File uploadFile = new File(basedir + pageMap.get("appl") + "/" + configFileDefaultDir + pageMap.get("config") + configFileExt);
+				if (!uploadFile.exists()) {
+					pageMap.put("fatalMsg", pageMap.get("fatalMsg").toString().concat("ERROR:  The supplied config file doesn't exist (" + uploadFile.getAbsolutePath() + ").<br/>"));
+				} else {
+					pageMap.put("uploadFile", uploadFile.getAbsolutePath());
+				}
 			}
+			
+			pageMap.put("key", request.getParameter("key"));
 			
 			// if we have a fatal message - stop processing and skip to the end
-			if (!"".equals(fatalMsg)) {
-				request.setAttribute("fatalMsg", fatalMsg);
+			if (!ObjectUtil.isEmpty(pageMap.get("fatalMsg"))) {
+				request.setAttribute("fatalMsg", pageMap.get("fatalMsg"));
 			}
 			
-			uploadKey = request.getParameter("uploadKey");
-
-			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			//////////////////////////////////////////////////////////////////////////////////////
+			// CONFIG validation
+			//////////////////////////////////////////////////////////////////////////////////////
+			SimpleNode doc = new SimpleNode(XmlUtil.loadDocumentFromFile(pageMap.get("uploadFile").toString()));
+			Map<String, Map<String, Object>> configMap = new HashMap<String, Map<String, Object>>();
+			
+			List<String> messages = validateConfig(doc, pageMap, configMap);
+			
+			if (messages.size() > 0) {
+				for (int i = 0; i < messages.size(); i++) {
+					String msg = messages.get(i);
+					if (i == 0) {
+						pageMap.put("fatalMsg", msg + "<br/>");
+					} else {
+						pageMap.put("fatalMsg", pageMap.get("fatalMsg").toString().concat(msg + "<br/>"));
+					}
+				}
+				request.setAttribute("fatalMsg", pageMap.get("fatalMsg"));
+			}
 				
-			// for this section, we'll loop through our config file and build a map that will be used in each processing section
-			// this is also the part where we'll validate the config file has everything we need
 			
-			// need to get a list of all the upload keys in our upload file
-			SimpleNode doc = new SimpleNode(XmlUtil.loadDocumentFromFile(fileUploadCfg.getAbsolutePath()));
-			
-			// get all the upload configs
-			NodeList uploads;
-			try {
-				uploads = doc.getSimpleNode("{hrUpload}{uploads}").getChildNodes("upload");
-				if (uploads == null)
-					throw new Exception();
-			} catch (Exception e) {
-				throw new Exception("Couldn't get uploads child node list");
+			//////////////////////////////////////////////////////////////////////////////////////
+			// UPLOAD key list
+			//////////////////////////////////////////////////////////////////////////////////////
+			// to make things easier for the display, let's create a list of uploader keys and sort it
+			List<String> uploadKeys = new ArrayList<String>();
+			for (int i = 0; i < configMap.keySet().toArray().length; i++) {
+				String uploadKey = configMap.keySet().toArray()[i].toString();
+				uploadKeys.add(uploadKey);
 			}
-
-			Integer uploadCnt = 0;
-			for (int i = 0; i < uploads.getLength(); i++) {
-				uploadCnt++;
-				Map<String, Object> typeMap = new HashMap<String, Object>();
-				
-				SimpleNode uploadNode = new SimpleNode(uploads.item(i));
-				
-				if (uploadNode.getNodeType() != Node.TEXT_NODE) {
-
-					String cfgUploadType;
-					try {
-						cfgUploadType = uploadNode.getAttribute("type");
-						if ("".equals(cfgUploadType) || cfgUploadType == null)
-							throw new Exception("");
-					} catch (Exception e) {
-						throw new Exception("cfgUploadType attribute not found");
-					}
-					uploadKeys.add(cfgUploadType);
-//						logger.info("  adding (" + cfgUploadType + ")");
-					
-					String cfgName;
-					try {
-						cfgName = uploadNode.getTextContent("{name}");
-//							logger.info("[" + cfgUploadType + "]cfgName: " + cfgName);
-						if ("".equals(cfgName) || cfgName == null)
-							throw new Exception("");
-					} catch (Exception e) {
-						throw new Exception("[" + cfgUploadType + "]cfgName value not found");
-					}
-					typeMap.put("name", cfgName);
-					
-					String cfgDestDir;
-					try {
-						cfgDestDir = uploadNode.getTextContent("{destDir}");
-//							logger.info("[" + cfgUploadType + "]cfgDestDir: " + cfgDestDir);
-						if ("".equals(cfgDestDir) || cfgDestDir == null)
-							throw new Exception("[" + cfgUploadType + "]cfgDestDir value not found");
-						File destDirObj = new File(cfgDestDir);
-						if (!destDirObj.exists()) {
-							throw new Exception("[" + cfgUploadType + "]cfgDestDir directory (" + destDirObj.getAbsolutePath() + ") does not exists or cannot be found");
-						} else if (destDirObj.exists() && !destDirObj.canWrite()) {
-							throw new Exception("[" + cfgUploadType + "]cfgDestDir directory found (" + destDirObj.getAbsolutePath() + ") but is not writable");
-						}
-					} catch (Exception e) {
-						throw new Exception(e.getMessage());
-					}
-					typeMap.put("destDir", cfgDestDir);
-					
-					String cfgAuthUsers;
-					List<String> cfgAuthUserList = null;
-					try {
-						cfgAuthUsers = uploadNode.getTextContent("{authorizedUsers}");
-//							logger.info("[" + cfgUploadType + "]cfgAuthUsers: " + cfgAuthUsers);
-						if ("".equals(cfgAuthUsers) || cfgAuthUsers == null) {
-							throw new Exception("[" + cfgUploadType + "]authorizediUsers value not found");
-						}
-					
-						File usersFile = new File(cfgAuthUsers);
-						if (!usersFile.exists()) 
-							throw new Exception("[" + cfgUploadType + "]userFile does not exist");
-						String s = FileUtil.loadFile(usersFile.getAbsolutePath());
-						logger.info("s: " + s);
-						s = s.toLowerCase();
-						logger.info("s2: " + s);
-						cfgAuthUserList = StringUtil.toList(s, "\n ");
-								logger.info("[" + cfgUploadType + "]cfgAuthUserList: " + cfgAuthUserList);
-					} catch (Exception e) {
-						throw new Exception(e.getMessage());
-					}
-					typeMap.put("authUserList", cfgAuthUserList);						
-
-					uploadMap.put(cfgUploadType, typeMap);
-//						logger.info("adding typeMap to master upload map: " + uploadMap);
-				}				
-			}
-			
-			if (uploadCnt == 0) {
-				throw new Exception("no uploaders were found");
-			}
-
 			Collections.sort(uploadKeys);
-			
 			request.setAttribute("uploadKeys", uploadKeys);
-			request.setAttribute("uploadKey", "");
 
-			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	
+			
+			//////////////////////////////////////////////////////////////////////////////////////
+			// UPLOAD functionality
+			//////////////////////////////////////////////////////////////////////////////////////
 			// this section is only performed when the action <> choose
 			// only when the jsp is trying to upload a file OR the first time the JSP is hit
 			// for this reason, we lock down any processing to when the incoming form is multipart content
 			
 			// Create a factory for disk-based file items
-			FileItemFactory factory = new DiskFileItemFactory();
+			FileItemFactory factory = new DiskFileItemFactory(0, null);
 			ServletFileUpload upload = new ServletFileUpload(factory);
 			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 			
 			if (isMultipart) {
 
 				// verify the authorization (a second check - the first one is upon selecting the upload key)
-				Map currentMap = uploadMap.get(uploadKey);
-				List authUserList = (List) currentMap.get("authUserList");
+				Map keyMap = configMap.get(pageMap.get("key"));
+				List<String> authUserList = (List<String>) keyMap.get("authorizedUserList");
 				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
-					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + uploadKey + ".");
+					logger.info("User (" + winPrincipal.getName() + ") is not authorized to upload files to (" + pageMap.get("key") + ")");
+					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
 					request.setAttribute("unauthorized", "true");
 					
 				} else {
@@ -237,14 +172,13 @@ public class GenericUploadServlet extends SavvisServlet {
 					Iterator iter = items.iterator();
 					while (iter.hasNext()) {
 					    FileItem item = (FileItem) iter.next();
-					    logger.info("item: " + item.getName());
 			
-					 // Process a file upload
+					    // Process a file upload
 					    if (!item.isFormField()) {
 					        String fullFileName = item.getName();
 					        String fileName = StringUtil.getLastToken(fullFileName, '\\');
 					        
-					        String destDir = (String) currentMap.get("destDir");
+					        String destDir = (String) keyMap.get("destDir");
 					        if (!destDir.endsWith("/"))
 					        	destDir = destDir.concat("/");
 					        
@@ -255,89 +189,494 @@ public class GenericUploadServlet extends SavvisServlet {
 					        	request.setAttribute("errMessage", "ERROR!  File (" + fileName + ") already exists and is waiting to be processed!  It was not uploaded again.");
 					        } else {
 					        	item.write(fileToCreate);
+					        	appendToRunInfo(winPrincipal, keyMap, fileName, fileName, null, "upload");
 						        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
 					        }
 					    }
 					}
 				}
 			}
+			////// end of multipart upload functionality
 			
-			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			
-			// always perform this file list if we're in the context of an uploader
-			if (!"".equals(uploadKey) && uploadKey != null) {
+			//////////////////////////////////////////////////////////////////////////////////////
+			// DOWNLOAD functionality
+			//////////////////////////////////////////////////////////////////////////////////////
+			String downloadFlag = "".equals(request.getParameter("download")) ? (String)request.getAttribute("download") : request.getParameter("download");
+			String downloadFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
+			String downloadPath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
+			String downloadSrc = "".equals(request.getParameter("src")) ? (String)request.getAttribute("src") : request.getParameter("src");
+			
+			if ("1".equals(downloadFlag)) {
 				
-				Map currentMap = uploadMap.get(uploadKey);
-				File destDir = new File((String)currentMap.get("destDir"));
-					
-				File[] files = null;
-				List<Map> fileList = new ArrayList<Map>();
-				SimpleDateFormat df = new SimpleDateFormat("MM-dd-yyyy HH:mm");
-	
-				if (destDir.exists()) {
-					files = destDir.listFiles();
-					
-					// sort the list of files by modified date ascending
-					Arrays.sort( files, new Comparator() {
-						public int compare(Object o1, Object o2) {
-							if (((File)o1).lastModified() > ((File)o2).lastModified()) {
-								return +1;
-							} else if (((File)o1).lastModified() < ((File)o2).lastModified()) {
-								return -1;
-							} else {
-								return 0;
+				if (ObjectUtil.isEmpty(downloadFile)) {
+					request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
+				} else {
+					if (ObjectUtil.isEmpty(downloadPath)) {
+						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
+					} else {
+						Map keyMap = configMap.get(pageMap.get("key"));
+						
+						if (!ObjectUtil.isEmpty(keyMap.get("runInfoDir"))) {
+							// need to figure out which run info file our download belongs to
+							File[] runInfoFiles = (File[]) (new File(keyMap.get("runInfoDir").toString()).listFiles());
+							String runInfoFile = "";
+							for (int i = 0; i < runInfoFiles.length; i++) {
+								File rif = runInfoFiles[i];
+								logger.info("rif: " + rif.getName());
+								if (downloadFile.startsWith(rif.getName().replace(".runInfo", ""))) {
+									runInfoFile = rif.getName().replace(".runInfo", "");
+								}
+							}					
+							logger.info("runInfoFile: " + runInfoFile);
+							
+							if (!"".equals(runInfoFile)) {
+								// skip logging run info file downloads
+								if (!downloadFile.endsWith(".runInfo")) {
+									appendToRunInfo(winPrincipal, keyMap, runInfoFile, downloadFile, downloadSrc, "download");
+								}
 							}
 						}
-					});
-					
-					for (int j = 0; j < files.length; j++) {
-						Map fileMap = new HashMap();
-						File file = files[j];
-						
-						if (!file.isDirectory()) {
-							fileMap.put("name", file.getName());
-							fileMap.put("lastModified", df.format(file.lastModified()));
-							fileList.add(fileMap);
-						}
+							
+						request.setAttribute("file", downloadFile);
+						request.setAttribute("path", downloadPath);
+						jspPage = "download";
 					}
 				}
-				request.setAttribute("fileList", fileList);
+			}
+			
+
+			//////////////////////////////////////////////////////////////////////////////////////
+			// ERROR ARCHIVE move functionality
+			//////////////////////////////////////////////////////////////////////////////////////
+			String errorArchive = "".equals(request.getParameter("errorArchive")) ? (String)request.getAttribute("errorArchive") : request.getParameter("errorArchive");
+			String eAFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
+			String eAPath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
+			
+			if ("1".equals(errorArchive)) {
+				
+				if (ObjectUtil.isEmpty(eAFile)) {
+					request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
+				} else {
+					if (ObjectUtil.isEmpty(eAPath)) {
+						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
+					} else {
+						Map keyMap = configMap.get(pageMap.get("key"));
+						
+						if (!eAPath.endsWith("/"))
+							eAPath = eAPath.concat("/");
+						
+						// need to figure out which run info file our download belongs to
+						File[] runInfoFiles = (File[]) (new File(keyMap.get("runInfoDir").toString()).listFiles());
+						String runInfoFile = "";
+						for (int i = 0; i < runInfoFiles.length; i++) {
+							File rif = runInfoFiles[i];
+							logger.info("rif: " + rif.getName());
+							if (downloadFile.startsWith(rif.getName().replace(".runInfo", ""))) {
+								runInfoFile = rif.getName().replace(".runInfo", "");
+							}
+						}
+//						List<Map<String, String>> runInfoFiles = (List<Map<String, String>>) request.getAttribute("files_runInfo");
+//						String runInfoFile = "";
+//						for (int i = 0; i < runInfoFiles.size(); i++) {
+//							Map<String, String> runInfoMap = runInfoFiles.get(i);
+//							logger.info("runInfoMap.get(name): " + runInfoMap.get("name"));
+//							if (eAFile.startsWith(runInfoMap.get("name").replace(".runInfo", ""))) {
+//								runInfoFile = runInfoMap.get("name").replace(".runInfo", "");
+//							}
+//						}					
+						logger.info("runInfoFile: " + runInfoFile);
+
+						// log and perform the move
+						if (!"".equals(runInfoFile)) {
+							appendToRunInfo(winPrincipal, keyMap, runInfoFile, eAFile, null, "archive_error");
+						}
+
+						FileUtil.moveFile(eAPath + eAFile, keyMap.get("errorArchiveDir").toString() + eAFile);
+					}
+				}
+			}
+
+			
+			//////////////////////////////////////////////////////////////////////////////////////
+			// CURRENT KEY logic
+			//////////////////////////////////////////////////////////////////////////////////////
+			// always perform a file list retrieval if we're in the context of an uploader
+			if (!ObjectUtil.isEmpty(pageMap.get("key"))) {
+				Map keyMap = configMap.get(pageMap.get("key"));
+				
+				if (!ObjectUtil.isEmpty(keyMap.get("destDir"))) {
+					request.setAttribute("files_pending", getFileList("destDir", keyMap, "a"));
+				}
+
+				if (!ObjectUtil.isEmpty(keyMap.get("errorDir"))) {
+					request.setAttribute("files_error", getFileList("errorDir", keyMap, "a"));
+				}
+				
+				if (!ObjectUtil.isEmpty(keyMap.get("errorArchiveDir"))) {
+					request.setAttribute("files_errorArchive", getFileList("errorArchiveDir", keyMap, "a"));
+				}
+				
+				if (!"".equals(keyMap.get("archiveDir")) && keyMap.get("archiveDir") != null) {
+					request.setAttribute("files_archive", getFileList("archiveDir", keyMap, "a"));
+				}
+
+				if (!ObjectUtil.isEmpty(keyMap.get("runInfoDir"))) {
+					request.setAttribute("files_runInfo", getFileList("runInfoDir", keyMap, "d"));
+				}
+				
+				if (StringUtil.hasValue(keyMap.get("name").toString()))
+					request.setAttribute("uploadKeyDisplay", " - " + keyMap.get("name").toString());
 				
 				// one of the last things we'll do is perform an authorization check
 				// if we're not authorized, we'll set a flag so that and that will help control
 				// the display
 				// (there's also a second check during the upload of the file just to make
 				// sure nothing slips through)
-				currentMap = uploadMap.get(uploadKey);
-				List authUserList = (List) currentMap.get("authUserList");
+				List authUserList = (List) keyMap.get("authorizedUserList");
 				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
 					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
-					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + uploadKey + ".");
+					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
 					request.setAttribute("unauthorized", "true");
 				}
 			}
+			////// end of current key logic
+			
 
-		} catch (Exception e) {			
-			request.setAttribute("errMessage", "ERROR:  There was an unforeseen error.  Please advise Technical Support (" + e.getMessage() + ").");
+		} catch (Exception e) {
 			logger.error("", e);
 		}
-		
+			
 		// put some things into the request
-//		request.setAttribute("winLoginPageTitle", "File Upload Utility");
-//		request.setAttribute("referrer", "genericUpload");
-//		request.setAttribute("action", request.getAttribute("action"));
-//		request.setAttribute("querystring", queryString);
-		request.setAttribute("appl", uploadAppl);
-		request.setAttribute("config", uploadCfg);
-		request.setAttribute("uploadKey", uploadKey);
+		request.setAttribute("appl", pageMap.get("appl"));
+		request.setAttribute("config", pageMap.get("config"));
+		request.setAttribute("key", pageMap.get("key"));
 
 		// always put back in the logged in credentials
-		request.setAttribute("winIsLoggedIn", winPrincipal);
-		
-		if (StringUtil.hasValue(uploadKey))
-			request.setAttribute("uploadKeyDisplay", " - " + uploadKey);
+		request.setAttribute("isLoggedIn", winPrincipal);
 		
 		// forward to the page
 		forward(jspPage, request, response);		
+	}
+	
+	private List<Map> getFileList(String mapKey, Map map, String sortOrder) {
+		File directory = new File((String)map.get(mapKey));
+		
+		Integer fileLimit = 10;
+		if (!ObjectUtil.isEmpty(map.get(mapKey + "Limit"))) {
+			fileLimit = Integer.parseInt(map.get(mapKey + "Limit").toString());
+		}
+		
+		File[] files = null;
+		List<Map> fileList = new ArrayList<Map>();
+		SimpleDateFormat df = new SimpleDateFormat("MM-dd-yyyy h:mm a");
+
+		if (directory.exists()) {
+			files = directory.listFiles();
+			
+			if ("d".toLowerCase().equals(sortOrder)) {
+				// sort the list of files by modified date descending
+				Arrays.sort( files, new Comparator() {
+					public int compare(Object o1, Object o2) {
+						if (((File)o1).lastModified() > ((File)o2).lastModified()) {
+							return -1;
+						} else if (((File)o1).lastModified() < ((File)o2).lastModified()) {
+							return +1;
+						} else {
+							return 0;
+						}
+					}
+				});
+			} else {
+				// sort the list of files by modified date ascending
+				Arrays.sort( files, new Comparator() {
+					public int compare(Object o1, Object o2) {
+						if (((File)o1).lastModified() > ((File)o2).lastModified()) {
+							return +1;
+						} else if (((File)o1).lastModified() < ((File)o2).lastModified()) {
+							return -1;
+						} else {
+							return 0;
+						}
+					}
+				});
+			}
+
+			for (int j = 0; j < files.length; j++) {
+				Map<String, String> fileMap = new HashMap<String, String>();
+				File file = files[j];
+				
+				if (!file.isDirectory()) {
+					fileMap.put("name", file.getName());
+					fileMap.put("lastModified", df.format(file.lastModified()));
+					fileMap.put("path", file.getParent().replace('\\', '/'));
+					
+					fileList.add(fileMap);
+				}
+			}
+		}
+		
+		// trim to the limit
+		while (fileList.size() > fileLimit) {
+			fileList.remove(fileList.size()-1);
+		}
+		return fileList;
+	}
+	
+	private List<Map> getFileListWithMeta(String mapKey, Map map) {
+		
+		File directory = new File((String)map.get(mapKey));
+		logger.info("directory: " + directory);
+		
+		File[] files = null;
+		List<Map> fileList = new ArrayList<Map>();
+		SimpleDateFormat df = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+
+		if (directory.exists()) {
+			files = directory.listFiles();
+			logger.info("files: " + files);
+			
+			// sort the list of files by modified date ascending
+			Arrays.sort( files, new Comparator() {
+				public int compare(Object o1, Object o2) {
+					if (((File)o1).lastModified() > ((File)o2).lastModified()) {
+						return +1;
+					} else if (((File)o1).lastModified() < ((File)o2).lastModified()) {
+						return -1;
+					} else {
+						return 0;
+					}
+				}
+			});
+			
+			for (int j = 0; j < files.length; j++) {
+				Map fileMap = new HashMap();
+				File file = files[j];
+				logger.info("file: " + file);
+				
+				if (!file.isDirectory()) {
+					logger.info("file.getName(): " + file.getName());
+					logger.info("df.format(file.lastModified()): " + df.format(file.lastModified()));
+					logger.info("file.getAbsolutePath(): " + file.getAbsolutePath());
+
+					fileMap.put("name", file.getName());
+					fileMap.put("lastModified", df.format(file.lastModified()));
+					fileMap.put("absolutePath", file.getAbsolutePath());
+					
+					fileList.add(fileMap);
+				}
+			}
+		}
+		return fileList;
+	}
+	
+	private String runInfoPrefix() {
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+		return df.format(new java.util.Date()) + "  ";
+	}
+	
+	private void appendToRunInfo(WindowsPrincipal win, Map map, String runInfoFile, String fileName, String source, String action) {
+		
+		String message = "";
+		if ("upload".equals(action)) {
+			message = "File " + fileName + " uploaded to server";
+		} else if ("download".equals(action)) {
+			message = "File " + fileName + " downloaded from " + source + " directory";
+		} else if ("archive_error".equals(action)) {
+			message = "Exception file " + fileName + " archived to archvied errors directory";
+		}
+		
+		try {
+			File runInfo = new File(map.get("runInfoDir") + runInfoFile + ".runInfo");
+	    	FileWriter fileWriter = new FileWriter(runInfo, true);
+	    	fileWriter.append(runInfoPrefix() + win.getName() + "  " + message + "\n");
+	    	fileWriter.flush();
+	    	fileWriter.close();
+		} catch (Exception e) {
+			logger.error("", e);
+		}
+	}
+	
+	private List<String> validateConfig(SimpleNode doc, Map<String, String> pageMap, Map<String, Map<String, Object>> configMap) throws Exception {
+		
+		List<String> messages = new ArrayList<String>();
+		
+		// get all the upload configs
+		NodeList uploads;
+		
+		if (ObjectUtil.isEmpty(doc.getSimpleNode("{genericUpload}{uploads}"))) {
+			messages.add("No uploads found.  Please configure at least one upload in the " + pageMap.get("uploadFile") + " config file.");
+		} else {
+			if (doc.getSimpleNode("{genericUpload}{uploads}").getChildNodes("upload").getLength() == 0) {
+				messages.add("No uploads found.  Please configure at least one upload in the " + pageMap.get("uploadFile") + " config file.");
+			} else {
+				uploads = doc.getSimpleNode("{genericUpload}{uploads}").getChildNodes("upload");
+				
+				// loop through the uploaders, validate and cache the info
+				Integer uploadCnt = 0;
+				for (int i = 0; i < uploads.getLength(); i++) {
+					uploadCnt++;
+					Map<String, Object> uploadMap = new HashMap<String, Object>();
+					
+					SimpleNode uploadNode = new SimpleNode(uploads.item(i));
+					
+					if (uploadNode.getNodeType() != Node.TEXT_NODE) {
+						String type = "";
+						String typeLog = "";
+						
+						if (ObjectUtil.isEmpty(uploadNode.getAttribute("type"))) {
+							messages.add("[Upload #" + uploadCnt + "] type attribute not found");
+							return messages;
+						} else {
+							uploadMap.put("type", uploadNode.getAttribute("type"));
+							typeLog = "[" + uploadNode.getAttribute("type") + "]";
+							type = uploadNode.getAttribute("type");
+						}
+						
+						if (ObjectUtil.isEmpty(uploadNode.getAttribute("allowUpload"))) {
+							// default to yes
+							uploadMap.put("allowUpload", "1");
+						} else {
+							uploadMap.put("allowUpload", uploadNode.getAttribute("allowUpload"));
+						}
+						
+						if (ObjectUtil.isEmpty(uploadNode.getTextContent("name"))) {
+							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " name keyword not found");
+						} else {
+							uploadMap.put("name", uploadNode.getTextContent("name"));
+						}
+						
+						if (ObjectUtil.isEmpty(uploadNode.getTextContent("destDir"))) {
+							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir keyword not found");
+						} else {
+							File dir = new File(uploadNode.getTextContent("destDir"));
+							if (!dir.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+							} else if (dir.exists() && !dir.canWrite()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir (" + dir.getAbsolutePath() + ") exists but is not writable");
+							}
+							if (uploadNode.getTextContent("destDir").endsWith("/")) {
+								uploadMap.put("destDir", uploadNode.getTextContent("destDir"));
+							} else {
+								uploadMap.put("destDir", uploadNode.getTextContent("destDir") + "/");
+							}
+							
+							if (!ObjectUtil.isEmpty(uploadNode.getAttribute("{destDir}", "displayLimit"))) {
+								try {
+									Integer fileLimit = Integer.parseInt(uploadNode.getAttribute("{destDir}", "displayLimit").toString());
+									uploadMap.put("destDirLimit", fileLimit);
+								} catch (Exception e) {
+									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir displayLimit attribute must be an integer");
+								}
+							}
+						}
+
+						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("errorDir"))) {
+							File dir = new File(uploadNode.getTextContent("errorDir"));
+							if (!dir.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " errorDir (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+							}
+							if (uploadNode.getTextContent("errorDir").endsWith("/")) {
+								uploadMap.put("errorDir", uploadNode.getTextContent("errorDir"));
+							} else {
+								uploadMap.put("errorDir", uploadNode.getTextContent("errorDir") + "/");
+							}
+							
+							if (!ObjectUtil.isEmpty(uploadNode.getAttribute("{errorDir}", "displayLimit"))) {
+								try {
+									Integer fileLimit = Integer.parseInt(uploadNode.getAttribute("{errorDir}", "displayLimit").toString());
+									uploadMap.put("errorDirLimit", fileLimit);
+								} catch (Exception e) {
+									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " errorDir displayLimit attribute must be an integer");
+								}
+							}
+						}
+						
+						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("errorArchiveDir"))) {
+							File dir = new File(uploadNode.getTextContent("errorArchiveDir"));
+							if (!dir.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " errorArchiveDir (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+							} else if (dir.exists() && !dir.canWrite()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " errorArchiveDir (" + dir.getAbsolutePath() + ") exists but is not writable");
+							}
+							if (uploadNode.getTextContent("errorArchiveDir").endsWith("/")) {
+								uploadMap.put("errorArchiveDir", uploadNode.getTextContent("errorArchiveDir"));
+							} else {
+								uploadMap.put("errorArchiveDir", uploadNode.getTextContent("errorArchiveDir") + "/");
+							}
+							
+							if (!ObjectUtil.isEmpty(uploadNode.getAttribute("{errorArchiveDir}", "displayLimit"))) {
+								try {
+									Integer fileLimit = Integer.parseInt(uploadNode.getAttribute("{errorArchiveDir}", "displayLimit").toString());
+									uploadMap.put("errorArchiveDirLimit", fileLimit);
+								} catch (Exception e) {
+									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " errorArchiveDir displayLimit attribute must be an integer");
+								}
+							}
+						}
+
+						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("archiveDir"))) {
+							File dir = new File(uploadNode.getTextContent("archiveDir"));
+							if (!dir.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " archiveDir (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+							}
+							if (uploadNode.getTextContent("archiveDir").endsWith("/")) {
+								uploadMap.put("archiveDir", uploadNode.getTextContent("archiveDir"));
+							} else {
+								uploadMap.put("archiveDir", uploadNode.getTextContent("archiveDir") + "/");
+							}
+							
+							if (!ObjectUtil.isEmpty(uploadNode.getAttribute("{archiveDir}", "displayLimit"))) {
+								try {
+									Integer fileLimit = Integer.parseInt(uploadNode.getAttribute("{archiveDir}", "displayLimit").toString());
+									uploadMap.put("archiveDirLimit", fileLimit);
+								} catch (Exception e) {
+									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " archiveDir displayLimit attribute must be an integer");
+								}
+							}
+						}
+
+						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("runInfoDir"))) {
+							File dir = new File(uploadNode.getTextContent("runInfoDir"));
+							if (!dir.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " runInfoDir (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+							} else if (dir.exists() && !dir.canWrite()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " runInfoDir (" + dir.getAbsolutePath() + ") exists but is not writable");
+							}
+							if (uploadNode.getTextContent("runInfoDir").endsWith("/")) {
+								uploadMap.put("runInfoDir", uploadNode.getTextContent("runInfoDir"));
+							} else {
+								uploadMap.put("runInfoDir", uploadNode.getTextContent("runInfoDir") + "/");
+							}
+							
+							if (!ObjectUtil.isEmpty(uploadNode.getAttribute("{runInfoDir}", "displayLimit"))) {
+								try {
+									Integer fileLimit = Integer.parseInt(uploadNode.getAttribute("{runInfoDir}", "displayLimit").toString());
+									uploadMap.put("runInfoDirLimit", fileLimit);
+								} catch (Exception e) {
+									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " runInfoDir displayLimit attribute must be an integer");
+								}
+							}
+						}
+
+						if (ObjectUtil.isEmpty(uploadNode.getTextContent("{authorizedUsers}"))) {
+							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " authorizedUsers keyword not found");
+						} else {
+							File file = new File(uploadNode.getTextContent("{authorizedUsers}"));
+							if (!file.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " authorizedUsers file (" + file.getAbsolutePath() + ") does not exist or cannot be found");
+							} else {
+								String s = FileUtil.loadFile(file.getAbsolutePath());
+								s = s.toLowerCase();
+								uploadMap.put("authorizedUserList", StringUtil.toList(s, "\n "));
+							}
+						}
+
+						configMap.put(type, uploadMap);
+					}				
+				}				
+			}
+		}
+		return messages;
 	}
 }
