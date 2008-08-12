@@ -39,11 +39,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.6 2008/07/28 19:59:12 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.7 2008/08/12 19:23:50 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.6 2008/07/28 19:59:12 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.7 2008/08/12 19:23:50 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -187,10 +187,17 @@ public class GenericUploadServlet extends SavvisServlet {
 					        // check to see if the file already exists
 					        if (fileToCreate.exists()) {
 					        	request.setAttribute("errMessage", "ERROR!  File (" + fileName + ") already exists and is waiting to be processed!  It was not uploaded again.");
+					        	
+					        // otherwise, write the file
 					        } else {
-					        	item.write(fileToCreate);
-					        	appendToRunInfo(winPrincipal, keyMap, fileName, fileName, null, "upload");
-						        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
+						        // if we have a reg ex, check to see if the file name matches it
+					        	if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx")) && !fileName.matches(keyMap.get("fileNameRegEx").toString())) {
+					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        	} else {
+						        	item.write(fileToCreate);
+						        	appendToRunInfo(winPrincipal, keyMap, fileName, fileName, null, "upload");
+							        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
+					        	}
 					        }
 					    }
 					}
@@ -247,14 +254,13 @@ public class GenericUploadServlet extends SavvisServlet {
 			
 
 			//////////////////////////////////////////////////////////////////////////////////////
-			// ERROR ARCHIVE move functionality
+			// MOVE functionality
 			//////////////////////////////////////////////////////////////////////////////////////
-			String errorArchive = "".equals(request.getParameter("errorArchive")) ? (String)request.getAttribute("errorArchive") : request.getParameter("errorArchive");
+			String moveCode = "".equals(request.getParameter("moveCode")) ? (String)request.getAttribute("moveCode") : request.getParameter("moveCode");
 			String eAFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
 			String eAPath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
 			
-			if ("1".equals(errorArchive)) {
-				
+			if (!ObjectUtil.isEmpty(moveCode)) {
 				if (ObjectUtil.isEmpty(eAFile)) {
 					request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
 				} else {
@@ -276,27 +282,28 @@ public class GenericUploadServlet extends SavvisServlet {
 								runInfoFile = rif.getName().replace(".runInfo", "");
 							}
 						}
-//						List<Map<String, String>> runInfoFiles = (List<Map<String, String>>) request.getAttribute("files_runInfo");
-//						String runInfoFile = "";
-//						for (int i = 0; i < runInfoFiles.size(); i++) {
-//							Map<String, String> runInfoMap = runInfoFiles.get(i);
-//							logger.info("runInfoMap.get(name): " + runInfoMap.get("name"));
-//							if (eAFile.startsWith(runInfoMap.get("name").replace(".runInfo", ""))) {
-//								runInfoFile = runInfoMap.get("name").replace(".runInfo", "");
-//							}
-//						}					
 						logger.info("runInfoFile: " + runInfoFile);
-
+	
 						// log and perform the move
-						if (!"".equals(runInfoFile)) {
-							appendToRunInfo(winPrincipal, keyMap, runInfoFile, eAFile, null, "archive_error");
+						logger.info("moveCode: " + moveCode);
+						if ("errorArchive".equals(moveCode)) {
+							if (!ObjectUtil.isEmpty(runInfoFile))
+								appendToRunInfo(winPrincipal, keyMap, runInfoFile, eAFile, null, "archive_error");
+		
+							FileUtil.moveFile(eAPath + eAFile, keyMap.get("errorArchiveDir").toString() + eAFile);
 						}
-
-						FileUtil.moveFile(eAPath + eAFile, keyMap.get("errorArchiveDir").toString() + eAFile);
+						
+						if ("resubmit".equals(moveCode)) {
+							if (!ObjectUtil.isEmpty(runInfoFile))
+								appendToRunInfo(winPrincipal, keyMap, runInfoFile, eAFile, null, "resubmit");
+		
+							FileUtil.moveFile(eAPath + eAFile, keyMap.get("destDir").toString() + eAFile);
+						}
 					}
 				}
 			}
-
+			
+			
 			
 			//////////////////////////////////////////////////////////////////////////////////////
 			// CURRENT KEY logic
@@ -307,6 +314,10 @@ public class GenericUploadServlet extends SavvisServlet {
 				
 				if (!ObjectUtil.isEmpty(keyMap.get("destDir"))) {
 					request.setAttribute("files_pending", getFileList("destDir", keyMap, "a"));
+				}
+
+				if (!ObjectUtil.isEmpty(keyMap.get("workingDir"))) {
+					request.setAttribute("files_working", getFileList("workingDir", keyMap, "a"));
 				}
 
 				if (!ObjectUtil.isEmpty(keyMap.get("errorDir"))) {
@@ -339,6 +350,8 @@ public class GenericUploadServlet extends SavvisServlet {
 					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
 					request.setAttribute("unauthorized", "true");
 				}
+				
+				request.setAttribute("allowUpload", keyMap.get("allowUpload"));
 			}
 			////// end of current key logic
 			
@@ -406,10 +419,13 @@ public class GenericUploadServlet extends SavvisServlet {
 				Map<String, String> fileMap = new HashMap<String, String>();
 				File file = files[j];
 				
+				Long fileAge = (System.currentTimeMillis() - file.lastModified()) / (1000 * 60);
+				
 				if (!file.isDirectory()) {
 					fileMap.put("name", file.getName());
 					fileMap.put("lastModified", df.format(file.lastModified()));
 					fileMap.put("path", file.getParent().replace('\\', '/'));
+					fileMap.put("age", fileAge.toString());
 					
 					fileList.add(fileMap);
 				}
@@ -419,53 +435,6 @@ public class GenericUploadServlet extends SavvisServlet {
 		// trim to the limit
 		while (fileList.size() > fileLimit) {
 			fileList.remove(fileList.size()-1);
-		}
-		return fileList;
-	}
-	
-	private List<Map> getFileListWithMeta(String mapKey, Map map) {
-		
-		File directory = new File((String)map.get(mapKey));
-		logger.info("directory: " + directory);
-		
-		File[] files = null;
-		List<Map> fileList = new ArrayList<Map>();
-		SimpleDateFormat df = new SimpleDateFormat("MM-dd-yyyy HH:mm");
-
-		if (directory.exists()) {
-			files = directory.listFiles();
-			logger.info("files: " + files);
-			
-			// sort the list of files by modified date ascending
-			Arrays.sort( files, new Comparator() {
-				public int compare(Object o1, Object o2) {
-					if (((File)o1).lastModified() > ((File)o2).lastModified()) {
-						return +1;
-					} else if (((File)o1).lastModified() < ((File)o2).lastModified()) {
-						return -1;
-					} else {
-						return 0;
-					}
-				}
-			});
-			
-			for (int j = 0; j < files.length; j++) {
-				Map fileMap = new HashMap();
-				File file = files[j];
-				logger.info("file: " + file);
-				
-				if (!file.isDirectory()) {
-					logger.info("file.getName(): " + file.getName());
-					logger.info("df.format(file.lastModified()): " + df.format(file.lastModified()));
-					logger.info("file.getAbsolutePath(): " + file.getAbsolutePath());
-
-					fileMap.put("name", file.getName());
-					fileMap.put("lastModified", df.format(file.lastModified()));
-					fileMap.put("absolutePath", file.getAbsolutePath());
-					
-					fileList.add(fileMap);
-				}
-			}
 		}
 		return fileList;
 	}
@@ -484,6 +453,10 @@ public class GenericUploadServlet extends SavvisServlet {
 			message = "File " + fileName + " downloaded from " + source + " directory";
 		} else if ("archive_error".equals(action)) {
 			message = "Exception file " + fileName + " archived to archvied errors directory";
+		} else if ("resubmit".equals(action)) {
+			message = "Working file " + fileName + " resubmitted to pending directory";
+		} else {
+			message = "Unknown action (" + action + ")";
 		}
 		
 		try {
@@ -540,6 +513,14 @@ public class GenericUploadServlet extends SavvisServlet {
 							uploadMap.put("allowUpload", uploadNode.getAttribute("allowUpload"));
 						}
 						
+						if (!ObjectUtil.isEmpty(uploadNode.getAttribute("fileNameRegEx"))) {
+							uploadMap.put("fileNameRegEx", uploadNode.getAttribute("fileNameRegEx"));
+						}
+						
+						if (!ObjectUtil.isEmpty(uploadNode.getAttribute("fileNameRegExText"))) {
+							uploadMap.put("fileNameRegExText", uploadNode.getAttribute("fileNameRegExText"));
+						}
+						
 						if (ObjectUtil.isEmpty(uploadNode.getTextContent("name"))) {
 							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " name keyword not found");
 						} else {
@@ -567,6 +548,29 @@ public class GenericUploadServlet extends SavvisServlet {
 									uploadMap.put("destDirLimit", fileLimit);
 								} catch (Exception e) {
 									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir displayLimit attribute must be an integer");
+								}
+							}
+						}
+
+						if (ObjectUtil.isEmpty(uploadNode.getTextContent("workingDir"))) {
+							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " workingDir keyword not found");
+						} else {
+							File dir = new File(uploadNode.getTextContent("workingDir"));
+							if (!dir.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " workingDir (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+							}
+							if (uploadNode.getTextContent("destDir").endsWith("/")) {
+								uploadMap.put("workingDir", uploadNode.getTextContent("workingDir"));
+							} else {
+								uploadMap.put("workingDir", uploadNode.getTextContent("workingDir") + "/");
+							}
+							
+							if (!ObjectUtil.isEmpty(uploadNode.getAttribute("{workingDir}", "displayLimit"))) {
+								try {
+									Integer fileLimit = Integer.parseInt(uploadNode.getAttribute("{workingDir}", "displayLimit").toString());
+									uploadMap.put("workingDir", fileLimit);
+								} catch (Exception e) {
+									messages.add("[Upload #" + uploadCnt + "]" + typeLog + " workingDir displayLimit attribute must be an integer");
 								}
 							}
 						}

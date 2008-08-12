@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.2 2008/07/28 19:59:11 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.3 2008/08/12 19:23:50 dyoung Exp $
 
 --%>
 
@@ -32,7 +32,7 @@
 	<input type="hidden" name="appl" value="${appl}"/>
 	<input type="hidden" name="config" value="${config}"/>
 	<input type="hidden" name="key" value="${key}"/>
-	<input type="hidden" name="errorArchive" value="1"/>
+	<input type="hidden" name="moveCode" value=""/>
 	<input type="hidden" name="file" value=""/>
 	<input type="hidden" name="path" value=""/>
 	<input type="hidden" name="src" value=""/>
@@ -113,13 +113,15 @@
 						<table width="100%" cellspacing="0" cellpadding="5">
 							<tr>
 								<td width="50%" valign="top">
-									<br/>
-									<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
-										<tr><th class="listTblHdr">Upload A File</th></tr>
-										<tr><td style="width: 60%;" class="listCell"><input class="fileInput" type="file" name="hrFile"/></td></tr>
-									</table>
-									<button onclick="frm.submit();">Upload</button>
-									<br/><br/><br/>
+									<c:if test='${allowUpload eq "1"}'>
+										<br/>
+										<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
+											<tr><th class="listTblHdr">Upload A File</th></tr>
+											<tr><td style="width: 60%;" class="listCell"><input class="fileInput" type="file" name="hrFile"/></td></tr>
+										</table>
+										<button onclick="frm.submit();">Upload</button>
+										<br/><br/><br/>
+									</c:if>
 									
 									<c:if test='${message ne "" and message != null}'>
 										<table width="100%" cellspacing="0" cellpadding="0">
@@ -140,9 +142,27 @@
 										<span class="fileListHdr">Pending Files To Be Processed</span>
 										<sv:dataTable data="${files_pending}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
-												<!-- sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="?appl=${appl}&config=${config}&key=${key}&download=1&file=${row.name}&path=${row.path}&src=pending" linkTarget="_blank" headerStyleClass="listTblHdr" style="width: 60%;"/ -->
 												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='pending';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
 												<sv:dataTableColumn title="Upload Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
+											</sv:dataTableRows>
+										</sv:dataTable>
+										<br/><br/><br/>
+									</c:if>
+
+									<c:if test="${files_working != null}">
+										<span class="fileListHdr">Files Currently Being Processed</span><br/>
+										<span class="fileListSubHdr">(files must be at least 15 minutes old before they can be resubmitted)</span>
+										<sv:dataTable data="${files_working}" cellpadding="2" cellspacing="2" styleClass="listTbl">
+											<sv:dataTableRows rowVar="row">
+												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='working';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
+												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="30%" />
+
+												<c:if test="${empty row.age or row.age < 15}">
+													<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
+												</c:if>
+												<c:if test="${row.age >= 15}">
+													<sv:dataTableColumn title=" " styleClass="listCell" value="resubmit" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.moveCode.value='resubmit';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='working';document.moveFileForm.submit()" headerStyleClass="listTblHdr" width="10%" />
+												</c:if>
 											</sv:dataTableRows>
 										</sv:dataTable>
 										<br/><br/><br/>
@@ -152,7 +172,6 @@
 										<span class="fileListHdr">Processed Files</span>
 										<sv:dataTable data="${files_archive}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
-												<!-- <sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="?appl=${appl}&config=${config}&key=${key}&download=1&file=${row.name}&path=${row.path}&src=archive" linkTarget="_blank" headerStyleClass="listTblHdr" style="width: 60%;"/> -->
 												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='archive';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
 												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
 											</sv:dataTableRows>
@@ -166,7 +185,6 @@
 										<span class="fileListHdr">Information Logs</span>
 										<sv:dataTable data="${files_runInfo}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
-												<!-- <sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="?appl=${appl}&config=${config}&key=${key}&download=1&file=${row.name}&path=${row.path}" linkTarget="_blank" headerStyleClass="listTblHdr" style="width: 60%;"/> -->
 												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
 												<sv:dataTableColumn title="Last Modified" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
 											</sv:dataTableRows>
@@ -178,12 +196,11 @@
 										<span class="fileListHdrErr">Exception Files</span>
 										<sv:dataTable data="${files_error}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
-												<!-- <sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="?appl=${appl}&config=${config}&key=${key}&download=1&file=${row.name}&path=${row.path}&src=error" linkTarget="_blank" headerStyleClass="listTblHdrErr" style="width: 60%;"/> -->
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='error';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
+												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='error';document.downloadForm.submit()" headerStyleClass="listTblHdrErr" style="width: 60%;"/>
 												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdrErr" width="30%" />
 												
 												<c:if test="${files_errorArchive != null}">
-													<sv:dataTableColumn title="" styleClass="listCell" value="archive" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='archived errors';document.moveFileForm.submit()" headerStyleClass="listTblHdrErr" width="10%" />
+													<sv:dataTableColumn title="" styleClass="listCell" value="archive" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.moveCode.value='errorArchive';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='archived errors';document.moveFileForm.submit()" headerStyleClass="listTblHdrErr" width="10%" />
 												</c:if>
 											</sv:dataTableRows>
 										</sv:dataTable>
@@ -194,7 +211,6 @@
 										<span class="fileListHdr">Archived Exception Files</span>
 										<sv:dataTable data="${files_errorArchive}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
-												<!-- <sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="?appl=${appl}&config=${config}&key=${key}&download=1&file=${row.name}&path=${row.path}&src=archived errors" linkTarget="_blank" headerStyleClass="listTblHdr" style="width: 60%;"/> -->
 												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='archived errors';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
 												<sv:dataTableColumn title="Archive Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
 											</sv:dataTableRows>
