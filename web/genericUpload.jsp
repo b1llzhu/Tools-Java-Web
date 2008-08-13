@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.3 2008/08/12 19:23:50 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.4 2008/08/13 17:46:27 dyoung Exp $
 
 --%>
 
@@ -149,25 +149,6 @@
 										<br/><br/><br/>
 									</c:if>
 
-									<c:if test="${files_working != null}">
-										<span class="fileListHdr">Files Currently Being Processed</span><br/>
-										<span class="fileListSubHdr">(files must be at least 15 minutes old before they can be resubmitted)</span>
-										<sv:dataTable data="${files_working}" cellpadding="2" cellspacing="2" styleClass="listTbl">
-											<sv:dataTableRows rowVar="row">
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='working';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
-												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="30%" />
-
-												<c:if test="${empty row.age or row.age < 15}">
-													<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
-												</c:if>
-												<c:if test="${row.age >= 15}">
-													<sv:dataTableColumn title=" " styleClass="listCell" value="resubmit" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.moveCode.value='resubmit';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='working';document.moveFileForm.submit()" headerStyleClass="listTblHdr" width="10%" />
-												</c:if>
-											</sv:dataTableRows>
-										</sv:dataTable>
-										<br/><br/><br/>
-									</c:if>
-
 									<c:if test="${files_archive != null}">
 										<span class="fileListHdr">Processed Files</span>
 										<sv:dataTable data="${files_archive}" cellpadding="2" cellspacing="2" styleClass="listTbl">
@@ -192,6 +173,25 @@
 										<br/><br/><br/>
 									</c:if>
 						
+									<c:if test="${files_working != null}">
+										<span class="fileListHdr">Files Currently Being Processed</span><br/>
+										<span class="fileListSubHdr">(files must be at least 15 minutes old before they can be resubmitted)</span>
+										<sv:dataTable data="${files_working}" cellpadding="2" cellspacing="2" styleClass="listTbl">
+											<sv:dataTableRows rowVar="row">
+												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='working';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
+												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="30%" />
+
+												<c:if test="${empty row.age or row.age < 15}">
+													<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
+												</c:if>
+												<c:if test="${row.age >= 15}">
+													<sv:dataTableColumn title=" " styleClass="listCell" value="resubmit" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.moveCode.value='resubmit';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='working';document.moveFileForm.submit()" headerStyleClass="listTblHdr" width="10%" />
+												</c:if>
+											</sv:dataTableRows>
+										</sv:dataTable>
+										<br/><br/><br/>
+									</c:if>
+
 									<c:if test="${files_error != null}">
 										<span class="fileListHdrErr">Exception Files</span>
 										<sv:dataTable data="${files_error}" cellpadding="2" cellspacing="2" styleClass="listTbl">
