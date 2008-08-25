@@ -53,6 +53,17 @@
 	</servlet-mapping>
 
 	<servlet>
+		<servlet-name>runInfo</servlet-name>
+		<servlet-class>
+			com.savvis.it.tools.web.servlet.RunInfoDisplayServlet
+		</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>runInfo</servlet-name>
+		<url-pattern>/runInfo</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
 		<servlet-name>PasswordResetServlet</servlet-name>
 		<servlet-class>
 			com.savvis.it.tools.web.servlet.PasswordResetServlet
