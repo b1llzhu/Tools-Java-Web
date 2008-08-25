@@ -30,6 +30,7 @@ import org.w3c.dom.NodeList;
 
 import com.savvis.it.db.DBConnection;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
+import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
 import com.savvis.it.servlet.SavvisServlet;
 import com.savvis.it.util.*;
 
@@ -37,11 +38,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: DownloadFileServlet.java,v 1.1 2008/07/28 19:53:29 dyoung Exp $
+ * @version $Id: DownloadFileServlet.java,v 1.2 2008/08/25 14:29:38 dyoung Exp $
  */
 public class DownloadFileServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(DownloadFileServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/DownloadFileServlet.java,v 1.1 2008/07/28 19:53:29 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/DownloadFileServlet.java,v 1.2 2008/08/25 14:29:38 dyoung Exp $";
 	
 	/** 
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -54,13 +55,13 @@ public class DownloadFileServlet extends SavvisServlet {
 
 		String fileName = "";
 		String path = "";
+		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = 
+			(WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);;
 		
 		try {
 			
 			fileName = request.getParameter("file") != null ? request.getParameter("file").toString() : request.getAttribute("file").toString();
 			path = request.getParameter("path") != null ? request.getParameter("path").toString() : request.getAttribute("path").toString();
-			logger.info("path: " + path);
-			logger.info("fileName: " + fileName);
 
 			if (StringUtil.hasValue(fileName) && StringUtil.hasValue(path)) {
 				response.setContentType("APPLICATION/OCTET-STREAM");
@@ -76,6 +77,10 @@ public class DownloadFileServlet extends SavvisServlet {
 				response.getOutputStream().flush();
 				response.getOutputStream().close();
 				fileInputStream.close();
+				
+				// add a log comment (if the file downloaded is not a standard log file
+				if (!fileName.equals(RunInfoUtil.STD_LOG_NAME) && !path.endsWith(RunInfoUtil.STD_LOG_NAME))
+					RunInfoUtil.addLog(file, winPrincipal.getName(), new java.util.Date(), "File " + file.getName() + " downloaded");
 			}
 			
 		} catch (SocketException se) {
