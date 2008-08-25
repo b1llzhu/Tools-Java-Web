@@ -42,11 +42,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.8 2008/08/25 14:29:38 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.9 2008/08/25 14:38:10 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.8 2008/08/25 14:29:38 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.9 2008/08/25 14:38:10 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -87,16 +87,16 @@ public class GenericUploadServlet extends SavvisServlet {
 					
 			pageMap.put("appl", "".equals(request.getParameter("appl")) ? (String)request.getAttribute("appl") : request.getParameter("appl"));
 			if (ObjectUtil.isEmpty(pageMap.get("appl")))
-				pageMap.put("fatalMsg", "ERROR:  Missing required parameter (APPL) required.<br/>");
+				pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  Missing required parameter (APPL) required.<br/>");
 
 			pageMap.put("config", "".equals(request.getParameter("config")) ? (String)request.getAttribute("config") : request.getParameter("config"));
 			if (ObjectUtil.isEmpty(pageMap.get("config"))) {
-				pageMap.put("fatalMsg", pageMap.get("fatalMsg").toString().concat("ERROR:  Missing required parameter (CONFIG) required.<br/>"));
+				pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  Missing required parameter (CONFIG) required.<br/>");
 			} else {
 				// test to make sure we can find the config file that was handed to us
 				File uploadFile = new File(basedir + "/" + pageMap.get("appl") + "/" + configFileDefaultDir + pageMap.get("config") + configFileExt);
 				if (!uploadFile.exists()) {
-					pageMap.put("fatalMsg", pageMap.get("fatalMsg").toString().concat("ERROR:  The supplied config file doesn't exist (" + uploadFile.getAbsolutePath() + ").<br/>"));
+					pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  The supplied config file doesn't exist (" + uploadFile.getAbsolutePath() + ").<br/>");
 				} else {
 					pageMap.put("uploadFile", uploadFile.getAbsolutePath());
 				}
@@ -414,6 +414,12 @@ public class GenericUploadServlet extends SavvisServlet {
 		
 		// forward to the page
 		forward(jspPage, request, response);		
+	}
+	
+	private String getFatalMsg(Map pageMap) {
+		if(pageMap.get("fatalMsg") == null)
+			return "";
+		return (String) pageMap.get("fatalMsg");
 	}
 	
 	private List<Map<String, String>> getFileList(String path, Integer limit, String sortOrder) {
