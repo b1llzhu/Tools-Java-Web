@@ -1,0 +1,35 @@
+body {
+	background: #fff;
+	margin: 0px;
+	padding: 0px;
+   	font-family: sans-serif;
+	font-size: 9pt;
+}
+
+.listTbl {
+	border-collapse: collapse;
+	border-top: 1px solid #003399;
+	border-bottom: 1px solid #003399;
+	margin-bottom: 3px;
+	width: 100%;
+}
+
+.listTblHdr {
+	background-color: #ddd;
+	color: #003399;
+	font-family: sans-serif;
+	font-size: 8pt;
+	font-weight: bold;
+	text-align: left;
+}
+
+.listCell {
+	border-collapse: collapse;
+	border-bottom: 1px solid #ddd;
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #ddd;
+	font-family: sans-serif;
+	font-size: 8pt;
+	text-align: left;
+	vertical-align: top;
+}
