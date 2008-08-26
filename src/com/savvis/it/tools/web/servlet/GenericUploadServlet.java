@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.10 2008/08/26 15:26:25 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.11 2008/08/26 17:35:14 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.10 2008/08/26 15:26:25 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.11 2008/08/26 17:35:14 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -229,7 +229,7 @@ public class GenericUploadServlet extends SavvisServlet {
 			ServletFileUpload upload = new ServletFileUpload(factory);
 			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 			
-			if (isMultipart && "download".equals(request.getParameter("action"))) {
+			if (isMultipart) {
 
 				// verify the authorization (a second check - the first one is upon selecting the upload key)
 				Map keyMap = configMap.get(pageMap.get("key"));
