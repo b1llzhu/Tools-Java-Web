@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.6 2008/08/26 15:26:25 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.7 2008/08/26 19:37:53 dyoung Exp $
 
 --%>
 
@@ -135,7 +135,7 @@
 										</c:if>
 
 										<span class="fileListHdr${classSuffix}">${dir.description}</span>
-										<c:if test='${dir.subDescription ne ""}'>
+										<c:if test='${!empty dir.subDescription}'>
 											<br/><span class="fileListSubHdr">${dir.subDescription}</span>
 										</c:if>
 
