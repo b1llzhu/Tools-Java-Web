@@ -35,6 +35,7 @@ import com.savvis.it.db.DBConnection;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
 import com.savvis.it.servlet.SavvisServlet;
+import com.savvis.it.tools.RunInfoUtil;
 import com.savvis.it.tools.web.bean.InputFieldHandler;
 import com.savvis.it.util.*;
 
@@ -42,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.9 2008/08/25 14:38:10 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.10 2008/08/26 15:26:25 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.9 2008/08/25 14:38:10 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.10 2008/08/26 15:26:25 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -140,7 +141,6 @@ public class GenericUploadServlet extends SavvisServlet {
 			for (int i = 0; i < uploadKeys.length; i++) {
 				Map<String, String> upload = new HashMap<String, String>();
 				String uploadKey = uploadKeys[i].toString();
-				logger.info("uploadKey: " + uploadKey);
 				upload.put("key", uploadKey);
 				upload.put("name", configMap.get(uploadKey).get("name").toString());
 				uploads.add(upload);
@@ -149,78 +149,8 @@ public class GenericUploadServlet extends SavvisServlet {
 
 			
 			//////////////////////////////////////////////////////////////////////////////////////
-			// UPLOAD functionality
-			//////////////////////////////////////////////////////////////////////////////////////
-			// this section is only performed when the action <> choose
-			// only when the jsp is trying to upload a file OR the first time the JSP is hit
-			// for this reason, we lock down any processing to when the incoming form is multipart content
-			
-			// Create a factory for disk-based file items
-			FileItemFactory factory = new DiskFileItemFactory(0, null);
-			ServletFileUpload upload = new ServletFileUpload(factory);
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-			
-			if (isMultipart) {
-
-				// verify the authorization (a second check - the first one is upon selecting the upload key)
-				Map keyMap = configMap.get(pageMap.get("key"));
-				Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
-				List<String> authUserList = (List<String>) keyMap.get("authorizedUserList");
-				
-				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-					logger.info("User (" + winPrincipal.getName() + ") is not authorized to upload files to (" + pageMap.get("key") + ")");
-					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
-					request.setAttribute("unauthorized", "true");
-					
-				} else {
-
-					List items = upload.parseRequest(request);
-					
-					// Process the uploaded items
-					Iterator iter = items.iterator();
-					while (iter.hasNext()) {
-					    FileItem item = (FileItem) iter.next();
-			
-					    // Process a file upload
-					    if (!item.isFormField()) {
-					        String fullFileName = item.getName();
-					        String fileName = StringUtil.getLastToken(fullFileName, '\\');
-					        
-					        String destDir = (String) directoriesMap.get("pending").get("path");
-					        if (!destDir.endsWith("/"))
-					        	destDir = destDir.concat("/");
-					        
-					        File fileToCreate = new File(destDir + fileName);
-					        
-					        // check to see if the file already exists
-					        if (fileToCreate.exists()) {
-					        	request.setAttribute("errMessage", "ERROR!  File (" + fileName + ") already exists and is waiting to be processed!  It was not uploaded again.");
-					        	
-					        // otherwise, write the file
-					        } else {
-						        // if we have a reg ex, check to see if the file name matches it
-					        	if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx")) && !fileName.matches(keyMap.get("fileNameRegEx").toString())) {
-					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
-					        	} else {
-						        	item.write(fileToCreate);
-									RunInfoUtil.addLog(fileToCreate, winPrincipal.getName(), new java.util.Date(), 
-											"File " + fileName + " uploaded");
-
-							        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
-					        	}
-					        }
-					    }
-					}
-				}
-			}
-			////// end of multipart upload functionality
-			
-
-			
-			//////////////////////////////////////////////////////////////////////////////////////
 			// PERFORM ACTION functionality
 			//////////////////////////////////////////////////////////////////////////////////////
-//			logger.info("request.getParameter(\"action\"): " + request.getParameter("action"));
 			if (!ObjectUtil.isEmpty(request.getParameter("action")) && "execute".equals(request.getParameter("action"))) {
 				Map keyMap = configMap.get(pageMap.get("key"));
 				Context inputsContext = new Context();
@@ -286,6 +216,75 @@ public class GenericUploadServlet extends SavvisServlet {
 				}
 			}
 			
+			
+			//////////////////////////////////////////////////////////////////////////////////////
+			// UPLOAD functionality
+			//////////////////////////////////////////////////////////////////////////////////////
+			// this section is only performed when the action <> choose
+			// only when the jsp is trying to upload a file OR the first time the JSP is hit
+			// for this reason, we lock down any processing to when the incoming form is multipart content
+			
+			// Create a factory for disk-based file items
+			FileItemFactory factory = new DiskFileItemFactory(0, null);
+			ServletFileUpload upload = new ServletFileUpload(factory);
+			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			
+			if (isMultipart && "download".equals(request.getParameter("action"))) {
+
+				// verify the authorization (a second check - the first one is upon selecting the upload key)
+				Map keyMap = configMap.get(pageMap.get("key"));
+				Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
+				List<String> authUserList = (List<String>) keyMap.get("authorizedUserList");
+				
+				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
+					logger.info("User (" + winPrincipal.getName() + ") is not authorized to upload files to (" + pageMap.get("key") + ")");
+					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
+					request.setAttribute("unauthorized", "true");
+					
+				} else {
+
+					List items = upload.parseRequest(request);
+					
+					// Process the uploaded items
+					Iterator iter = items.iterator();
+					while (iter.hasNext()) {
+					    FileItem item = (FileItem) iter.next();
+			
+					    // Process a file upload
+					    if (!item.isFormField()) {
+					        String fullFileName = item.getName();
+					        String fileName = StringUtil.getLastToken(fullFileName, '\\');
+					        
+					        String destDir = (String) directoriesMap.get("pending").get("path");
+					        if (!destDir.endsWith("/"))
+					        	destDir = destDir.concat("/");
+					        
+					        File fileToCreate = new File(destDir + fileName);
+					        
+					        // check to see if the file already exists
+					        if (fileToCreate.exists()) {
+					        	request.setAttribute("errMessage", "ERROR!  File (" + fileName + ") already exists and is waiting to be processed!  It was not uploaded again.");
+					        	
+					        // otherwise, write the file
+					        } else {
+						        // if we have a reg ex, check to see if the file name matches it
+					        	if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx")) && !fileName.matches(keyMap.get("fileNameRegEx").toString())) {
+					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        	} else {
+						        	item.write(fileToCreate);
+									RunInfoUtil.addLog(fileToCreate, winPrincipal.getName(), new java.util.Date(), 
+											"File " + fileName + " uploaded");
+
+							        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
+					        	}
+					        }
+					    }
+					}
+				}
+			}
+			////// end of multipart upload functionality
+			
+
 			
 			//////////////////////////////////////////////////////////////////////////////////////
 			// DOWNLOAD functionality
@@ -358,19 +357,20 @@ public class GenericUploadServlet extends SavvisServlet {
 			if (!ObjectUtil.isEmpty(pageMap.get("key"))) {
 				Map keyMap = configMap.get(pageMap.get("key"));
 				
-				Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
+				Map<String, Map<String, Object>> directoriesMap = (Map<String, Map<String, Object>>) keyMap.get("directories");
 //				logger.info("directoriesMap: " + directoriesMap);
 				
 				for (int i = 0; i < directoriesMap.keySet().size(); i++) {
 					String key = (String) directoriesMap.keySet().toArray()[i];
-					Map<String, String> directoryMap = (Map<String, String>) directoriesMap.get(key);
+					Map<String, Object> directoryMap = (Map<String, Object>) directoriesMap.get(key);
 
 					if (!"0".equals(directoryMap.get("display"))) {
 						Integer limit = null;
 						if (!ObjectUtil.isEmpty(directoryMap.get("limit")))
-							limit = Integer.parseInt(directoryMap.get("limit"));
+							limit = Integer.parseInt(directoryMap.get("limit").toString());
 						
-						request.setAttribute("files_" + key, getFileList(directoryMap.get("path"), limit, directoryMap.get("sort")));
+						directoryMap.put("data", getFileList(directoryMap.get("path").toString(), limit, directoryMap.get("sort").toString()));
+						request.setAttribute("files_" + key, getFileList(directoryMap.get("path").toString(), limit, directoryMap.get("sort").toString()));
 					}
 				}
 				
@@ -388,13 +388,15 @@ public class GenericUploadServlet extends SavvisServlet {
 				// (there's also a second check during the upload of the file just to make
 				// sure nothing slips through)
 				List authUserList = (List) keyMap.get("authorizedUserList");
-				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
-					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
-					request.setAttribute("unauthorized", "true");
-				}
+//				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
+//					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
+//					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
+//					request.setAttribute("unauthorized", "true");
+//				}
 				
 				request.setAttribute("allowUpload", keyMap.get("allowUpload"));
+				
+				request.setAttribute("directories", keyMap.get("directories"));
 			}
 			////// end of current key logic
 			
@@ -497,6 +499,8 @@ public class GenericUploadServlet extends SavvisServlet {
 		
 		List<String> messages = new ArrayList<String>();
 		
+		SimpleNode.setEnableKeywordSubstitution(true);
+		
 		// get all the upload configs
 		NodeList uploads;
 		
@@ -553,12 +557,12 @@ public class GenericUploadServlet extends SavvisServlet {
 						// process the directories
 						if (!ObjectUtil.isEmpty(uploadNode.getSimpleNode("{directories}"))) {
 							NodeList diretoriesNode = uploadNode.getSimpleNode("{directories}").getChildNodes("directory");
-							Map<String, Map<String, String>> directoriesMap = new HashMap<String, Map<String, String>>();
+							Map<String, Map<String, Object>> directoriesMap = new LinkedHashMap<String, Map<String, Object>>();
 							
 							try {
 								for (int j = 0; j < diretoriesNode.getLength(); j++) {
 									SimpleNode directoryNode = new SimpleNode(diretoriesNode.item(j));
-									Map<String, String> directoryMap = new HashMap<String, String>();
+									Map<String, Object> directoryMap = new HashMap<String, Object>();
 									
 									String directoryKey = null;
 									if (!ObjectUtil.isEmpty(directoryNode.getAttribute("key"))) {
@@ -589,6 +593,9 @@ public class GenericUploadServlet extends SavvisServlet {
 									if (!ObjectUtil.isEmpty(directoryNode.getTextContent("{description}")))
 										directoryMap.put("description", directoryNode.getTextContent("{description}"));
 
+									if (!ObjectUtil.isEmpty(directoryNode.getTextContent("{subDescription}")))
+										directoryMap.put("subDescription", directoryNode.getTextContent("{subDescription}"));
+
 									// path validation
 									if (ObjectUtil.isEmpty(directoryNode.getSimpleNode("{path}"))) {
 										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " directory " + j + " does not contain a 'path' keyword");
@@ -604,6 +611,45 @@ public class GenericUploadServlet extends SavvisServlet {
 											path = path + "/";
 
 										directoryMap.put("path", path);
+									}
+									
+									// columns
+									if (!ObjectUtil.isEmpty(directoryNode.getSimpleNode("{columns}"))) {
+										NodeList columnsNode = directoryNode.getSimpleNode("{columns}").getChildNodes("column");
+										Map<String, Map<String, String>> columnsMap = new LinkedHashMap<String, Map<String, String>>();
+
+										for (int k = 0; k < columnsNode.getLength(); k++) {
+											SimpleNode columnNode = new SimpleNode(columnsNode.item(k));
+											Map<String, String> columnMap = new HashMap<String, String>();
+
+											columnMap.put("name", columnNode.getAttribute("name"));
+											columnMap.put("title", columnNode.getAttribute("title"));
+											columnMap.put("download", columnNode.getAttribute("download"));
+											
+											columnsMap.put(columnMap.get("name"), columnMap);
+										}
+										directoryMap.put("columns", columnsMap);
+									}
+									
+									
+									// actions
+									if (!ObjectUtil.isEmpty(directoryNode.getSimpleNode("{actions}"))) {
+										NodeList actionsNode = directoryNode.getSimpleNode("{actions}").getChildNodes("action");
+										Map<String, Map<String, String>> actionsMap = new LinkedHashMap<String, Map<String, String>>();
+
+										for (int l = 0; l < actionsNode.getLength(); l++) {
+											SimpleNode actionNode = new SimpleNode(actionsNode.item(l));
+											Map<String, String> actionMap = new HashMap<String, String>();
+
+											actionMap.put("level", actionNode.getAttribute("level"));
+											actionMap.put("type", actionNode.getAttribute("type"));
+											actionMap.put("fileAge", actionNode.getAttribute("fileAge"));
+											actionMap.put("target", actionNode.getAttribute("target"));
+											actionMap.put("description", actionNode.getAttribute("description"));
+											
+											actionsMap.put(ObjectUtil.toString(l), actionMap);
+										}
+										directoryMap.put("actions", actionsMap);
 									}
 									
 									directoriesMap.put(directoryKey, directoryMap);
@@ -692,11 +738,9 @@ public class GenericUploadServlet extends SavvisServlet {
 								
 							} catch (Exception e) {
 								e.printStackTrace();
-								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " error in actions section (" + e.getMessage() + ")");
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " error in actions section (" + ObjectUtil.toString(e) + ")");
 							}
-							uploadMap.put("actions", actionsMap);
 						}
-						
 						configMap.put(type, uploadMap);
 					}				
 				}				

@@ -32,17 +32,18 @@ import com.savvis.it.db.DBConnection;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
 import com.savvis.it.servlet.SavvisServlet;
+import com.savvis.it.tools.RunInfoUtil;
 import com.savvis.it.util.*;
 
 /**
  * This class displays the run info log 
  * 
  * @author David R Young
- * @version $Id: RunInfoDisplayServlet.java,v 1.1 2008/08/25 14:28:33 dyoung Exp $
+ * @version $Id: RunInfoDisplayServlet.java,v 1.2 2008/08/26 15:26:25 dyoung Exp $
  */
 public class RunInfoDisplayServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(RunInfoDisplayServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/RunInfoDisplayServlet.java,v 1.1 2008/08/25 14:28:33 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/RunInfoDisplayServlet.java,v 1.2 2008/08/26 15:26:25 dyoung Exp $";
 	
 	/** 
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -66,7 +67,7 @@ public class RunInfoDisplayServlet extends SavvisServlet {
 				if (!path.endsWith("/"))
 					path = path + "/";
 				
-				logger.info("path: " + path);
+//				logger.info("path: " + path);
 				
 				List<Map<String, String>> contents = RunInfoUtil.getContents(path, true);
 				request.setAttribute("contents", contents);

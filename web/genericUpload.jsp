@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.5 2008/08/25 14:29:37 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.6 2008/08/26 15:26:25 dyoung Exp $
 
 --%>
 
@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/genericUpload.css"/>
 
 <form name="downloadForm" method="post">
+	<input type="hidden" name="action" value="download"/>
 	<input type="hidden" name="appl" value="${appl}"/>
 	<input type="hidden" name="config" value="${config}"/>
 	<input type="hidden" name="key" value="${key}"/>
@@ -29,6 +30,7 @@
 </form>
 
 <form name="moveFileForm" method="post">
+	<input type="hidden" name="action" value="move"/>
 	<input type="hidden" name="appl" value="${appl}"/>
 	<input type="hidden" name="config" value="${config}"/>
 	<input type="hidden" name="key" value="${key}"/>
@@ -125,72 +127,64 @@
 										<br/></br>
 									</c:if>		
 						
-									<c:if test="${files_pending != null}">
-										<span class="fileListHdr">Pending Files To Be Processed</span>
-										<sv:dataTable data="${files_pending}" cellpadding="2" cellspacing="2" styleClass="listTbl">
-											<sv:dataTableRows rowVar="row">
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='pending';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
-												<sv:dataTableColumn title="Upload Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
-											</sv:dataTableRows>
-										</sv:dataTable>
-										<br/><br/><br/>
-									</c:if>
+									<c:forEach items="${directories}" var="d">
+										<c:set var="dir" value="${d.value}" />
+										<c:set var="classSuffix" value="" />
+										<c:if test='${d.key eq "error"}'>
+											<c:set var="classSuffix" value="Err" />
+										</c:if>
 
-									<c:if test="${files_working != null}">
-										<span class="fileListHdr">Files Currently Being Processed</span><br/>
-										<span class="fileListSubHdr">(files must be at least 15 minutes old before they can be resubmitted)</span>
-										<sv:dataTable data="${files_working}" cellpadding="2" cellspacing="2" styleClass="listTbl">
-											<sv:dataTableRows rowVar="row">
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='working';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
-												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="30%" />
+										<span class="fileListHdr${classSuffix}">${dir.description}</span>
+										<c:if test='${dir.subDescription ne ""}'>
+											<br/><span class="fileListSubHdr">${dir.subDescription}</span>
+										</c:if>
 
-												<c:if test="${empty row.age or row.age < 15}">
-													<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
-												</c:if>
-												<c:if test="${row.age >= 15}">
-													<sv:dataTableColumn title=" " styleClass="listCell" value="resubmit" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.moveCode.value='resubmit';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='working';document.moveFileForm.submit()" headerStyleClass="listTblHdr" width="10%" />
-												</c:if>
-											</sv:dataTableRows>
-										</sv:dataTable>
-										<br/><br/><br/>
-									</c:if>
-
-									<c:if test="${files_archive != null}">
-										<span class="fileListHdr">Processed Files</span>
-										<sv:dataTable data="${files_archive}" cellpadding="2" cellspacing="2" styleClass="listTbl">
+										<sv:dataTable data="${dir.data}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='archive';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
-												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
-											</sv:dataTableRows>
-										</sv:dataTable>
-										<br/><br/><br/>
-									</c:if>
-									
-									<c:if test="${files_error != null}">
-										<span class="fileListHdrErr">Exception Files</span>
-										<sv:dataTable data="${files_error}" cellpadding="2" cellspacing="2" styleClass="listTbl">
-											<sv:dataTableRows rowVar="row">
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='error';document.downloadForm.submit()" headerStyleClass="listTblHdrErr" style="width: 60%;"/>
-												<sv:dataTableColumn title="Process Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdrErr" width="30%" />
-												
-												<c:if test="${files_errorArchive != null}">
-													<sv:dataTableColumn title="" styleClass="listCell" value="archive" linkClass="drillLink" linkHref="Javascript:document.moveFileForm.moveCode.value='errorArchive';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='archived errors';document.moveFileForm.submit()" headerStyleClass="listTblHdrErr" width="10%" />
+											<c:forEach items="${dir.columns}" var="c">
+												<c:set var="column" value="${c.value}" />
+												<c:if test='${column.name eq "name"}'>
+													<c:choose>
+														<c:when test='${column.download eq "1"}'>
+															<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.name}" 
+																linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='pending';document.downloadForm.submit()" 
+																headerStyleClass="listTblHdr${classSuffix}" style="width: 60%;"/>														
+														</c:when>
+														<c:otherwise>
+															<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.name}" headerStyleClass="listTblHdr${classSuffix}" width="60%" />
+														</c:otherwise>
+													</c:choose>
+													<c:if test='${column.download eq "1"}'>
+														
+													</c:if>
+													
 												</c:if>
+												<c:if test='${column.name eq "lastModified"}'>
+													<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr${classSuffix}" width="30%" />
+												</c:if>
+											</c:forEach>
+											<c:forEach items="${dir.actions}" var="a">
+												<c:set var="action" value="${a.value}" />
+												<c:if test='${action.level eq "file" and action.type eq "move"}'>
+													<c:choose>
+														<c:when test="${empty row.age or row.age < action.fileAge}">
+															<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
+														</c:when>
+														<c:when test="${row.age >= 15}">
+															<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
+																linkHref="Javascript:document.moveFileForm.moveCode.value='resubmit';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='${action.target}';document.moveFileForm.submit()" 
+																headerStyleClass="listTblHdr" width="10%" />
+														</c:when>
+													</c:choose>
+												</c:if>
+											</c:forEach>
+											<c:if test="${empty dir.actions}">
+												<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
+											</c:if>
 											</sv:dataTableRows>
 										</sv:dataTable>
 										<br/><br/><br/>
-									</c:if>
-			
-									<c:if test="${files_errorArchive != null}">
-										<span class="fileListHdr">Archived Exception Files</span>
-										<sv:dataTable data="${files_errorArchive}" cellpadding="2" cellspacing="2" styleClass="listTbl">
-											<sv:dataTableRows rowVar="row">
-												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='archived errors';document.downloadForm.submit()" headerStyleClass="listTblHdr" style="width: 60%;"/>
-												<sv:dataTableColumn title="Archive Date" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr" width="40%" />
-											</sv:dataTableRows>
-										</sv:dataTable>
-										<br/><br/><br/>
-									</c:if>			
+									</c:forEach>
 								</td>
 								<td valign="top">
 									<c:if test='${allowUpload eq "1"}'>
@@ -235,22 +229,21 @@
 													<c:if test='${action.inputs != null}'>
 														<table width="100%" cellspacing="2" cellpadding="2">
 			
-														<c:set var="input" value="${action.inputs}" />
-														<c:forEach items="${input}" var="i">
-															<c:set var="inputs" value="${i.value}" />
-														
+														<c:set var="inputs" value="${action.inputs}" />
+														<c:forEach items="${inputs}" var="i">
+															<c:set var="input" value="${i.value}" />
 															<tr>
-																<td width="20%" class="inputCell" style="text-align: right;">${inputs.label}</td>
+																<td width="20%" class="inputCell" style="text-align: right;">${input.label}</td>
 																<td width="5" class="inputCell"></td>
 																<td class="inputCell">
-																	<c:if test='${inputs.type eq "select" or inputs.type eq "SQLselect"}'>
-																		<sv:select id="${inputs.name}" name="${inputs.name}" items="${inputs.values}" required="1"/>
+																	<c:if test='${input.type eq "select" or input.type eq "SQLselect"}'>
+																		<sv:select id="${input.name}" name="${input.name}" title="${input.label}" items="${input.values}" required="${input.required}"/>
 																	</c:if>
-																	<c:if test='${inputs.type eq "text"}'>
-																		<sv:input id="${inputs.name}" name="${inputs.name}" type="text" />
+																	<c:if test='${input.type eq "text"}'>
+																		<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="text" />
 																	</c:if>
-																	<c:if test='${inputs.type eq "date"}'>
-																		<sv:date id="${inputs.name}" name="${inputs.name}" />
+																	<c:if test='${input.type eq "date"}'>
+																		<sv:date id="${input.name}" name="${input.name}" title="${input.label}" />
 																	</c:if>
 																</td>
 															</tr>
@@ -262,7 +255,7 @@
 													
 												</td></tr>
 												<tr>
-													<td class="actionBtnCell"><button onclick="action_${action.name}.submit();">${action.buttonLabel}</button></td>
+													<td class="actionBtnCell"><button onclick="svSetMyForm(document.forms['action_${action.name}']); svSubmitAction('execute');">${action.buttonLabel}</button></td>
 												</tr>
 
 												</form>

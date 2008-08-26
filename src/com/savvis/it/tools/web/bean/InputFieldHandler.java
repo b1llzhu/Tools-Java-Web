@@ -23,11 +23,11 @@ import com.sun.corba.se.impl.orbutil.closure.Constant;
  * This class handles the processing and creation of generic inputs for web pages. 
  * 
  * @author David R Young
- * @version $Id: InputFieldHandler.java,v 1.1 2008/08/25 14:28:33 dyoung Exp $
+ * @version $Id: InputFieldHandler.java,v 1.2 2008/08/26 15:26:25 dyoung Exp $
  */
 public class InputFieldHandler {	
 	private static Logger logger = Logger.getLogger(InputFieldHandler.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.1 2008/08/25 14:28:33 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.2 2008/08/26 15:26:25 dyoung Exp $";
 	
 	/*
 	 * Valid types of inputs:
@@ -41,8 +41,10 @@ public class InputFieldHandler {
 	private String name;
 	private String label;
 	private List<String> values;
+	private String defaultValue;
 	
-	private String required;
+	private Boolean required;
+	private Boolean readonly;
 
 	private static final String INPUT_TYPE_SELECT = "select";
 	private static final String INPUT_TYPE_SQLSELECT = "sqlselect";
@@ -64,16 +66,26 @@ public class InputFieldHandler {
 			SimpleNode inputNode = new SimpleNode(inputs.item(i));
 			InputFieldHandler input = new InputFieldHandler();
 			
-			if (!ObjectUtil.isEmpty(inputNode.getAttribute("mandatory")))
-				input.setRequired(inputNode.getAttribute("mandatory"));
+			if (!ObjectUtil.isEmpty(inputNode.getAttribute("mandatory"))) {
+				if ("1".equals(inputNode.getAttribute("mandatory"))) {
+					input.setRequired(true);
+				} else {
+					input.setRequired(false);
+				}
+			}
 
-			if (!ObjectUtil.isEmpty(inputNode.getAttribute("readonly")))
-				input.setRequired(inputNode.getAttribute("readonly"));
+			if (!ObjectUtil.isEmpty(inputNode.getAttribute("readonly"))) {
+				if ("1".equals(inputNode.getAttribute("readonly"))) {
+					input.setReadonly(true);
+				} else {
+					input.setReadonly(false);
+				}
+			}
 
 			input.setName(inputNode.getTextContent("{name}"));
 			input.setType(inputNode.getTextContent("{type}"));
 			input.setLabel(inputNode.getTextContent("{label}"));
-			input.setLabel(inputNode.getTextContent("{defaultValue}"));
+			input.setDefaultValue(inputNode.getTextContent("{defaultValue}"));
 
 			// simple list
 			if (INPUT_TYPE_SELECT.equals(input.getType().toLowerCase())) {
@@ -103,19 +115,21 @@ public class InputFieldHandler {
 					
 					String sql = inputNode.getTextContent("{values_sql}");
 					
-					DBUtil.setEnableKeywordSubstitution(true);
-					List results = DBUtil.executeQuery(dbDriver, sql);
-					if (results.size() > 0) {
-						List<String> values = new ArrayList<String>();
-						for (int j = 0; j < results.size(); j++) {
-							Map result = (Map) results.get(j);
-							values.add(result.get(valueCol).toString());
-						}
-						input.setValues(values);
-					}
+//					DBUtil.setEnableKeywordSubstitution(true);
+//					List results = DBUtil.executeQuery(dbDriver, sql);
+//					if (results.size() > 0) {
+//						List<String> values = new ArrayList<String>();
+//						for (int j = 0; j < results.size(); j++) {
+//							Map result = (Map) results.get(j);
+//							values.add(result.get(valueCol).toString());
+//						}
+//						input.setValues(values);
+//					}
 				}				
 			}
-			
+
+			logger.info("input.getName(): " + input.getName());
+			logger.info("input.getLabel(): " + input.getLabel());
 			inputsMap.put(input.getName(), input);
 		}		
 		return inputsMap;
@@ -176,11 +190,27 @@ public class InputFieldHandler {
 		}
 	}
 
-	public String getRequired() {
+	public Boolean getRequired() {
 		return required;
 	}
 
-	public void setRequired(String required) {
+	public void setRequired(Boolean required) {
 		this.required = required;
+	}
+
+	public Boolean getReadonly() {
+		return readonly;
+	}
+
+	public void setReadonly(Boolean readonly) {
+		this.readonly = readonly;
+	}
+
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 }

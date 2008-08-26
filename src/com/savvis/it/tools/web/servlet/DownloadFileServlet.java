@@ -32,17 +32,18 @@ import com.savvis.it.db.DBConnection;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
 import com.savvis.it.servlet.SavvisServlet;
+import com.savvis.it.tools.RunInfoUtil;
 import com.savvis.it.util.*;
 
 /**
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: DownloadFileServlet.java,v 1.2 2008/08/25 14:29:38 dyoung Exp $
+ * @version $Id: DownloadFileServlet.java,v 1.3 2008/08/26 15:26:25 dyoung Exp $
  */
 public class DownloadFileServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(DownloadFileServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/DownloadFileServlet.java,v 1.2 2008/08/25 14:29:38 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/DownloadFileServlet.java,v 1.3 2008/08/26 15:26:25 dyoung Exp $";
 	
 	/** 
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
