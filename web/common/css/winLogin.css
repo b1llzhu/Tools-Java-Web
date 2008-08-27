@@ -1,0 +1,55 @@
+body {
+	background: #fff;
+	margin: 1em;
+	padding: 1em 10px 2em 10px;
+   	font-family: sans-serif;
+	font-size: 9pt;
+}
+
+.loginTbl {
+	width: 600px;
+	border: 2px solid #003399;
+	background-color: #cccfff;
+	padding: 5px;
+}
+
+.loginHdr {
+	font-family: sans-serif; 
+	font-size: 14pt; 
+	font-weight: bold; 
+	color: #003399;
+	padding: 4px;
+}
+
+.loginCaption {
+	width: 180px; 
+	font-family: sans-serif; 
+	font-size: 9pt;
+	color: #000; 
+	text-align: right;
+}
+
+.appTitle {
+	font-family: sans-serif; 
+	font-size: 13pt; 
+	font-weight: bold; 
+	color: #000000;
+}
+
+.reqCaption {
+	font-family: sans-serif; 
+	font-size: 9pt; 
+	color: #ff0000;
+}
+
+.loginBtn {
+	font-family: sans-serif; 
+	font-size: 9pt; 
+	color: #000000;
+}
+
+.msgText {
+	font-family: sans-serif; 
+	font-size: 10pt;
+	color: #ff0000;	
+}
