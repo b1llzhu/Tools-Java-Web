@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.11 2008/08/26 17:35:14 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.12 2008/08/27 22:59:23 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.11 2008/08/26 17:35:14 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.12 2008/08/27 22:59:23 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -167,7 +167,7 @@ public class GenericUploadServlet extends SavvisServlet {
 				// retrieve the commands from the config
 				Map actionsMap = (Map) keyMap.get("actions");
 				Map actionMap = (Map) actionsMap.get(inputsContext.get("input", "action_name"));
-				List<Map<String, String>> commands = (List<Map<String, String>>) actionMap.get("cmds");
+				List<Map<String, Object>> commands = (List<Map<String, Object>>) actionMap.get("cmds");
 
 				// execute the command in another thread
 				try {
@@ -177,11 +177,17 @@ public class GenericUploadServlet extends SavvisServlet {
 						
 						// only the first one is read here
 						logger.info("commands.get(0).get(\"cmdString\"): " + commands.get(0).get("cmdString"));
-						String className = inputsContext.keywordSubstitute(commands.get(0).get("cmdString"));
+						String className = inputsContext.keywordSubstitute((String)commands.get(0).get("cmdString"));
 						logger.info("className: " + className);
 						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
-						String args = inputsContext.keywordSubstitute(commands.get(0).get("argString"));
+						String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
 						logger.info("args: " + args);
+						
+						Map propertyMap = (Map) commands.get(0).get("properties");
+						for (Object key : propertyMap.keySet()) {
+							logger.info("Setting System property "+key+" to "+propertyMap.get(key));
+							System.setProperty((String) key, (String) propertyMap.get(key));
+						}
 						
 						Class clp = Class.forName(className);
 						Method m = clp.getMethod("main", String[].class);
@@ -193,17 +199,26 @@ public class GenericUploadServlet extends SavvisServlet {
 					if ("shell".equals(actionMap.get("cmdType"))) {
 						// create a string array for the command line processor
 						String[] clpCmdArray = new String[commands.size()];
-						
-						for (int i = 0; i < commands.size(); i++) {
-							Map<String, String> cmdMap = commands.get(i);
+
+						CommandLineProcess clp = new CommandLineProcess();
+						for (int i = 0; i < 1 ; i++) {
+							Map<String, Object> cmdMap = commands.get(i);
 							String cmd = inputsContext.keywordSubstitute(cmdMap.get("cmdString") + " " + cmdMap.get("argString"));
 							logger.info("cmd: " + cmd);
-							clpCmdArray[i] = cmd; 
+//							clp.setWaitForProcess(false);
+							clp.setDir(new File((String) cmdMap.get("startDir")));
+							Context envContext = new Context();
+							envContext.fillWithEnvAndSystemProperties();
+							Map propertyMap = (Map) cmdMap.get("properties");
+							List<String> envList = new ArrayList<String>();
+							for (Object key : propertyMap.keySet()) 
+								envList.add(key+"="+propertyMap.get(key));
+							clp.setEnvp((String[])envList.toArray(new String[] {}));
+							clp.run(cmd);
 						}
 						
-						CommandLineProcess clp = new CommandLineProcess(clpCmdArray);
-						clp.setWaitForProcess(false);
-						clp.run();
+						logger.info(""+clp.getOutput());
+						logger.info(""+clp.getError());
 
 						request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has started execution.");
 					}
@@ -694,34 +709,37 @@ public class GenericUploadServlet extends SavvisServlet {
 
 									// get command(s)
 									if (!ObjectUtil.isEmpty(actionNode.getSimpleNode("{cmds}"))) {
-										List<Map<String,String>> cmds = new ArrayList<Map<String, String>>();
+										List<Map<String,Object>> cmds = new ArrayList<Map<String, Object>>();
 										
 										if (ObjectUtil.isEmpty(actionNode.getSimpleNode("{cmds}").getAttribute("type"))) {
 											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " cmds keyword must have a type attribute of 'class' or 'shell'");
 										} else {
 											actionMap.put("cmdType", actionNode.getSimpleNode("{cmds}").getAttribute("type"));
-											Map<String, String> cmdMap = new HashMap<String, String>();
+											Map<String, Object> cmdMap = new HashMap<String, Object>();
 										
 											for (int k = 0; k < actionNode.getSimpleNode("{cmds}").getChildNodes("cmd").getLength(); k++) {
 												SimpleNode cmdNode = new SimpleNode(actionNode.getSimpleNode("{cmds}").getChildNodes("cmd").item(k));
 												cmdMap.put("cmdString", cmdNode.getTextContent("{cmdString}"));
 												cmdMap.put("argString", cmdNode.getTextContent("{argString}"));
+												cmdMap.put("startDir", cmdNode.getTextContent("{startDir}"));
+												
+												// get property values if present
+												Map<String, String> propertyMap = new HashMap<String, String>();
+												if (!ObjectUtil.isEmpty(cmdNode.getSimpleNode("{properties}"))) {
+													for (int l = 0; l < cmdNode.getSimpleNode("{properties}").getChildNodes("property").getLength(); l++) {
+														SimpleNode propertyNode = new SimpleNode(cmdNode.getSimpleNode("{properties}").getChildNodes("property").item(l));
+														if (ObjectUtil.isEmpty(propertyNode.getAttribute("name"))) {
+															messages.add("[Upload #" + uploadCnt + "]" + typeLog + " property keyword must have a name attribute");
+														} else {
+															propertyMap.put(propertyNode.getAttribute("name"), propertyNode.getTextContent());
+														}
+													}
+												}
+												cmdMap.put("properties", propertyMap);
 											}
 											cmds.add(cmdMap);
 										}
 										actionMap.put("cmds", cmds);
-									}
-									
-									// get property values if present
-									if (!ObjectUtil.isEmpty(actionNode.getSimpleNode("{properties}"))) {
-										for (int k = 0; k < actionNode.getSimpleNode("{properties}").getChildNodes("property").getLength(); k++) {
-											SimpleNode propertyNode = new SimpleNode(actionNode.getSimpleNode("{properties}").getChildNodes("property").item(k));
-											if (ObjectUtil.isEmpty(propertyNode.getAttribute("name"))) {
-												messages.add("[Upload #" + uploadCnt + "]" + typeLog + " property keyword must have a name attribute");
-											} else {
-												System.setProperty(propertyNode.getAttribute("name").toUpperCase(), propertyNode.getTextContent());
-											}
-										}
 									}
 									
 									// get input variables
