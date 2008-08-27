@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.7 2008/08/26 19:37:53 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.8 2008/08/27 15:06:25 telrick Exp $
 
 --%>
 
@@ -241,6 +241,9 @@
 																	</c:if>
 																	<c:if test='${input.type eq "text"}'>
 																		<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="text" />
+																	</c:if>
+																	<c:if test='${input.type eq "numeric"}'>
+																		<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="numeric" />
 																	</c:if>
 																	<c:if test='${input.type eq "date"}'>
 																		<sv:date id="${input.name}" name="${input.name}" title="${input.label}" />
