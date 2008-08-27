@@ -23,11 +23,11 @@ import com.sun.corba.se.impl.orbutil.closure.Constant;
  * This class handles the processing and creation of generic inputs for web pages. 
  * 
  * @author David R Young
- * @version $Id: InputFieldHandler.java,v 1.4 2008/08/26 19:38:11 dyoung Exp $
+ * @version $Id: InputFieldHandler.java,v 1.5 2008/08/27 14:36:27 telrick Exp $
  */
 public class InputFieldHandler {	
 	private static Logger logger = Logger.getLogger(InputFieldHandler.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.4 2008/08/26 19:38:11 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.5 2008/08/27 14:36:27 telrick Exp $";
 	
 	/*
 	 * Valid types of inputs:
@@ -50,6 +50,7 @@ public class InputFieldHandler {
 	private static final String INPUT_TYPE_SQLSELECT = "sqlselect";
 	private static final String INPUT_TYPE_TEXT = "input";
 	private static final String INPUT_TYPE_DATE = "date";
+	private static final String INPUT_TYPE_NUMERIC = "numeric";
 
 	public InputFieldHandler() {
 	}
