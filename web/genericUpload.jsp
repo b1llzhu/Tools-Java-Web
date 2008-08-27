@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.8 2008/08/27 15:06:25 telrick Exp $
+	@version $Id: genericUpload.jsp,v 1.9 2008/08/27 21:23:27 telrick Exp $
 
 --%>
 
@@ -233,21 +233,23 @@
 														<c:forEach items="${inputs}" var="i">
 															<c:set var="input" value="${i.value}" />
 															<tr>
-																<td width="20%" class="inputCell" style="text-align: right;">${input.label}</td>
+																<td class="inputCell" style="text-align: right;">${input.label}</td>
 																<td width="5" class="inputCell"></td>
 																<td class="inputCell">
-																	<c:if test='${input.type eq "select" or input.type eq "SQLselect"}'>
-																		<sv:select id="${input.name}" name="${input.name}" title="${input.label}" items="${input.values}" required="${input.required}"/>
-																	</c:if>
-																	<c:if test='${input.type eq "text"}'>
-																		<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="text" />
-																	</c:if>
-																	<c:if test='${input.type eq "numeric"}'>
-																		<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="numeric" />
-																	</c:if>
-																	<c:if test='${input.type eq "date"}'>
-																		<sv:date id="${input.name}" name="${input.name}" title="${input.label}" />
-																	</c:if>
+																	<c:choose>
+																		<c:when test='${input.type eq "select" or input.type eq "SQLselect"}'>
+																			<sv:select id="${input.name}" name="${input.name}" title="${input.label}" items="${input.values}" 
+																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"/>
+																		</c:when>
+																		<c:when test='${input.type eq "date"}'>
+																			<sv:date id="${input.name}" name="${input.name}" title="${input.label}" 
+																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"/>
+																		</c:when>
+																		<c:otherwise>
+																			<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="${input.type}" 
+																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"/>
+																		</c:otherwise>
+																	</c:choose>
 																</td>
 															</tr>
 		
