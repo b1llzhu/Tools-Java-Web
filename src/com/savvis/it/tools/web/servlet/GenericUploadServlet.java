@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.13 2008/08/28 03:55:09 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.14 2008/08/28 16:11:44 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.13 2008/08/28 03:55:09 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.14 2008/08/28 16:11:44 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -388,7 +388,7 @@ public class GenericUploadServlet extends SavvisServlet {
 						directoryMap.put("data", fileList);
 						
 						if (fileList.size() > 0) {
-							directoryMap.put("sizeAlgorithm", (fileList.size() * 23) > 255 ? 255 : fileList.size() * 23);
+							directoryMap.put("sizeAlgorithm", ((fileList.size() * 23) + 23) > 255 ? 255 : ((fileList.size() * 23) + 23));
 						}
 					}
 				}
