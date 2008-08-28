@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: runInfoDisplay.jsp,v 1.1 2008/08/25 14:28:33 dyoung Exp $
+	@version $Id: runInfoDisplay.jsp,v 1.2 2008/08/28 03:55:08 dyoung Exp $
 
 --%>
 
@@ -20,8 +20,7 @@
 <c:if test="${contents != null}">
 	<sv:dataTable data="${contents}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 		<sv:dataTableRows rowVar="row">
-			<sv:dataTableColumn title="Date" styleClass="listCell" value="${row.date}" headerStyleClass="listTblHdr" width="100" />
-			<sv:dataTableColumn title="User" styleClass="listCell" value="${row.user}" headerStyleClass="listTblHdr" width="100" />
+			<sv:dataTableColumn title="Date/User" styleClass="listCell" value="${row.date}<br/>${row.user}" headerStyleClass="listTblHdr" width="100" />
 			<sv:dataTableColumn title="Message" styleClass="listCell" value="${row.message}" headerStyleClass="listTblHdr" />
 		</sv:dataTableRows>
 	</sv:dataTable>

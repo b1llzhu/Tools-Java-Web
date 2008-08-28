@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.9 2008/08/27 21:23:27 telrick Exp $
+	@version $Id: genericUpload.jsp,v 1.10 2008/08/28 03:55:08 dyoung Exp $
 
 --%>
 
@@ -139,6 +139,14 @@
 											<br/><span class="fileListSubHdr">${dir.subDescription}</span>
 										</c:if>
 
+										<c:choose>
+											<c:when test='${! empty dir.sizeAlgorithm}'>
+												<div style="overflow-y: scroll; overflow-x: none; height: ${dir.sizeAlgorithm}px;" width="100%">
+											</c:when>
+											<c:otherwise>
+												<div style="height: 50px;" width="100%">
+											</c:otherwise>
+										</c:choose>
 										<sv:dataTable data="${dir.data}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
 											<c:forEach items="${dir.columns}" var="c">
@@ -148,19 +156,15 @@
 														<c:when test='${column.download eq "1"}'>
 															<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.name}" 
 																linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='pending';document.downloadForm.submit()" 
-																headerStyleClass="listTblHdr${classSuffix}" style="width: 60%;"/>														
+																headerStyleClass="listTblHdr${classSuffix}" width="60%"/>														
 														</c:when>
 														<c:otherwise>
 															<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.name}" headerStyleClass="listTblHdr${classSuffix}" width="60%" />
 														</c:otherwise>
 													</c:choose>
-													<c:if test='${column.download eq "1"}'>
-														
-													</c:if>
-													
 												</c:if>
 												<c:if test='${column.name eq "lastModified"}'>
-													<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr${classSuffix}" width="30%" />
+													<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr${classSuffix}" />
 												</c:if>
 											</c:forEach>
 											<c:forEach items="${dir.actions}" var="a">
@@ -178,11 +182,9 @@
 													</c:choose>
 												</c:if>
 											</c:forEach>
-											<c:if test="${empty dir.actions}">
-												<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
-											</c:if>
 											</sv:dataTableRows>
 										</sv:dataTable>
+										</div>
 										<br/><br/><br/>
 									</c:forEach>
 								</td>
@@ -270,7 +272,7 @@
 									</c:if>
 									
 									<span class="fileListHdr">Information Logs</span>
-									<iframe frameborder="0" id="runInfoLog" src="runInfo?path=${basedir}/${appl}/${key}" 
+									<iframe frameborder="0" id="runInfoLog" src="runInfo?path=${keyMap.path}" 
 										style="border-collapse: collapse; border: 0px; height: 300px; width: 100%;"></iframe>
 									<br/><br/><br/>
 								</td>

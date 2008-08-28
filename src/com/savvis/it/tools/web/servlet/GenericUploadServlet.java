@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.12 2008/08/27 22:59:23 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.13 2008/08/28 03:55:09 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.12 2008/08/27 22:59:23 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.13 2008/08/28 03:55:09 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -384,8 +384,12 @@ public class GenericUploadServlet extends SavvisServlet {
 						if (!ObjectUtil.isEmpty(directoryMap.get("limit")))
 							limit = Integer.parseInt(directoryMap.get("limit").toString());
 						
-						directoryMap.put("data", getFileList(directoryMap.get("path").toString(), limit, directoryMap.get("sort").toString()));
-						request.setAttribute("files_" + key, getFileList(directoryMap.get("path").toString(), limit, directoryMap.get("sort").toString()));
+						List<Map<String, String>> fileList = getFileList(directoryMap.get("path").toString(), limit, directoryMap.get("sort").toString());
+						directoryMap.put("data", fileList);
+						
+						if (fileList.size() > 0) {
+							directoryMap.put("sizeAlgorithm", (fileList.size() * 23) > 255 ? 255 : fileList.size() * 23);
+						}
 					}
 				}
 				
@@ -403,14 +407,14 @@ public class GenericUploadServlet extends SavvisServlet {
 				// (there's also a second check during the upload of the file just to make
 				// sure nothing slips through)
 				List authUserList = (List) keyMap.get("authorizedUserList");
-//				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-//					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
-//					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
-//					request.setAttribute("unauthorized", "true");
-//				}
+				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
+					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
+					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
+					request.setAttribute("unauthorized", "true");
+				}
 				
 				request.setAttribute("allowUpload", keyMap.get("allowUpload"));
-				
+				request.setAttribute("keyMap", keyMap);
 				request.setAttribute("directories", keyMap.get("directories"));
 			}
 			////// end of current key logic
@@ -443,7 +447,7 @@ public class GenericUploadServlet extends SavvisServlet {
 		File directory = new File(path);
 //		logger.info("directory: " + directory);
 		
-		Integer fileLimit = 10;
+		Integer fileLimit = 50;
 		if (!ObjectUtil.isEmpty(limit)) {
 			fileLimit = limit;
 		}
@@ -569,6 +573,16 @@ public class GenericUploadServlet extends SavvisServlet {
 							uploadMap.put("name", uploadNode.getTextContent("name"));
 						}
 
+						if (ObjectUtil.isEmpty(uploadNode.getTextContent("path"))) {
+							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " path keyword not found");
+						} else {
+							if (uploadNode.getTextContent("path").endsWith("/")) {
+								uploadMap.put("path", uploadNode.getTextContent("path").substring(0, uploadNode.getTextContent("path").length()-1));
+							} else {
+								uploadMap.put("path", uploadNode.getTextContent("path"));
+							}
+						}
+
 						// process the directories
 						if (!ObjectUtil.isEmpty(uploadNode.getSimpleNode("{directories}"))) {
 							NodeList diretoriesNode = uploadNode.getSimpleNode("{directories}").getChildNodes("directory");
@@ -612,21 +626,17 @@ public class GenericUploadServlet extends SavvisServlet {
 										directoryMap.put("subDescription", directoryNode.getTextContent("{subDescription}"));
 
 									// path validation
-									if (ObjectUtil.isEmpty(directoryNode.getSimpleNode("{path}"))) {
-										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " directory " + j + " does not contain a 'path' keyword");
-									} else {
-										String path = directoryNode.getTextContent("path");
-										File dir = new File(path);
-										if (!dir.exists()) {
-											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " directory " + j + " (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
-										} else if (dir.exists() && !dir.canWrite() && "1".equals(directoryMap.get("writable"))) {
-											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir " + j + " (" + dir.getAbsolutePath() + ") exists but is not writable");
-										}
-										if (!path.endsWith("/"))
-											path = path + "/";
-
-										directoryMap.put("path", path);
+									String path = uploadMap.get("path") + "/" + directoryNode.getAttribute("key");
+									File dir = new File(path);
+									if (!dir.exists()) {
+										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " directory " + j + " (" + dir.getAbsolutePath() + ") does not exist or cannot be found");
+									} else if (dir.exists() && !dir.canWrite() && "1".equals(directoryMap.get("writable"))) {
+										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " destDir " + j + " (" + dir.getAbsolutePath() + ") exists but is not writable");
 									}
+									if (!path.endsWith("/"))
+										path = path + "/";
+
+									directoryMap.put("path", path);
 									
 									// columns
 									if (!ObjectUtil.isEmpty(directoryNode.getSimpleNode("{columns}"))) {
