@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.16 2008/08/29 14:33:03 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.17 2008/08/29 21:26:36 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.16 2008/08/29 14:33:03 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.17 2008/08/29 21:26:36 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -69,12 +69,17 @@ public class GenericUploadServlet extends SavvisServlet {
 
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
-		String basedir = properties.getProperty("basedir");
-
+		String basedir = null;
+		if (!ObjectUtil.isEmpty(properties.getProperty("basedir"))) {
+			basedir = properties.getProperty("basedir");
+		} else {
+			basedir = SystemUtil.getProperty("basedir");
+		}
+		
 		try {
 
 			if (basedir == null)
-				throw new Exception("BASEDIR not set in properties file");
+				throw new Exception("BASEDIR not set");
 				
 			if (basedir.endsWith("/"))
 				basedir = basedir.substring(0, basedir.length()-1);
