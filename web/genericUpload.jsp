@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.11 2008/08/29 12:40:19 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.12 2008/08/29 14:33:03 dyoung Exp $
 
 --%>
 
@@ -25,8 +25,7 @@
 	<input type="hidden" name="key" value="${key}"/>
 	<input type="hidden" name="download" value="1"/>
 	<input type="hidden" name="file" value=""/>
-	<input type="hidden" name="path" value=""/>
-	<input type="hidden" name="src" value=""/>
+	<input type="hidden" name="dir" value=""/>
 </form>
 
 <form name="moveFileForm" method="post">
@@ -156,7 +155,7 @@
 													<c:choose>
 														<c:when test='${column.download eq "1"}'>
 															<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.name}" 
-																linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.path.value='${row.path}';document.downloadForm.src.value='pending';document.downloadForm.submit()" 
+																linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.dir.value='${d.key}';document.downloadForm.submit()" 
 																headerStyleClass="listTblHdr${classSuffix}" width="60%"/>														
 														</c:when>
 														<c:otherwise>

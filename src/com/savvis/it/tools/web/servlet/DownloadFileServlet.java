@@ -39,11 +39,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: DownloadFileServlet.java,v 1.3 2008/08/26 15:26:25 dyoung Exp $
+ * @version $Id: DownloadFileServlet.java,v 1.4 2008/08/29 14:33:03 dyoung Exp $
  */
 public class DownloadFileServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(DownloadFileServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/DownloadFileServlet.java,v 1.3 2008/08/26 15:26:25 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/Attic/DownloadFileServlet.java,v 1.4 2008/08/29 14:33:03 dyoung Exp $";
 	
 	/** 
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -54,22 +54,33 @@ public class DownloadFileServlet extends SavvisServlet {
 	 */
 	protected void processRequest(String action, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
+		String basePath = "";
+		String addtlPath = "";
 		String fileName = "";
-		String path = "";
+		String source = "";
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = 
 			(WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);;
 		
 		try {
 			
+			basePath = request.getParameter("path") != null ? request.getParameter("path").toString() : request.getAttribute("path").toString();
+			addtlPath = request.getParameter("addtl") != null ? request.getParameter("addtl").toString() : request.getAttribute("addtl").toString();
 			fileName = request.getParameter("file") != null ? request.getParameter("file").toString() : request.getAttribute("file").toString();
-			path = request.getParameter("path") != null ? request.getParameter("path").toString() : request.getAttribute("path").toString();
+			source = request.getParameter("source") != null ? request.getParameter("source").toString() : request.getAttribute("source").toString();
 
-			if (StringUtil.hasValue(fileName) && StringUtil.hasValue(path)) {
+			if (StringUtil.hasValue(fileName) && StringUtil.hasValue(basePath)) {
 				response.setContentType("APPLICATION/OCTET-STREAM");
 				String disHeader = "Attachment;Filename=" + fileName ;
 				response.setHeader("Content-Disposition", disHeader);
 				response.setHeader("Content-type", "application/force-download");
-				File file = new File(path + "/" + fileName);
+				
+				if (!basePath.endsWith("/"))
+					basePath = basePath + "/";
+				
+				if (!ObjectUtil.isEmpty(addtlPath) && !addtlPath.endsWith("/"))
+					addtlPath = addtlPath + "/";
+				
+				File file = new File(basePath + addtlPath + fileName);
 				FileInputStream fileInputStream = new FileInputStream(file);
 				int i;
 				while ((i=fileInputStream.read())!=-1) {
@@ -80,12 +91,16 @@ public class DownloadFileServlet extends SavvisServlet {
 				fileInputStream.close();
 				
 				// add a log comment (if the file downloaded is not a standard log file
-				if (!fileName.equals(RunInfoUtil.STD_LOG_NAME) && !path.endsWith(RunInfoUtil.STD_LOG_NAME))
-					RunInfoUtil.addLog(file, winPrincipal.getName(), new java.util.Date(), "File " + file.getName() + " downloaded");
+				String message = "File " + fileName + " downloaded";
+				if (!ObjectUtil.isEmpty(source))
+					message = message + " from \"" + source + "\"";
+				
+				if (!fileName.equals(RunInfoUtil.STD_LOG_NAME))
+					RunInfoUtil.addLog(basePath, file, winPrincipal.getName(), new java.util.Date(), message);
 			}
 			
 		} catch (SocketException se) {
-			logger.info("User cancelled download of file " + fileName + " from path " + path);
+			logger.info("User cancelled download of file " + fileName + " from path " + basePath);
 		} catch(Exception e) {
 			e.printStackTrace();
 		} 

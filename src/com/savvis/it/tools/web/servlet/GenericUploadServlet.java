@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.15 2008/08/29 12:40:19 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.16 2008/08/29 14:33:03 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.15 2008/08/29 12:40:19 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.16 2008/08/29 14:33:03 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -306,22 +306,24 @@ public class GenericUploadServlet extends SavvisServlet {
 			//////////////////////////////////////////////////////////////////////////////////////
 			String downloadFlag = "".equals(request.getParameter("download")) ? (String)request.getAttribute("download") : request.getParameter("download");
 			String downloadFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
-			String downloadPath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
-			String downloadSrc = "".equals(request.getParameter("src")) ? (String)request.getAttribute("src") : request.getParameter("src");
+			String downloadKey = "".equals(request.getParameter("dir")) ? (String)request.getAttribute("dir") : request.getParameter("dir");
 			
 			if ("1".equals(downloadFlag)) {
 				
 				if (ObjectUtil.isEmpty(downloadFile)) {
 					request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
 				} else {
-					if (ObjectUtil.isEmpty(downloadPath)) {
+					if (ObjectUtil.isEmpty(downloadKey)) {
 						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
 					} else {
 						Map keyMap = configMap.get(pageMap.get("key"));
 						Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
+						logger.info("directoriesMap: " + directoriesMap);
 						request.setAttribute("win", winPrincipal);
 						request.setAttribute("file", downloadFile);
-						request.setAttribute("path", downloadPath);
+						request.setAttribute("addtl", downloadKey);
+						request.setAttribute("path", keyMap.get("path"));
+						request.setAttribute("source", directoriesMap.get(downloadKey).get("description"));
 						jspPage = "download";
 					}
 				}
@@ -332,15 +334,10 @@ public class GenericUploadServlet extends SavvisServlet {
 			// MOVE functionality
 			//////////////////////////////////////////////////////////////////////////////////////
 			String moveType = "".equals(request.getParameter("type")) ? (String)request.getAttribute("type") : request.getParameter("type");
-			logger.info("moveType: " + moveType);
 			String moveFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
-			logger.info("moveFile: " + moveFile);
 			String moveFilePath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
-			logger.info("moveFilePath: " + moveFilePath);
 			String moveTarget = "".equals(request.getParameter("target")) ? (String)request.getAttribute("target") : request.getParameter("target");
-			logger.info("moveTarget: " + moveTarget);
 			String moveDescription = "".equals(request.getParameter("description")) ? (String)request.getAttribute("description") : request.getParameter("description");
-			logger.info("moveDescription: " + moveDescription);
 			
 			if (!ObjectUtil.isEmpty(moveType)) {
 				if ("move".equals(moveType)) {
