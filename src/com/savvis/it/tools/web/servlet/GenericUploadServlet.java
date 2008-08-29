@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.14 2008/08/28 16:11:44 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.15 2008/08/29 12:40:19 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.14 2008/08/28 16:11:44 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.15 2008/08/29 12:40:19 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -287,7 +287,7 @@ public class GenericUploadServlet extends SavvisServlet {
 					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
 					        	} else {
 						        	item.write(fileToCreate);
-									RunInfoUtil.addLog(fileToCreate, winPrincipal.getName(), new java.util.Date(), 
+									RunInfoUtil.addLog(keyMap.get("path").toString(), fileToCreate, winPrincipal.getName(), new java.util.Date(), 
 											"File " + fileName + " uploaded");
 
 							        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
@@ -331,34 +331,42 @@ public class GenericUploadServlet extends SavvisServlet {
 			//////////////////////////////////////////////////////////////////////////////////////
 			// MOVE functionality
 			//////////////////////////////////////////////////////////////////////////////////////
-			String moveCode = "".equals(request.getParameter("moveCode")) ? (String)request.getAttribute("moveCode") : request.getParameter("moveCode");
+			String moveType = "".equals(request.getParameter("type")) ? (String)request.getAttribute("type") : request.getParameter("type");
+			logger.info("moveType: " + moveType);
 			String moveFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
+			logger.info("moveFile: " + moveFile);
 			String moveFilePath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
+			logger.info("moveFilePath: " + moveFilePath);
+			String moveTarget = "".equals(request.getParameter("target")) ? (String)request.getAttribute("target") : request.getParameter("target");
+			logger.info("moveTarget: " + moveTarget);
+			String moveDescription = "".equals(request.getParameter("description")) ? (String)request.getAttribute("description") : request.getParameter("description");
+			logger.info("moveDescription: " + moveDescription);
 			
-			if (!ObjectUtil.isEmpty(moveCode)) {
-				if (ObjectUtil.isEmpty(moveFile)) {
-					request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
-				} else {
-					if (ObjectUtil.isEmpty(moveFilePath)) {
-						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
+			if (!ObjectUtil.isEmpty(moveType)) {
+				if ("move".equals(moveType)) {
+					if (ObjectUtil.isEmpty(moveFile)) {
+						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
 					} else {
-						Map keyMap = configMap.get(pageMap.get("key"));
-						Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
-						
-						if (!moveFilePath.endsWith("/"))
-							moveFilePath = moveFilePath.concat("/");
-						
-						// log and perform the move
-						if ("errorArchive".equals(moveCode)) {
-							RunInfoUtil.addLog(new File(moveFilePath + moveFile), winPrincipal.getName(), new java.util.Date(), 
-									"Exception file " + moveFile + " archived to archived errors directory");
-							FileUtil.moveFile(moveFilePath + moveFile, directoriesMap.get("errorArchive").get("path") + moveFile);
-						}
-						
-						if ("resubmit".equals(moveCode)) {
-							RunInfoUtil.addLog(new File(moveFilePath + moveFile), winPrincipal.getName(), new java.util.Date(), 
-									"Working file " + moveFile + " resubmitted to pending directory");
-							FileUtil.moveFile(moveFilePath + moveFile, directoriesMap.get("pending").get("path") + moveFile);
+						if (ObjectUtil.isEmpty(moveFilePath)) {
+							request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
+						} else {
+							Map keyMap = configMap.get(pageMap.get("key"));
+							Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
+							
+							if (!moveFilePath.endsWith("/"))
+								moveFilePath = moveFilePath.concat("/");
+							
+							// verify the target directory is in the map
+							if (ObjectUtil.isEmpty(directoriesMap.get(moveTarget))) {
+								request.setAttribute("fatalMsg", "ERROR: Invalid value for target directory (" + moveTarget + ".<br/>");
+							} else {
+								// log and perform the move
+								logger.info("keyMap.get(\"path\") + directoriesMap.get(moveTarget).get(\"path\") + moveFile: " + keyMap.get("path") + directoriesMap.get(moveTarget).get("path") + moveFile);
+								FileUtil.moveFile(moveFilePath + moveFile, directoriesMap.get(moveTarget).get("path") + moveFile);
+								
+								RunInfoUtil.addLog(keyMap.get("path").toString(), new File(moveFilePath + moveFile), winPrincipal.getName(), new java.util.Date(), 
+										"File " + moveFile + " moved to \"" + directoriesMap.get(moveTarget).get("description") + "\" directory");
+							}
 						}
 					}
 				}

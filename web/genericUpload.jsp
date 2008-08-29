@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.10 2008/08/28 03:55:08 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.11 2008/08/29 12:40:19 dyoung Exp $
 
 --%>
 
@@ -34,10 +34,11 @@
 	<input type="hidden" name="appl" value="${appl}"/>
 	<input type="hidden" name="config" value="${config}"/>
 	<input type="hidden" name="key" value="${key}"/>
-	<input type="hidden" name="moveCode" value=""/>
+	<input type="hidden" name="type" value=""/>
 	<input type="hidden" name="file" value=""/>
 	<input type="hidden" name="path" value=""/>
-	<input type="hidden" name="src" value=""/>
+	<input type="hidden" name="description" value=""/>
+	<input type="hidden" name="target" value=""/>
 </form>
 
 <c:choose>
@@ -174,9 +175,9 @@
 														<c:when test="${empty row.age or row.age < action.fileAge}">
 															<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
 														</c:when>
-														<c:when test="${row.age >= 15}">
+														<c:when test="${row.age >= action.fileAge}">
 															<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
-																linkHref="Javascript:document.moveFileForm.moveCode.value='resubmit';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.src.value='${action.target}';document.moveFileForm.submit()" 
+																linkHref="Javascript:document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit()" 
 																headerStyleClass="listTblHdr" width="10%" />
 														</c:when>
 													</c:choose>
