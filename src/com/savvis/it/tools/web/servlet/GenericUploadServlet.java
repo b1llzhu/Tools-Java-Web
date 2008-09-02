@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.17 2008/08/29 21:26:36 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.18 2008/09/02 01:24:44 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.17 2008/08/29 21:26:36 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.18 2008/09/02 01:24:44 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -141,14 +141,30 @@ public class GenericUploadServlet extends SavvisServlet {
 			//////////////////////////////////////////////////////////////////////////////////////
 			// to make things easier for the display, let's create a list of uploader keys and sort it
 			List<Map<String, String>> uploads = new ArrayList<Map<String, String>>();
-			Object[] uploadKeys = configMap.keySet().toArray();
-			Arrays.sort(uploadKeys);
-			for (int i = 0; i < uploadKeys.length; i++) {
+			
+			// properly sort the list by descriptive name
+			ArrayList<String> sortedKeys = new ArrayList<String>();
+			for (String uploadKey : configMap.keySet()) {
+				sortedKeys.add(configMap.get(uploadKey).get("name").toString() + "::" + uploadKey);
+			}
+			Collections.sort(sortedKeys);
+			
+			// now, create a list of maps for the display
+			for (int i = 0; i < sortedKeys.size(); i++) {
+				String uploadCombo = sortedKeys.get(i);
+
+				// split to get the pieces
+				String[] uploadData = uploadCombo.split("::");
+				
 				Map<String, String> upload = new HashMap<String, String>();
-				String uploadKey = uploadKeys[i].toString();
-				upload.put("key", uploadKey);
-				upload.put("name", configMap.get(uploadKey).get("name").toString());
-				uploads.add(upload);
+				upload.put("name", uploadData[0]);
+				upload.put("key", uploadData[1]);
+				
+				// authorize the user to see the upload
+				AuthorizationObject authObject = isAuthorized(configMap.get(uploadData[1]), winPrincipal);
+				
+				if (authObject.isAuthorized)
+					uploads.add(upload);
 			}
 			request.setAttribute("uploads", uploads);
 
@@ -256,11 +272,16 @@ public class GenericUploadServlet extends SavvisServlet {
 				Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
 				List<String> authUserList = (List<String>) keyMap.get("authorizedUserList");
 				
-				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-					logger.info("User (" + winPrincipal.getName() + ") is not authorized to upload files to (" + pageMap.get("key") + ")");
-					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
-					request.setAttribute("unauthorized", "true");
-					
+				AuthorizationObject authObject = isAuthorized(keyMap, winPrincipal);
+				request.setAttribute("authorized", authObject.isAuthorized);
+				if (!authObject.isAuthorized) {
+					request.setAttribute("errMessage", authObject.getMessage());
+
+//				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
+//					logger.info("User (" + winPrincipal.getName() + ") is not authorized to upload files to (" + pageMap.get("key") + ")");
+//					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
+//					request.setAttribute("unauthorized", "true");
+//					
 				} else {
 
 					List items = upload.parseRequest(request);
@@ -416,12 +437,16 @@ public class GenericUploadServlet extends SavvisServlet {
 				// the display
 				// (there's also a second check during the upload of the file just to make
 				// sure nothing slips through)
-				List authUserList = (List) keyMap.get("authorizedUserList");
-				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
-					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
-					request.setAttribute("unauthorized", "true");
+				AuthorizationObject authObject = isAuthorized(keyMap, winPrincipal);
+				if (!authObject.isAuthorized) {
+					request.setAttribute("errMessage", authObject.getMessage());
 				}
+				request.setAttribute("authorized", authObject.isAuthorized);
+//				List authUserList = (List) keyMap.get("authorizedUserList");
+//				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
+//					logger.info("current user (" + winPrincipal.getName() + ") is not authorized to upload files to (" + request.getSession().getAttribute("uploadKey") + ")");
+//					
+//				}
 				
 				request.setAttribute("allowUpload", keyMap.get("allowUpload"));
 				request.setAttribute("keyMap", keyMap);
@@ -522,6 +547,26 @@ public class GenericUploadServlet extends SavvisServlet {
 		}
 //		logger.info("fileList: " + fileList);
 		return fileList;
+	}
+	
+	private AuthorizationObject isAuthorized(Map keyMap, WindowsPrincipal winPrincipal) throws Exception {
+		AuthorizationObject authObject = new AuthorizationObject();
+		
+		// always check for the authList for legacy compatability, then check for the newer "auth" sections for the different kinds
+			List authUserList = (List) keyMap.get("authorizedUserList");
+			if (!ObjectUtil.isEmpty(keyMap.get("authorizedUserList"))) {
+			if (authUserList.contains(winPrincipal.getName().toLowerCase())) {
+				authObject.setIsAuthorized(true);
+			} else {
+				logger.info("current user (" + winPrincipal.getName() + ") is not authorized to use the file utility for (" + keyMap.get("type") + ")");
+				authObject.setMessage("Sorry!  You don't have access to use the file utility for " + keyMap.get("type") + ".");
+				authObject.setIsAuthorized(false);
+			} 
+			return authObject;
+		}
+
+		
+		return authObject;
 	}
 	
 	private List<String> validateConfig(SimpleNode doc, Map<String, String> pageMap, Map<String, Map<String, Object>> configMap) throws Exception {
@@ -785,5 +830,23 @@ public class GenericUploadServlet extends SavvisServlet {
 			}
 		}
 		return messages;
+	}
+	
+	private class AuthorizationObject {
+		private Boolean isAuthorized;
+		private String message;
+		
+		public Boolean getIsAuthorized() {
+			return isAuthorized;
+		}
+		public void setIsAuthorized(Boolean isAuthorized) {
+			this.isAuthorized = isAuthorized;
+		}
+		public String getMessage() {
+			return message;
+		}
+		public void setMessage(String message) {
+			this.message = message;
+		}
 	}
 }

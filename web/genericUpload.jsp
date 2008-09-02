@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.12 2008/08/29 14:33:03 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.13 2008/09/02 01:24:44 dyoung Exp $
 
 --%>
 
@@ -55,7 +55,10 @@
 						<tr>
 							<td valign="top" align="center">
 								<br/><br/>	
-								<c:if test='${key ne "" and key != null and (unauthorized eq "" or unauthorized == null)}'>
+								<c:if test='${key eq "" or key == null}'>
+									<a class="pageNav" href="?appl=${appl}&config=${config}">Refresh This Page</a>
+								</c:if>
+								<c:if test='${key ne "" and key != null and authorized}'>
 									<a class="pageNav" href="?appl=${appl}&config=${config}&key=${key}">Refresh This Page</a>
 									<br/><br/>
 									<a class="pageNav" href="?appl=${appl}&config=${config}">Return to Upload List</a>
@@ -64,7 +67,7 @@
 					</table>
 				</td>
 				<td valign="top" class="bodyText">
-					<c:if test='${(key eq "" or key == null) or unauthorized eq "true"}'>
+					<c:if test='${(key eq "" or key == null) or !authorized}'>
 						<form method="post" name="frm">
 							<input type="hidden" name="action" value="choose"/>
 							<input type="hidden" name="appl" value="${appl}"/>
@@ -79,7 +82,7 @@
 					<br/>
 					
 
-					<c:if test='${(key eq "" or key == null) or unauthorized eq "true"}'>
+					<c:if test='${(key eq "" or key == null) or !authorized}'>
 						Select the upload type from the list below.  If authorized, you will be taken to the upload screen.<p/>
 						<ul>
 							<c:forEach items="${uploads}" var="upload">
@@ -106,7 +109,7 @@
 							
 					</c:if>
 					
-					<c:if test='${key ne "" and key != null and (unauthorized eq "" or unauthorized == null)}'>
+					<c:if test='${key ne "" and key != null and authorized}'>
 					
 						<table width="100%" cellspacing="0" cellpadding="5">
 							<tr>
