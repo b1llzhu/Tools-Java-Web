@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.19 2008/09/02 15:30:34 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.20 2008/09/02 15:57:26 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.19 2008/09/02 15:30:34 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.20 2008/09/02 15:57:26 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -226,7 +226,7 @@ public class GenericUploadServlet extends SavvisServlet {
 							Map<String, Object> cmdMap = commands.get(i);
 							String cmd = inputsContext.keywordSubstitute(cmdMap.get("cmdString") + " " + cmdMap.get("argString"));
 							logger.info("cmd: " + cmd);
-							clp.setWaitForProcess(false);
+//							clp.setWaitForProcess(false);
 							clp.setDir(new File((String) cmdMap.get("startDir")));
 							Context envContext = new Context();
 							envContext.fillWithEnvAndSystemProperties();
@@ -238,8 +238,8 @@ public class GenericUploadServlet extends SavvisServlet {
 							clp.run(cmd);
 						}
 						
-						logger.info(""+clp.getOutput());
-						logger.info(""+clp.getError());
+						logger.info("output: "+clp.getOutput());
+						logger.info("error: "+clp.getError());
 
 						request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has started execution.");
 					}
