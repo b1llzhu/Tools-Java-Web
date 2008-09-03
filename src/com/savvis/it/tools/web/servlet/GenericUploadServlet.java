@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.20 2008/09/02 15:57:26 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.21 2008/09/03 17:06:29 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.20 2008/09/02 15:57:26 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.21 2008/09/03 17:06:29 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -234,6 +234,10 @@ public class GenericUploadServlet extends SavvisServlet {
 							List<String> envList = new ArrayList<String>();
 							for (Object key : propertyMap.keySet()) 
 								envList.add(key+"="+propertyMap.get(key));
+							Map<String, String> envMap = System.getenv();
+							for (Object key : envMap.keySet()) 
+								envList.add(key+"="+envMap.get(key));
+							envList.add("CALLED_BY_USER="+winPrincipal.getName());
 							clp.setEnvp((String[])envList.toArray(new String[] {}));
 							clp.run(cmd);
 						}
@@ -542,9 +546,9 @@ public class GenericUploadServlet extends SavvisServlet {
 		}
 		
 		// trim to the limit
-		while (fileList.size() > fileLimit) {
-			fileList.remove(fileList.size()-1);
-		}
+//		while (fileList.size() > fileLimit) {
+//			fileList.remove(fileList.size()-1);
+//		}
 //		logger.info("fileList: " + fileList);
 		return fileList;
 	}
