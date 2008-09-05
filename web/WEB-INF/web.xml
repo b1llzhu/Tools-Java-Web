@@ -55,7 +55,7 @@
 	<servlet>
 		<servlet-name>runInfo</servlet-name>
 		<servlet-class>
-			com.savvis.it.tools.web.servlet.RunInfoDisplayServlet
+			com.savvis.it.servlet.RunInfoDisplayServlet
 		</servlet-class>
 	</servlet>
 	<servlet-mapping>
