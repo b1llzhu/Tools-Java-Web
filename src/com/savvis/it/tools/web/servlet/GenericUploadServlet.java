@@ -44,11 +44,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.25 2008/09/05 19:45:59 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.26 2008/09/05 20:02:36 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.25 2008/09/05 19:45:59 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.26 2008/09/05 20:02:36 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -246,7 +246,8 @@ public class GenericUploadServlet extends SavvisServlet {
 							
 							clp.setDir(new File((String) cmdMap.get("startDir")));
 							// set the output stream
-							clp.setOutputStream(new FileOutputStream(""));
+							if (!ObjectUtil.isEmpty(cmdMap.get("logFile")))
+								clp.setOutputStream(new FileOutputStream(cmdMap.get("logFile").toString(), true));
 							Context envContext = new Context();
 							envContext.fillWithEnvAndSystemProperties();
 							Map propertyMap = (Map) cmdMap.get("properties");
@@ -821,6 +822,7 @@ public class GenericUploadServlet extends SavvisServlet {
 												cmdMap.put("cmdString", cmdNode.getTextContent("{cmdString}"));
 												cmdMap.put("argString", cmdNode.getTextContent("{argString}"));
 												cmdMap.put("startDir", cmdNode.getTextContent("{startDir}"));
+												cmdMap.put("logFile", cmdNode.getTextContent("{logFile}"));
 												
 												// get property values if present
 												Map<String, String> propertyMap = new HashMap<String, String>();
