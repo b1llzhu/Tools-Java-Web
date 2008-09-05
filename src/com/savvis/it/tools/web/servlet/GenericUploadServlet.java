@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.23 2008/09/05 18:08:51 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.24 2008/09/05 19:10:19 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.23 2008/09/05 18:08:51 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.24 2008/09/05 19:10:19 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -199,18 +199,33 @@ public class GenericUploadServlet extends SavvisServlet {
 						String className = inputsContext.keywordSubstitute((String)commands.get(0).get("cmdString"));
 						logger.info("className: " + className);
 						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
-						String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
+						final String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
 						logger.info("args: " + args);
+						boolean async = "async".equals(commands.get(0).get("mode")); 
 						
 						Map propertyMap = (Map) commands.get(0).get("properties");
 						for (Object key : propertyMap.keySet()) {
 							logger.info("Setting System property "+key+" to "+propertyMap.get(key));
 							System.setProperty((String) key, (String) propertyMap.get(key));
 						}
-						
+
 						Class clp = Class.forName(className);
-						Method m = clp.getMethod("main", String[].class);
-						m.invoke(null, new Object[] { args.split(" ") });
+						final Method m = clp.getMethod("main", String[].class);
+						if(async) {
+							Thread t = new Thread() {
+								public void run() {
+									try {
+										m.invoke(null, new Object[] { args.split(" ") });
+									} catch (Exception e) {
+										throw new RuntimeException(e);
+									}
+								}
+							};
+							t.start();
+						} else {
+							m.invoke(null, new Object[] { args.split(" ") });
+						}
+						
 
 						request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has completed.");
 					}
