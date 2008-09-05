@@ -5,6 +5,7 @@ package com.savvis.it.tools.web.servlet;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -43,11 +44,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.24 2008/09/05 19:10:19 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.25 2008/09/05 19:45:59 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.24 2008/09/05 19:10:19 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.25 2008/09/05 19:45:59 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -244,6 +245,8 @@ public class GenericUploadServlet extends SavvisServlet {
 								clp.setWaitForProcess(false);
 							
 							clp.setDir(new File((String) cmdMap.get("startDir")));
+							// set the output stream
+							clp.setOutputStream(new FileOutputStream(""));
 							Context envContext = new Context();
 							envContext.fillWithEnvAndSystemProperties();
 							Map propertyMap = (Map) cmdMap.get("properties");
