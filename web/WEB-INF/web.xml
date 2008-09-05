@@ -44,7 +44,7 @@
 	<servlet>
 		<servlet-name>download</servlet-name>
 		<servlet-class>
-			com.savvis.it.tools.web.servlet.DownloadFileServlet
+			com.savvis.it.servlet.DownloadFileServlet
 		</servlet-class>
 	</servlet>
 	<servlet-mapping>
