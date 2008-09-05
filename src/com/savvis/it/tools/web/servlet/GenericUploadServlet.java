@@ -43,11 +43,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.22 2008/09/05 16:44:29 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.23 2008/09/05 18:08:51 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.22 2008/09/05 16:44:29 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.23 2008/09/05 18:08:51 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -192,8 +192,6 @@ public class GenericUploadServlet extends SavvisServlet {
 
 				// execute the command in another thread
 				try {
-//					logger.info("actionMap: " + actionMap);
-//					logger.info("actionMap.get(\"cmdType\"): " + actionMap.get("cmdType"));
 					if ("class".equals(actionMap.get("cmdType"))) {
 						
 						// only the first one is read here
@@ -226,7 +224,10 @@ public class GenericUploadServlet extends SavvisServlet {
 							Map<String, Object> cmdMap = commands.get(i);
 							String cmd = inputsContext.keywordSubstitute(cmdMap.get("cmdString") + " " + cmdMap.get("argString"));
 							logger.info("cmd: " + cmd);
-							clp.setWaitForProcess(false);
+							
+							if ("async".equals(commands.get(0).get("mode")))
+								clp.setWaitForProcess(false);
+							
 							clp.setDir(new File((String) cmdMap.get("startDir")));
 							Context envContext = new Context();
 							envContext.fillWithEnvAndSystemProperties();
@@ -786,6 +787,17 @@ public class GenericUploadServlet extends SavvisServlet {
 											actionMap.put("cmdType", actionNode.getSimpleNode("{cmds}").getAttribute("type"));
 											Map<String, Object> cmdMap = new HashMap<String, Object>();
 										
+											if (!ObjectUtil.isEmpty(actionNode.getSimpleNode("{cmds}").getAttribute("mode"))) {
+												String cmdMode = actionNode.getSimpleNode("{cmds}").getAttribute("mode");
+												if (!"sync".equals(cmdMode.toLowerCase()) && !"async".equals(cmdMode.toLowerCase())) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " cmd attribute mode must be either 'sync' or 'async'");
+												} else {
+													cmdMap.put("mode", cmdMode.toLowerCase());
+												}
+											} else {
+												cmdMap.put("mode", "sync");
+											}
+				
 											for (int k = 0; k < actionNode.getSimpleNode("{cmds}").getChildNodes("cmd").getLength(); k++) {
 												SimpleNode cmdNode = new SimpleNode(actionNode.getSimpleNode("{cmds}").getChildNodes("cmd").item(k));
 												cmdMap.put("cmdString", cmdNode.getTextContent("{cmdString}"));
