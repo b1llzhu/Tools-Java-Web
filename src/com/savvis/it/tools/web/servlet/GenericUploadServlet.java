@@ -44,11 +44,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.26 2008/09/05 20:02:36 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.27 2008/09/08 18:52:58 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.26 2008/09/05 20:02:36 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.27 2008/09/08 18:52:58 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -210,7 +210,7 @@ public class GenericUploadServlet extends SavvisServlet {
 							System.setProperty((String) key, (String) propertyMap.get(key));
 						}
 
-						Class clp = Class.forName(className);
+						Class clp = Class.forName(className, true, ClassLoader.getSystemClassLoader());
 						final Method m = clp.getMethod("main", String[].class);
 						if(async) {
 							Thread t = new Thread() {
@@ -246,6 +246,7 @@ public class GenericUploadServlet extends SavvisServlet {
 							
 							clp.setDir(new File((String) cmdMap.get("startDir")));
 							// set the output stream
+							clp.setOutputStream(new FileOutputStream("", true));
 							if (!ObjectUtil.isEmpty(cmdMap.get("logFile")))
 								clp.setOutputStream(new FileOutputStream(cmdMap.get("logFile").toString(), true));
 							Context envContext = new Context();
