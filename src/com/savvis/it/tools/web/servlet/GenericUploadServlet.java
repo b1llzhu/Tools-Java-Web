@@ -8,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +37,8 @@ import org.w3c.dom.NodeList;
 import com.savvis.it.db.DBConnection;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
+import com.savvis.it.job.Job;
+import com.savvis.it.job.WebJobRunner;
 import com.savvis.it.servlet.SavvisServlet;
 import com.savvis.it.tools.RunInfoUtil;
 import com.savvis.it.tools.web.bean.InputFieldHandler;
@@ -44,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.27 2008/09/08 18:52:58 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.28 2008/09/10 18:06:04 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.27 2008/09/08 18:52:58 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.28 2008/09/10 18:06:04 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -193,7 +197,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 				// execute the command in another thread
 				try {
-					if ("class".equals(actionMap.get("cmdType"))) {
+					if ("job".equals(actionMap.get("cmdType"))) {
 						
 						// only the first one is read here
 						logger.info("commands.get(0).get(\"cmdString\"): " + commands.get(0).get("cmdString"));
@@ -201,8 +205,10 @@ public class GenericUploadServlet extends SavvisServlet {
 						logger.info("className: " + className);
 						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
 						final String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
+						String jar = (String) commands.get(0).get("jar");
 						logger.info("args: " + args);
 						boolean async = "async".equals(commands.get(0).get("mode")); 
+						List<String> classpathList = (List<String>) commands.get(0).get("classpath");
 						
 						Map propertyMap = (Map) commands.get(0).get("properties");
 						for (Object key : propertyMap.keySet()) {
@@ -210,13 +216,33 @@ public class GenericUploadServlet extends SavvisServlet {
 							System.setProperty((String) key, (String) propertyMap.get(key));
 						}
 
-						Class clp = Class.forName(className, true, ClassLoader.getSystemClassLoader());
-						final Method m = clp.getMethod("main", String[].class);
+						List<URL> classpath = new ArrayList<URL>();
+						for (String entry : classpathList) {
+							if(entry.endsWith(".jar")) {
+								classpath.add(new File(entry).toURL());
+							} else {
+								classpath.add(new File(entry+"/classes").toURL());
+								classpath.add(new File(entry+"/build/classes").toURL());
+							}
+						}
+						logger.info("classpath = "+(classpath));
+						
+						URLClassLoader classLoader = new URLClassLoader(
+									classpath.toArray(new URL[] {}), this.getClass().getClassLoader()) {
+							@Override
+							protected Class<?> findClass(String name) throws ClassNotFoundException {
+								logger.info("finding class "+name);
+								return super.findClass(name);
+							}
+						};
+						Class clp = classLoader.loadClass(className);
+//						Class clp = Class.forName(className, true, classLoader);
+						final Job job = (Job) clp.newInstance();
 						if(async) {
 							Thread t = new Thread() {
 								public void run() {
 									try {
-										m.invoke(null, new Object[] { args.split(" ") });
+										new WebJobRunner(job, args.split(" ")).start();
 									} catch (Exception e) {
 										throw new RuntimeException(e);
 									}
@@ -224,7 +250,7 @@ public class GenericUploadServlet extends SavvisServlet {
 							};
 							t.start();
 						} else {
-							m.invoke(null, new Object[] { args.split(" ") });
+							new WebJobRunner(job, args.split(" ")).start();
 						}
 						
 
@@ -822,6 +848,7 @@ public class GenericUploadServlet extends SavvisServlet {
 												SimpleNode cmdNode = new SimpleNode(actionNode.getSimpleNode("{cmds}").getChildNodes("cmd").item(k));
 												cmdMap.put("cmdString", cmdNode.getTextContent("{cmdString}"));
 												cmdMap.put("argString", cmdNode.getTextContent("{argString}"));
+												cmdMap.put("classpath", cmdNode.getTextContent("{jar}"));
 												cmdMap.put("startDir", cmdNode.getTextContent("{startDir}"));
 												cmdMap.put("logFile", cmdNode.getTextContent("{logFile}"));
 												
@@ -838,6 +865,16 @@ public class GenericUploadServlet extends SavvisServlet {
 													}
 												}
 												cmdMap.put("properties", propertyMap);
+												
+												// get classpath values if present
+												List<String> classpathList = new ArrayList<String>();
+												if (!ObjectUtil.isEmpty(cmdNode.getSimpleNode("{classpath}"))) {
+													for (int l = 0; l < cmdNode.getSimpleNode("{classpath}").getChildNodes("entry").getLength(); l++) {
+														SimpleNode classpathNode = new SimpleNode(cmdNode.getSimpleNode("{classpath}").getChildNodes("entry").item(l));
+														classpathList.add(classpathNode.getTextContent());
+													}
+												}
+												cmdMap.put("classpath", classpathList);
 											}
 											cmds.add(cmdMap);
 										}

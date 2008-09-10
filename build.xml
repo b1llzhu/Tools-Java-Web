@@ -15,7 +15,7 @@
 	<!-- This is the fileset of com.savvis.it jars that this project requires -->
 	<target name="copy-required-jars">
 		<copy todir="tmp/lib" overwrite="true">
-			<fileset dir="${it.java.dir}/Common/java/Core/dist" includes="*.jar"/>
+			<fileset dir="${it.java.dir}/Common/java/Core/dist" includes="it-common-core.jar"/>
 			<fileset dir="${it.java.dir}/Common/java/DB/dist" includes="*.jar"/>
 			<fileset dir="${it.java.dir}/Common/java/Web/dist" includes="*.jar"/>
 		</copy>
