@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.28 2008/09/10 18:06:04 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.29 2008/09/15 19:47:59 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.28 2008/09/10 18:06:04 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.29 2008/09/15 19:47:59 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -187,8 +187,9 @@ public class GenericUploadServlet extends SavvisServlet {
 					inputsContext.add("input", parm, request.getParameter(parm));
 				}
 				
-				// add the username into the context
+				// substitute some common global items
 				inputsContext.add("global", "username", winPrincipal.getName());
+				inputsContext.add("global", "url", request.getRequestURL() + "?" + request.getQueryString());
 				
 				// retrieve the commands from the config
 				Map actionsMap = (Map) keyMap.get("actions");
