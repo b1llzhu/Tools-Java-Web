@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.13 2008/09/02 01:24:44 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.14 2008/09/17 18:06:55 dyoung Exp $
 
 --%>
 
@@ -213,6 +213,7 @@
 										<span class="fileListHdr">Perform Actions</span>
 										<table width="100%" cellspacing="2" cellpadding="2" class="actionTbl">
 
+											<% try { %>
 											<c:forEach items="${actions}" var="a">
 												<c:set var="action" value="${a.value}" />
 
@@ -270,6 +271,10 @@
 
 												</form>
 											</c:forEach>
+											<%  } catch(Exception e) {
+													e.printStackTrace(new java.io.PrintWriter(out));
+												} 
+											%>
 										</table>
 										<br/><br/>
 									</c:if>
