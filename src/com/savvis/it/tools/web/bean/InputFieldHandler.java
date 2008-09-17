@@ -23,11 +23,11 @@ import com.sun.corba.se.impl.orbutil.closure.Constant;
  * This class handles the processing and creation of generic inputs for web pages. 
  * 
  * @author David R Young
- * @version $Id: InputFieldHandler.java,v 1.6 2008/09/17 18:06:55 dyoung Exp $
+ * @version $Id: InputFieldHandler.java,v 1.7 2008/09/17 18:33:03 dyoung Exp $
  */
 public class InputFieldHandler {	
 	private static Logger logger = Logger.getLogger(InputFieldHandler.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.6 2008/09/17 18:06:55 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.7 2008/09/17 18:33:03 dyoung Exp $";
 	
 	/*
 	 * Valid types of inputs:
@@ -148,24 +148,24 @@ public class InputFieldHandler {
 	public List<String> getValues() {
 		
 		try {
-			if (ObjectUtil.isEmpty(this.node) && INPUT_TYPE_SQLSELECT.equals(this.type.toLowerCase())) {
-					if (!ObjectUtil.isEmpty(this.node.getNode("{values_sql}"))) {
-						String dbDriver = this.node.getSimpleNode("{values_sql}").getAttribute("dbdriver");
-						String valueCol = this.node.getSimpleNode("{values_sql}").getAttribute("valueCol");
-						String sql = this.node.getTextContent("{values_sql}");
-						
-						DBUtil.setEnableKeywordSubstitution(true);
-						List results = DBUtil.executeQuery(dbDriver, sql);
-						if (results.size() > 0) {
-							List<String> values = new ArrayList<String>();
-							for (int j = 0; j < results.size(); j++) {
-								Map result = (Map) results.get(j);
-								values.add(result.get(valueCol).toString());
-							}
-							this.values = values;
+			if (ObjectUtil.isEmpty(this.values) && INPUT_TYPE_SQLSELECT.equals(this.type.toLowerCase())) {
+				if (!ObjectUtil.isEmpty(this.node.getNode("{values_sql}"))) {
+					String dbDriver = this.node.getSimpleNode("{values_sql}").getAttribute("dbdriver");
+					String valueCol = this.node.getSimpleNode("{values_sql}").getAttribute("valueCol");
+					String sql = this.node.getTextContent("{values_sql}");
+					
+					DBUtil.setEnableKeywordSubstitution(true);
+					List results = DBUtil.executeQuery(dbDriver, sql);
+					if (results.size() > 0) {
+						List<String> values = new ArrayList<String>();
+						for (int j = 0; j < results.size(); j++) {
+							Map result = (Map) results.get(j);
+							values.add(result.get(valueCol).toString());
 						}
-					}				
-				}
+						this.values = values;
+					}
+				}				
+			}
 		} catch (Exception e) {
 			logger.error(e);
 			throw new RuntimeException(e);
