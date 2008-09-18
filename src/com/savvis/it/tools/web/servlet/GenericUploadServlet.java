@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.29 2008/09/15 19:47:59 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.30 2008/09/18 15:06:43 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.29 2008/09/15 19:47:59 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.30 2008/09/18 15:06:43 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -204,7 +204,7 @@ public class GenericUploadServlet extends SavvisServlet {
 						logger.info("commands.get(0).get(\"cmdString\"): " + commands.get(0).get("cmdString"));
 						String className = inputsContext.keywordSubstitute((String)commands.get(0).get("cmdString"));
 						logger.info("className: " + className);
-						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
+//						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
 						final String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
 						String jar = (String) commands.get(0).get("jar");
 						logger.info("args: " + args);
