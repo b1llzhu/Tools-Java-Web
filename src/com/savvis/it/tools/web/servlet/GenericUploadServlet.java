@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.30 2008/09/18 15:06:43 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.31 2008/09/24 15:53:58 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.30 2008/09/18 15:06:43 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.31 2008/09/24 15:53:58 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -173,6 +173,11 @@ public class GenericUploadServlet extends SavvisServlet {
 			}
 			request.setAttribute("uploads", uploads);
 
+			if (uploads.size() == 0) {
+				request.setAttribute("errMessage", "Sorry!  You have not been added to the authorization lists for any file utilities.  " + 
+						"Please contact Access Administration and request to be added to the specific authorization list for the action " +
+						"you need to perform.");
+			}
 			
 			//////////////////////////////////////////////////////////////////////////////////////
 			// PERFORM ACTION functionality
