@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.31 2008/09/24 15:53:58 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.32 2008/10/20 14:57:22 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.31 2008/09/24 15:53:58 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.32 2008/10/20 14:57:22 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	
@@ -74,12 +74,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
-		String basedir = null;
-		if (!ObjectUtil.isEmpty(properties.getProperty("basedir"))) {
-			basedir = properties.getProperty("basedir");
-		} else {
-			basedir = SystemUtil.getProperty("basedir");
-		}
+		String basedir = SystemUtil.getProperty("BASEDIR");
 		
 		try {
 
@@ -212,7 +207,6 @@ public class GenericUploadServlet extends SavvisServlet {
 //						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
 						final String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
 						String jar = (String) commands.get(0).get("jar");
-						logger.info("args: " + args);
 						boolean async = "async".equals(commands.get(0).get("mode")); 
 						List<String> classpathList = (List<String>) commands.get(0).get("classpath");
 						
