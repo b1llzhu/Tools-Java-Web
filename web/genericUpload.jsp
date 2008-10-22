@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.14 2008/09/17 18:06:55 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.15 2008/10/22 15:16:47 dyoung Exp $
 
 --%>
 
@@ -266,7 +266,15 @@
 													
 												</td></tr>
 												<tr>
-													<td class="actionBtnCell"><button onclick="svSetMyForm(document.forms['action_${action.name}']); svSubmitAction('execute');">${action.buttonLabel}</button></td>
+													<c:choose>
+														<c:when test="${procesRunning}">
+															<td class="actionBtnCell">A process is currently running... please wait...</td>
+														</c:when>
+														<c:otherwise>
+															<td class="actionBtnCell"><button onclick="svSetMyForm(document.forms['action_${action.name}']); svSubmitAction('execute');">${action.buttonLabel}</button></td>
+														</c:otherwise>
+													</c:choose>
+													
 												</tr>
 
 												</form>

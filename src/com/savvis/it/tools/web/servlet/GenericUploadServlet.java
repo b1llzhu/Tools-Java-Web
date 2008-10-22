@@ -48,13 +48,14 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.32 2008/10/20 14:57:22 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.33 2008/10/22 15:16:47 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.32 2008/10/20 14:57:22 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.33 2008/10/22 15:16:47 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
+	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
 	
 	/** 
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -177,130 +178,153 @@ public class GenericUploadServlet extends SavvisServlet {
 			//////////////////////////////////////////////////////////////////////////////////////
 			// PERFORM ACTION functionality
 			//////////////////////////////////////////////////////////////////////////////////////
-			if (!ObjectUtil.isEmpty(request.getParameter("action")) && "execute".equals(request.getParameter("action"))) {
-				Map keyMap = configMap.get(pageMap.get("key"));
-				Context inputsContext = new Context();
-
-				// get parms and add into context for command line keyword substitution 
-				for (int i = 0; i < request.getParameterMap().keySet().size(); i++) {
-					String parm = (String) request.getParameterMap().keySet().toArray()[i];
-					inputsContext.add("input", parm, request.getParameter(parm));
-				}
-				
-				// substitute some common global items
-				inputsContext.add("global", "username", winPrincipal.getName());
-				inputsContext.add("global", "url", request.getRequestURL() + "?" + request.getQueryString());
-				
-				// retrieve the commands from the config
-				Map actionsMap = (Map) keyMap.get("actions");
-				Map actionMap = (Map) actionsMap.get(inputsContext.get("input", "action_name"));
-				List<Map<String, Object>> commands = (List<Map<String, Object>>) actionMap.get("cmds");
-
-				// execute the command in another thread
-				try {
-					if ("job".equals(actionMap.get("cmdType"))) {
-						
-						// only the first one is read here
-						logger.info("commands.get(0).get(\"cmdString\"): " + commands.get(0).get("cmdString"));
-						String className = inputsContext.keywordSubstitute((String)commands.get(0).get("cmdString"));
-						logger.info("className: " + className);
-//						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
-						final String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
-						String jar = (String) commands.get(0).get("jar");
-						boolean async = "async".equals(commands.get(0).get("mode")); 
-						List<String> classpathList = (List<String>) commands.get(0).get("classpath");
-						
-						Map propertyMap = (Map) commands.get(0).get("properties");
-						for (Object key : propertyMap.keySet()) {
-							logger.info("Setting System property "+key+" to "+propertyMap.get(key));
-							System.setProperty((String) key, (String) propertyMap.get(key));
-						}
-
-						List<URL> classpath = new ArrayList<URL>();
-						for (String entry : classpathList) {
-							if(entry.endsWith(".jar")) {
-								classpath.add(new File(entry).toURL());
-							} else {
-								classpath.add(new File(entry+"/classes").toURL());
-								classpath.add(new File(entry+"/build/classes").toURL());
-							}
-						}
-						logger.info("classpath = "+(classpath));
-						
-						URLClassLoader classLoader = new URLClassLoader(
-									classpath.toArray(new URL[] {}), this.getClass().getClassLoader()) {
-							@Override
-							protected Class<?> findClass(String name) throws ClassNotFoundException {
-								logger.info("finding class "+name);
-								return super.findClass(name);
-							}
-						};
-						Class clp = classLoader.loadClass(className);
-//						Class clp = Class.forName(className, true, classLoader);
-						final Job job = (Job) clp.newInstance();
-						if(async) {
-							Thread t = new Thread() {
-								public void run() {
-									try {
-										new WebJobRunner(job, args.split(" ")).start();
-									} catch (Exception e) {
-										throw new RuntimeException(e);
-									}
-								}
-							};
-							t.start();
-						} else {
-							new WebJobRunner(job, args.split(" ")).start();
-						}
-						
-
-						request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has completed.");
+			Thread lkpThread = threadMap.get(pageMap.get("key"));
+			if (!ObjectUtil.isEmpty(lkpThread) && !lkpThread.isAlive()) {
+				if (!ObjectUtil.isEmpty(request.getParameter("action")) && "execute".equals(request.getParameter("action"))) {
+					Map keyMap = configMap.get(pageMap.get("key"));
+					Context inputsContext = new Context();
+	
+					// get parms and add into context for command line keyword substitution 
+					for (int i = 0; i < request.getParameterMap().keySet().size(); i++) {
+						String parm = (String) request.getParameterMap().keySet().toArray()[i];
+						inputsContext.add("input", parm, request.getParameter(parm));
 					}
 					
-					if ("shell".equals(actionMap.get("cmdType"))) {
-						// create a string array for the command line processor
-						String[] clpCmdArray = new String[commands.size()];
-
-						CommandLineProcess clp = new CommandLineProcess();
-						for (int i = 0; i < 1 ; i++) {
-							Map<String, Object> cmdMap = commands.get(i);
-							String cmd = inputsContext.keywordSubstitute(cmdMap.get("cmdString") + " " + cmdMap.get("argString"));
-							logger.info("cmd: " + cmd);
+					// substitute some common global items
+					inputsContext.add("global", "username", winPrincipal.getName());
+					inputsContext.add("global", "url", request.getRequestURL() + "?" + request.getQueryString());
+					
+					// retrieve the commands from the config
+					Map actionsMap = (Map) keyMap.get("actions");
+					Map actionMap = (Map) actionsMap.get(inputsContext.get("input", "action_name"));
+					List<Map<String, Object>> commands = (List<Map<String, Object>>) actionMap.get("cmds");
+	
+					// execute the command in another thread
+					try {
+						if ("job".equals(actionMap.get("cmdType"))) {
 							
-							if ("async".equals(commands.get(0).get("mode")))
-								clp.setWaitForProcess(false);
+							// only the first one is read here
+							logger.info("commands.get(0).get(\"cmdString\"): " + commands.get(0).get("cmdString"));
+							String className = inputsContext.keywordSubstitute((String)commands.get(0).get("cmdString"));
+							logger.info("className: " + className);
+	//						logger.info("commands.get(0).get(\"argString\"): " + commands.get(0).get("argString"));
+							final String args = inputsContext.keywordSubstitute((String)commands.get(0).get("argString"));
+							String jar = (String) commands.get(0).get("jar");
+							boolean async = "async".equals(commands.get(0).get("mode")); 
+							List<String> classpathList = (List<String>) commands.get(0).get("classpath");
 							
-							clp.setDir(new File((String) cmdMap.get("startDir")));
-							// set the output stream
-							clp.setOutputStream(new FileOutputStream("", true));
-							if (!ObjectUtil.isEmpty(cmdMap.get("logFile")))
-								clp.setOutputStream(new FileOutputStream(cmdMap.get("logFile").toString(), true));
-							Context envContext = new Context();
-							envContext.fillWithEnvAndSystemProperties();
-							Map propertyMap = (Map) cmdMap.get("properties");
-							List<String> envList = new ArrayList<String>();
-							for (Object key : propertyMap.keySet()) 
-								envList.add(key+"="+propertyMap.get(key));
-							Map<String, String> envMap = System.getenv();
-							for (Object key : envMap.keySet()) 
-								envList.add(key+"="+envMap.get(key));
-							envList.add("CALLED_BY_USER="+winPrincipal.getName());
-							clp.setEnvp((String[])envList.toArray(new String[] {}));
-							clp.run(cmd);
+							Map propertyMap = (Map) commands.get(0).get("properties");
+							for (Object key : propertyMap.keySet()) {
+								logger.info("Setting System property "+key+" to "+propertyMap.get(key));
+								System.setProperty((String) key, (String) propertyMap.get(key));
+							}
+	
+							List<URL> classpath = new ArrayList<URL>();
+							for (String entry : classpathList) {
+								if(entry.endsWith(".jar")) {
+									classpath.add(new File(entry).toURL());
+								} else {
+									classpath.add(new File(entry+"/classes").toURL());
+									classpath.add(new File(entry+"/build/classes").toURL());
+								}
+							}
+							logger.info("classpath = "+(classpath));
+							
+							URLClassLoader classLoader = new URLClassLoader(
+										classpath.toArray(new URL[] {}), this.getClass().getClassLoader()) {
+								@Override
+								protected Class<?> findClass(String name) throws ClassNotFoundException {
+									logger.info("finding class "+name);
+									return super.findClass(name);
+								}
+							};
+							Class clp = classLoader.loadClass(className);
+	//						Class clp = Class.forName(className, true, classLoader);
+							final Job job = (Job) clp.newInstance();
+							if(async) {
+								Thread t = new Thread() {
+									public void run() {
+										try {
+											new WebJobRunner(job, args.split(" ")).start();
+										} catch (Exception e) {
+											throw new RuntimeException(e);
+										}
+									}
+								};
+								threadMap.put(pageMap.get("key"), t);
+								t.start();
+								request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
+							} else {
+								new WebJobRunner(job, args.split(" ")).start();
+								request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has completed.");
+							}
 						}
 						
-						logger.info("output: "+clp.getOutput());
-						logger.info("error: "+clp.getError());
-
-						request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has started execution.");
+						if ("shell".equals(actionMap.get("cmdType"))) {
+							// create a string array for the command line processor
+							String[] clpCmdArray = new String[commands.size()];
+	
+							final CommandLineProcess clp = new CommandLineProcess();
+							for (int i = 0; i < 1 ; i++) {
+								Map<String, Object> cmdMap = commands.get(i);
+								boolean async = "async".equals(commands.get(0).get("mode"));
+								final String cmd = inputsContext.keywordSubstitute(cmdMap.get("cmdString") + " " + cmdMap.get("argString"));
+								logger.info("cmd: " + cmd);
+								// always wait for process since async will be kicked off in another thread
+								clp.setWaitForProcess(true);
+								clp.setDir(new File((String) cmdMap.get("startDir")));
+								// set the output stream
+								clp.setOutputStream(new FileOutputStream("", true));
+								if (!ObjectUtil.isEmpty(cmdMap.get("logFile")))
+									clp.setOutputStream(new FileOutputStream(cmdMap.get("logFile").toString(), true));
+								Context envContext = new Context();
+								envContext.fillWithEnvAndSystemProperties();
+								Map propertyMap = (Map) cmdMap.get("properties");
+								List<String> envList = new ArrayList<String>();
+								for (Object key : propertyMap.keySet()) 
+									envList.add(key+"="+propertyMap.get(key));
+								Map<String, String> envMap = System.getenv();
+								for (Object key : envMap.keySet()) 
+									envList.add(key+"="+envMap.get(key));
+								envList.add("CALLED_BY_USER="+winPrincipal.getName());
+								clp.setEnvp((String[])envList.toArray(new String[] {}));
+								
+								if(async) {
+									Thread t = new Thread() {
+										public void run() {
+											try {
+												clp.run(cmd);
+											} catch (Exception e) {
+												throw new RuntimeException(e);
+											}
+										}
+									};
+									threadMap.put(pageMap.get("key"), t);
+									t.start();
+									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
+								} else {
+									clp.run(cmd);
+									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has completed.");
+								}
+								
+							}
+							
+							logger.info("output: "+clp.getOutput());
+							logger.info("error: "+clp.getError());
+						}
+					
+	
+					} catch (Exception e) {
+						e.printStackTrace();
+						logger.error(e);
+						request.setAttribute("errMessage", "There was an error executing the action \"" + actionMap.get("display") + "\".  (" + e + ")");
 					}
-				
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					logger.error(e);
-					request.setAttribute("errMessage", "There was an error executing the action \"" + actionMap.get("display") + "\".  (" + e + ")");
 				}
+			} else {
+				// already running a thread for this uploader
+				request.setAttribute("message", "A process is current running.  No other actions can be started until it is finished.  " + 
+						"Please refresh the page until this message no longer appears.");
+				request.setAttribute("processRunning", true);
 			}
 			
 			
