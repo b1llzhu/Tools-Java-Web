@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.33 2008/10/22 15:16:47 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.34 2008/10/22 16:07:08 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.33 2008/10/22 15:16:47 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.34 2008/10/22 16:07:08 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -179,7 +179,21 @@ public class GenericUploadServlet extends SavvisServlet {
 			// PERFORM ACTION functionality
 			//////////////////////////////////////////////////////////////////////////////////////
 			Thread lkpThread = threadMap.get(pageMap.get("key"));
-			if (!ObjectUtil.isEmpty(lkpThread) && !lkpThread.isAlive()) {
+			Boolean processRunning = false;
+			if (!ObjectUtil.isEmpty(lkpThread)) {
+				if (lkpThread.isAlive()) {
+					// already running a thread for this uploader
+					request.setAttribute("message", "A process is current running.  No other actions can be started until it is finished.  " + 
+							"Please refresh the page until this message no longer appears.");
+					processRunning = true;
+				} else {
+					// thread is no longer active - kill it from the map
+					threadMap.remove(pageMap.get("key"));
+				}
+			}
+			request.setAttribute("processRunning", processRunning);
+			
+			if (!processRunning) {
 				if (!ObjectUtil.isEmpty(request.getParameter("action")) && "execute".equals(request.getParameter("action"))) {
 					Map keyMap = configMap.get(pageMap.get("key"));
 					Context inputsContext = new Context();
@@ -320,11 +334,6 @@ public class GenericUploadServlet extends SavvisServlet {
 						request.setAttribute("errMessage", "There was an error executing the action \"" + actionMap.get("display") + "\".  (" + e + ")");
 					}
 				}
-			} else {
-				// already running a thread for this uploader
-				request.setAttribute("message", "A process is current running.  No other actions can be started until it is finished.  " + 
-						"Please refresh the page until this message no longer appears.");
-				request.setAttribute("processRunning", true);
 			}
 			
 			
