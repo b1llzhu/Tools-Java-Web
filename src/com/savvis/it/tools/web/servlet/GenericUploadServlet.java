@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.34 2008/10/22 16:07:08 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.35 2008/10/22 18:19:37 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.34 2008/10/22 16:07:08 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.35 2008/10/22 18:19:37 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -71,7 +71,7 @@ public class GenericUploadServlet extends SavvisServlet {
 		String configFileExt = ".xml";
 		String configFileDefaultDir = "config/misc/";
 		
-		Map<String, String> pageMap = new HashMap<String, String>();
+		final Map<String, String> pageMap = new HashMap<String, String>();
 
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
@@ -95,6 +95,7 @@ public class GenericUploadServlet extends SavvisServlet {
 			pageMap.put("appl", "".equals(request.getParameter("appl")) ? (String)request.getAttribute("appl") : request.getParameter("appl"));
 			if (ObjectUtil.isEmpty(pageMap.get("appl")))
 				pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  Missing required parameter (APPL) required.<br/>");
+			SystemUtil.setAPPL(pageMap.get("appl"));
 
 			pageMap.put("config", "".equals(request.getParameter("config")) ? (String)request.getAttribute("config") : request.getParameter("config"));
 			if (ObjectUtil.isEmpty(pageMap.get("config"))) {
@@ -259,7 +260,9 @@ public class GenericUploadServlet extends SavvisServlet {
 								Thread t = new Thread() {
 									public void run() {
 										try {
+											SystemUtil.setAPPL(pageMap.get("appl"));
 											new WebJobRunner(job, args.split(" ")).start();
+											SystemUtil.setAPPL(null);
 										} catch (Exception e) {
 											throw new RuntimeException(e);
 										}
@@ -307,7 +310,9 @@ public class GenericUploadServlet extends SavvisServlet {
 									Thread t = new Thread() {
 										public void run() {
 											try {
+												SystemUtil.setAPPL(pageMap.get("appl"));
 												clp.run(cmd);
+												SystemUtil.setAPPL(null);
 											} catch (Exception e) {
 												throw new RuntimeException(e);
 											}
