@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.35 2008/10/22 18:19:37 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.36 2008/10/27 19:28:27 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.35 2008/10/22 18:19:37 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.36 2008/10/27 19:28:27 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -446,38 +446,62 @@ public class GenericUploadServlet extends SavvisServlet {
 			
 
 			//////////////////////////////////////////////////////////////////////////////////////
-			// MOVE functionality
+			// ACTION functionality
 			//////////////////////////////////////////////////////////////////////////////////////
-			String moveType = "".equals(request.getParameter("type")) ? (String)request.getAttribute("type") : request.getParameter("type");
-			String moveFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
-			String moveFilePath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
-			String moveTarget = "".equals(request.getParameter("target")) ? (String)request.getAttribute("target") : request.getParameter("target");
-			String moveDescription = "".equals(request.getParameter("description")) ? (String)request.getAttribute("description") : request.getParameter("description");
+			String actionType = "".equals(request.getParameter("type")) ? (String)request.getAttribute("type") : request.getParameter("type");
+			String actionFile = "".equals(request.getParameter("file")) ? (String)request.getAttribute("file") : request.getParameter("file");
+			String actionFilePath = "".equals(request.getParameter("path")) ? (String)request.getAttribute("path") : request.getParameter("path");
+			String actionTarget = "".equals(request.getParameter("target")) ? (String)request.getAttribute("target") : request.getParameter("target");
 			
-			if (!ObjectUtil.isEmpty(moveType)) {
-				if ("move".equals(moveType)) {
-					if (ObjectUtil.isEmpty(moveFile)) {
+			if (!ObjectUtil.isEmpty(actionType)) {
+				if ("move".equals(actionType)) {
+					if (ObjectUtil.isEmpty(actionFile)) {
 						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
 					} else {
-						if (ObjectUtil.isEmpty(moveFilePath)) {
+						if (ObjectUtil.isEmpty(actionFilePath)) {
 							request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
 						} else {
 							Map keyMap = configMap.get(pageMap.get("key"));
 							Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
 							
-							if (!moveFilePath.endsWith("/"))
-								moveFilePath = moveFilePath.concat("/");
+							if (!actionFilePath.endsWith("/"))
+								actionFilePath = actionFilePath.concat("/");
 							
 							// verify the target directory is in the map
-							if (ObjectUtil.isEmpty(directoriesMap.get(moveTarget))) {
-								request.setAttribute("fatalMsg", "ERROR: Invalid value for target directory (" + moveTarget + ".<br/>");
+							if (ObjectUtil.isEmpty(directoriesMap.get(actionTarget))) {
+								request.setAttribute("fatalMsg", "ERROR: Invalid value for target directory (" + actionTarget + ".<br/>");
 							} else {
 								// log and perform the move
-								logger.info("keyMap.get(\"path\") + directoriesMap.get(moveTarget).get(\"path\") + moveFile: " + keyMap.get("path") + directoriesMap.get(moveTarget).get("path") + moveFile);
-								FileUtil.moveFile(moveFilePath + moveFile, directoriesMap.get(moveTarget).get("path") + moveFile);
+								logger.info("keyMap.get(\"path\") + directoriesMap.get(moveTarget).get(\"path\") + moveFile: " + keyMap.get("path") + directoriesMap.get(actionTarget).get("path") + actionFile);
+								FileUtil.moveFile(actionFilePath + actionFile, directoriesMap.get(actionTarget).get("path") + actionFile);
 								
-								RunInfoUtil.addLog(keyMap.get("path").toString(), new File(moveFilePath + moveFile), winPrincipal.getName(), new java.util.Date(), 
-										"File " + moveFile + " moved to \"" + directoriesMap.get(moveTarget).get("description") + "\" directory");
+								RunInfoUtil.addLog(keyMap.get("path").toString(), new File(actionFilePath + actionFile), winPrincipal.getName(), new java.util.Date(), 
+										"File " + actionFile + " moved to \"" + directoriesMap.get(actionTarget).get("description") + "\" directory");
+							}
+						}
+					}
+				} else if ("delete".equals(actionType)) {
+					if (ObjectUtil.isEmpty(actionFile)) {
+						request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (FILE) required.<br/>");
+					} else {
+						if (ObjectUtil.isEmpty(actionFilePath)) {
+							request.setAttribute("fatalMsg", "ERROR:  Missing required parameter (PATH) required.<br/>");
+						} else {
+							Map keyMap = configMap.get(pageMap.get("key"));
+							Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
+
+							if (!actionFilePath.endsWith("/"))
+								actionFilePath = actionFilePath.concat("/");
+
+							File f = new File(actionFilePath + actionFile);
+							f.delete();
+							
+							if (!f.exists()) {
+								// log the delete
+								RunInfoUtil.addLog(keyMap.get("path").toString(), new File(actionFilePath + actionFile), winPrincipal.getName(), new java.util.Date(), 
+										"File " + actionFile + " deleted from \"" + actionFilePath + "\" directory");
+							} else {
+								request.setAttribute("errMsg", "ERROR: Unable to delete " + actionFile + " from \"" + actionFilePath + "\" directory.");
 							}
 						}
 					}
@@ -498,7 +522,6 @@ public class GenericUploadServlet extends SavvisServlet {
 				for (int i = 0; i < directoriesMap.keySet().size(); i++) {
 					String key = (String) directoriesMap.keySet().toArray()[i];
 					Map<String, Object> directoryMap = (Map<String, Object>) directoriesMap.get(key);
-
 					if (!"0".equals(directoryMap.get("display"))) {
 						Integer limit = null;
 						if (!ObjectUtil.isEmpty(directoryMap.get("limit")))
@@ -508,7 +531,7 @@ public class GenericUploadServlet extends SavvisServlet {
 						directoryMap.put("data", fileList);
 						
 						if (fileList.size() > 0) {
-							directoryMap.put("sizeAlgorithm", ((fileList.size() * 23) + 23) > 255 ? 255 : ((fileList.size() * 23) + 23));
+							directoryMap.put("sizeAlgorithm", ((fileList.size() * 25) + 25) > 255 ? 255 : ((fileList.size() * 25) + 25));
 						}
 					}
 				}
@@ -810,11 +833,18 @@ public class GenericUploadServlet extends SavvisServlet {
 											SimpleNode actionNode = new SimpleNode(actionsNode.item(l));
 											Map<String, String> actionMap = new HashMap<String, String>();
 
+											// required
 											actionMap.put("level", actionNode.getAttribute("level"));
 											actionMap.put("type", actionNode.getAttribute("type"));
-											actionMap.put("fileAge", actionNode.getAttribute("fileAge"));
-											actionMap.put("target", actionNode.getAttribute("target"));
 											actionMap.put("description", actionNode.getAttribute("description"));
+
+											// could be optional
+											if (!ObjectUtil.isEmpty(actionNode.getAttribute("fileAge")))
+												actionMap.put("fileAge", actionNode.getAttribute("fileAge"));
+											if (!ObjectUtil.isEmpty(actionNode.getAttribute("target")))
+												actionMap.put("target", actionNode.getAttribute("target"));
+											if (!ObjectUtil.isEmpty(actionNode.getAttribute("confirm")))
+												actionMap.put("confirm", actionNode.getAttribute("confirm"));
 											
 											actionsMap.put(ObjectUtil.toString(l), actionMap);
 										}
