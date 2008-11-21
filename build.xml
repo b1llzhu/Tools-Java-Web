@@ -34,5 +34,11 @@
 				depends="copy-common-web">
 		<antcall target="war"/>
 	</target>
+	
+	<target name="dist-stage" description="Creates the staging version of the war file"
+				depends="copy-common-web">
+		<property name="target.environment" value="stage"/>
+		<antcall target="war-environment-specific"/>
+	</target>
 		
 </project>

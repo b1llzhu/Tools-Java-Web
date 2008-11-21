@@ -26,7 +26,8 @@
 				<tr>
 					<td>
 						<c:forEach items="${propertyManagers}" var="pm">
-							<a href="javascript:svSubmitActionAndIndex('edit', '${pm.resourceFileName}')">${pm.resourceFileName}</a><br>
+							<a href="javascript:svSubmitActionAndIndex('edit', '${pm.value.resourceFileName}')"
+										>${pm.value.resourceFileName}</a><br>
 						</c:forEach>
 						<a href="javascript:svSubmitActionAndIndex('edit', 'log4j')">Edit log4j settings</a><br>
 					</td>

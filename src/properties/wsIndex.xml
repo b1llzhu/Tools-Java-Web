@@ -1,0 +1,7 @@
+<wsIndex>
+	<entry appl="envision" config="getQuoteWS"/>
+	<entry appl="vantive" config="priceQuoteWS"/>
+	<entry appl="vantive" config="createWorkRequestWS"/>
+	<entry appl="vantive" config="aipWS"/>
+	<entry appl="finance" config="creditCheckWS"/>
+</wsIndex>

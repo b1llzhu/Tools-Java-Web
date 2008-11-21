@@ -3,7 +3,7 @@
   type="WEB"
   name="Tools-Web"
   id="myeclipse.1155312938669"
-  context-root="/tools"
+  context-root="/Tools"
   j2ee-spec="1.4"
   archive="Tools-Web.war">
   <attributes>

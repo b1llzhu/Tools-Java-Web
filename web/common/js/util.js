@@ -639,7 +639,7 @@ function svValidateDate(value, title) {
 		if(value == "") {
 			return true;
 		} else {
-			alert(title+" must be of the format MM/DD/YYYY (offending value: "+value+")");
+			alert(title+" must be of the format MM/DD/YY (offending value: "+value+")");
 			return false;
 		}
 	}

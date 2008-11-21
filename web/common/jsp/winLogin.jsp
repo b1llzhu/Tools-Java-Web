@@ -28,7 +28,8 @@
 <sv:head title="SAVVIS Authentication - ${referrerTitle}"></sv:head>
 <link rel="stylesheet" href="common/css/winLogin.css"/>
 
-<form method="post" action="${referrer}">
+<body onload="svInitializeFocus('winUser')">
+<form method="post" action="${referrer}" >
 	<input type="hidden" name="action" value="authenticate"/>
 	<input type="hidden" name="referrer" value="${referrer}"/>
 	
@@ -91,3 +92,5 @@
 	<img src="common/images/savvisLogo.jpg" width="210" align="center">
 	</p>
 </form>
+</body>
+</html>
