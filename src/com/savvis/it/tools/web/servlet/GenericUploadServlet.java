@@ -48,14 +48,15 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.37 2008/11/11 14:36:37 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.38 2008/12/02 15:20:31 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.37 2008/11/11 14:36:37 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.38 2008/12/02 15:20:31 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
+	private static Thread threadChecker = null;
 	
 	/** 
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -76,7 +77,31 @@ public class GenericUploadServlet extends SavvisServlet {
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
 		String basedir = SystemUtil.getProperty("BASEDIR");
-		
+
+		/*
+		 * instead of only checking on a refresh and removing THAT key's thread
+		 * if it's not active anymore, we need to actually loop through EVERY
+		 * thread in the hash and check to see if we have any dead threads out
+		 * there - it's possible some threads could be left in the map if that
+		 * particular page isn't refreshed for a while
+		 */
+		if (threadChecker == null) {
+			Thread t = new Thread() {
+				public void run() {
+					try {
+						for (String key : threadMap.keySet()) {
+							Thread t = threadMap.get(key);
+							if (!t.isAlive()) {
+								threadMap.remove(key);
+							}
+						}
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}
+			};
+		}
+
 		try {
 
 			if (basedir == null)
@@ -187,9 +212,6 @@ public class GenericUploadServlet extends SavvisServlet {
 					request.setAttribute("message", "A process is current running.  No other actions can be started until it is finished.  " + 
 							"Please refresh the page until this message no longer appears.");
 					processRunning = true;
-				} else {
-					// thread is no longer active - kill it from the map
-					threadMap.remove(pageMap.get("key"));
 				}
 			}
 			request.setAttribute("processRunning", processRunning);
