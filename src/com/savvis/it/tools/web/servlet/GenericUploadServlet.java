@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.38 2008/12/02 15:20:31 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.39 2008/12/02 18:18:30 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.38 2008/12/02 15:20:31 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.39 2008/12/02 18:18:30 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -86,20 +86,25 @@ public class GenericUploadServlet extends SavvisServlet {
 		 * particular page isn't refreshed for a while
 		 */
 		if (threadChecker == null) {
-			Thread t = new Thread() {
+			threadChecker = new Thread() {
 				public void run() {
 					try {
-						for (String key : threadMap.keySet()) {
-							Thread t = threadMap.get(key);
-							if (!t.isAlive()) {
-								threadMap.remove(key);
+						while(true) {
+							for (String key : threadMap.keySet()) {
+								Thread t = threadMap.get(key);
+								if (!t.isAlive()) {
+									logger.info("removing dead thread from thread map for key(" + key + ")"); 
+									threadMap.remove(key);
+								}
 							}
+							sleep(30000);
 						}
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
 				}
 			};
+			threadChecker.start();
 		}
 
 		try {
