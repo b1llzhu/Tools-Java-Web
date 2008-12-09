@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.39 2008/12/02 18:18:30 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.40 2008/12/09 22:45:05 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.39 2008/12/02 18:18:30 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.40 2008/12/09 22:45:05 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -356,7 +356,8 @@ public class GenericUploadServlet extends SavvisServlet {
 							}
 							
 							logger.info("output: "+clp.getOutput());
-							logger.info("error: "+clp.getError());
+							if(StringUtil.hasValue(clp.getError()))
+								logger.info("error: "+clp.getError());
 						}
 					
 	
