@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.40 2008/12/09 22:45:05 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.41 2008/12/17 21:17:16 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.40 2008/12/09 22:45:05 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.41 2008/12/17 21:17:16 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -295,7 +295,8 @@ public class GenericUploadServlet extends SavvisServlet {
 										}
 									}
 								};
-								threadMap.put(pageMap.get("key"), t);
+								if(pageMap.get("key") != null)
+									threadMap.put(pageMap.get("key"), t);
 								t.start();
 								request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 							} else {
@@ -345,7 +346,8 @@ public class GenericUploadServlet extends SavvisServlet {
 											}
 										}
 									};
-									threadMap.put(pageMap.get("key"), t);
+									if(pageMap.get("key") != null)
+										threadMap.put(pageMap.get("key"), t);
 									t.start();
 									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 								} else {

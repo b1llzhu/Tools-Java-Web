@@ -16,6 +16,10 @@
   		<filter-name>authenticate</filter-name> 
   		<url-pattern>/genericUpload</url-pattern> 
   	</filter-mapping>
+	<filter-mapping>
+  		<filter-name>authenticate</filter-name> 
+  		<url-pattern>/genericWSClient</url-pattern> 
+  	</filter-mapping>
 
 	<!-- need to have this in here to handle the generic windows login -->
 	<servlet>
@@ -73,6 +77,33 @@
 		<servlet-name>PasswordResetServlet</servlet-name>
 		<url-pattern>/passwordReset</url-pattern>
 	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>GenericWSClient</servlet-name>
+		<servlet-class>
+			com.savvis.it.tools.web.servlet.GenericWSClientServlet
+		</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>GenericWSClient</servlet-name>
+		<url-pattern>/genericWSClient</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>PropertyManagerServlet</servlet-name>
+		<servlet-class>com.savvis.it.servlet.PropertyManagerServlet</servlet-class>
+	</servlet>  
+	<servlet-mapping>
+		<servlet-name>PropertyManagerServlet</servlet-name>
+		<url-pattern>/PropertyManagerServlet</url-pattern>
+	</servlet-mapping>
+	
+	<session-config>
+		<!-- in minutes -->
+		<session-timeout>
+			1440
+		</session-timeout>
+	</session-config>
 
 	<welcome-file-list>
 		<welcome-file>genericUpload</welcome-file>

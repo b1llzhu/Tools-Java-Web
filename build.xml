@@ -18,6 +18,8 @@
 			<fileset dir="${it.java.dir}/Common/java/Core/dist" includes="it-common-core.jar"/>
 			<fileset dir="${it.java.dir}/Common/java/DB/dist" includes="*.jar"/>
 			<fileset dir="${it.java.dir}/Common/java/Web/dist" includes="*.jar"/>
+			<fileset dir="${it.java.dir}/3rdParty/java/Log4j/1.2.8" includes="*.jar"/>
+			<fileset dir="${it.java.dir}/3rdParty/java/JakartaCommons/1.0" includes="commons-logging-1.0.4.jar"/>
 		</copy>
 	</target>
 	
