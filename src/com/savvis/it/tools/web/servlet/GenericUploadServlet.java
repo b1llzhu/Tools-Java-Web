@@ -48,11 +48,11 @@ import com.savvis.it.util.*;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.41 2008/12/17 21:17:16 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.42 2009/01/06 22:09:31 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.41 2008/12/17 21:17:16 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.42 2009/01/06 22:09:31 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -324,14 +324,14 @@ public class GenericUploadServlet extends SavvisServlet {
 									clp.setOutputStream(new FileOutputStream(cmdMap.get("logFile").toString(), true));
 								Context envContext = new Context();
 								envContext.fillWithEnvAndSystemProperties();
-								Map propertyMap = (Map) cmdMap.get("properties");
 								List<String> envList = new ArrayList<String>();
-								for (Object key : propertyMap.keySet()) 
-									envList.add(key+"="+propertyMap.get(key));
 								Map<String, String> envMap = System.getenv();
 								for (Object key : envMap.keySet()) 
 									envList.add(key+"="+envMap.get(key));
 								envList.add("CALLED_BY_USER="+winPrincipal.getName());
+								Map propertyMap = (Map) cmdMap.get("properties");
+								for (Object key : propertyMap.keySet()) 
+									envList.add(key+"="+propertyMap.get(key));
 								clp.setEnvp((String[])envList.toArray(new String[] {}));
 								
 								if(async) {
