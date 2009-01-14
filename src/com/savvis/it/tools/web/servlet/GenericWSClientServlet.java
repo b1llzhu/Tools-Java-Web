@@ -5,10 +5,13 @@ package com.savvis.it.tools.web.servlet;
 
 import java.beans.XMLEncoder;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,15 +23,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.servlet.SavvisServlet;
+import com.savvis.it.util.FileUtil;
 import com.savvis.it.util.ObjectUtil;
 import com.savvis.it.util.SimpleNode;
+import com.savvis.it.util.StringUtil;
 import com.savvis.it.util.SystemUtil;
+import com.savvis.it.util.XmlCreator;
 import com.savvis.it.util.XmlUtil;
 import com.savvis.it.ws.GenericWebServiceClient;
 
@@ -44,7 +52,7 @@ public class GenericWSClientServlet extends SavvisServlet {
 	
 	protected void processRequest(String action, HttpServletRequest request, HttpServletResponse response)
 				throws Exception {
-
+		
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = 
 			(WindowsAuthenticationFilter.WindowsPrincipal) request.getSession()
 			.getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);
@@ -55,7 +63,7 @@ public class GenericWSClientServlet extends SavvisServlet {
 			throw new Exception("BASEDIR not set");
 		
 		// show the index page
-		if(action == null || "authenticate".equals(action)) {
+		if((action == null || "authenticate".equals(action)) && !ServletFileUpload.isMultipartContent(request)) {
 			List<SimpleNode> index = new SimpleNode(XmlUtil.loadDocumentFromFileAsStream("/properties/wsIndex.xml")
 						.getFirstChild()).getChildren("entry");
 			Map<String, Set<WebServiceClient>> applMap = new TreeMap<String, Set<WebServiceClient>>();
@@ -80,8 +88,32 @@ public class GenericWSClientServlet extends SavvisServlet {
 			return;
 		}
 		
+		// Create a factory for disk-based file items
+		DiskFileItemFactory factory = new DiskFileItemFactory();
+		
+		// Create a new file upload handler
+		ServletFileUpload upload = new ServletFileUpload(factory);
+		List<FileItem> items = null;
+		
 		String config = request.getParameter("config");
 		String appl = request.getParameter("appl");
+		String operation = request.getParameter("operation");
+		if(ServletFileUpload.isMultipartContent(request)) {
+			// Parse the request
+			items = upload.parseRequest(request);
+			// Process the uploaded items
+			for (FileItem item : items) {
+		    if (item.isFormField()) {
+		    	if(item.getFieldName().equals("config")) {
+		    		config = item.getString();
+		    	} else if(item.getFieldName().equals("appl")) {
+		    		appl = item.getString();
+		    	} else if(item.getFieldName().equals("operation")) {
+		    		operation = item.getString();
+		    	}
+		    }
+			}
+		}
 		request.setAttribute("config", config);
 		request.setAttribute("appl", appl);
 		request.setAttribute("winIsLoggedIn", winPrincipal);
@@ -112,6 +144,10 @@ public class GenericWSClientServlet extends SavvisServlet {
 				pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  You are not authorized to access this page<br/>");
 			}
 		}
+		String input = request.getParameter("xml");
+		if("call".equals(action) && (input == null || input.trim().length() == 0)) {
+			pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  You must supply input XML to run the web service<br/>");
+		}
 
 logger.info("action = "+(action));
 		if (!ObjectUtil.isEmpty(pageMap.get("fatalMsg"))) { 
@@ -125,47 +161,88 @@ logger.info("action = "+(action));
 		String endpoint = ws.getTextContent("{endpoint}");
 		GenericWebServiceClient client = new GenericWebServiceClient(wsdl, endpoint);
 		request.setAttribute("operations", client.getAvailableOperations());
-		String operation = request.getParameter("operation");
+		
+		if(wsdl.indexOf("localhost") != -1)
+			wsdl = StringUtil.replaceSubstring(wsdl, "localhost", java.net.InetAddress.getLocalHost().getCanonicalHostName());
 		
 		if("call".equals(action)) {
-			String input = request.getParameter("xml");
+			if(input == null || input.trim().length() == 0) {
+				pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  You are not authorized to access this page<br/>");
+			}
 			input = input.substring(input.indexOf('<'));
 			String output = client.invoke(operation, input).getOutput();
 
+			if("1".equals(request.getParameter("attachment")))
+				response.setHeader("Content-Disposition", "attachment; filename=\""+operation+ ".xml\"");
 			response.setContentType("application/xml");
-			response.getWriter().write(output);
+			if("1".equals(request.getParameter("pretty"))) {
+				XmlCreator xml = XmlCreator.parseXml(output);
+				xml.setSorted(true);
+				response.getWriter().write(xml.toString());
+			} else {
+				response.getWriter().write(output);
+			}
 			return;
 		} else if("sample".equals(action)) {
 			response.setContentType("application/xml");
-			
-			List<SimpleNode> configs = new SimpleNode(XmlUtil.loadDocumentFromFileAsStream("/properties/wsSamples.xml")
-						.getFirstChild()).getChildren("client");
 
-			outerLoop:
-			for (SimpleNode configSample : configs) {
-				if(config.equals(configSample.getAttribute("config")) && appl.equals(configSample.getAttribute("appl"))) {
-					for (SimpleNode sample : configSample.getChildren("sample")) {
-						if(operation.equals(sample.getAttribute("operation"))) {
-							for (SimpleNode sampleXml : sample.getChildren()) {
-								if(sampleXml.getNodeType() != Node.TEXT_NODE) {
-									String xml = ""+sampleXml;
-									xml = xml.substring(xml.indexOf("?>")+2);
-									response.getWriter().write(xml);
-									break outerLoop;
-								}
-							}
-						}
-					}
-				}
-			}
+			String xml = getSampleXml(config, appl, operation);
+			response.getWriter().write(xml);
 			return;
+		} else if("useSample".equals(action)) {
+			String xml = getSampleXml(config, appl, operation);
+			request.setAttribute("xml", xml);
+		} else if(ServletFileUpload.isMultipartContent(request)) {
+			
+			// Process the uploaded items
+			for (FileItem item : items) {
+		    if (!item.isFormField()) {
+		    	try {
+		    		request.setAttribute("xml", FileUtil.loadFileFromStream(item.getInputStream()));
+						break;
+		    	} catch (Exception e) {
+						logger.error("", e);
+						throw new RuntimeException("The file is either corrupted or is not of the correct type.  " +
+								"Make sure you have saved the export as file type .xml and try to upload again.");
+					}
+		    }
+			}
 		}
-		
+
 		request.setAttribute("title", ws.getTextContent("{title}"));
 		request.setAttribute("wsdl", wsdl);
 		request.setAttribute("operation", operation);
 		
 		forward("/jsp/ws/genericWebServiceClient.jsp", request, response);
+	}
+
+	/**
+	 * @param response
+	 * @param config
+	 * @param appl
+	 * @param operation
+	 * @throws IOException
+	 */
+	private String getSampleXml(String config, String appl, String operation)
+				throws IOException {
+		List<SimpleNode> configs = new SimpleNode(XmlUtil.loadDocumentFromFileAsStream("/properties/wsSamples.xml")
+					.getFirstChild()).getChildren("client");
+
+		for (SimpleNode configSample : configs) {
+			if(config.equals(configSample.getAttribute("config")) && appl.equals(configSample.getAttribute("appl"))) {
+				for (SimpleNode sample : configSample.getChildren("sample")) {
+					if(operation.equals(sample.getAttribute("operation"))) {
+						for (SimpleNode sampleXml : sample.getChildren()) {
+							if(sampleXml.getNodeType() != Node.TEXT_NODE) {
+								String xml = ""+sampleXml;
+								return xml.substring(xml.indexOf("?>")+2);
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
 	}
 	
 	private String getFatalMsg(Map pageMap) {

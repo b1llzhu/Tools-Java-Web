@@ -2863,7 +2863,7 @@
 		<name>contains</name>
 		<function-class>com.savvis.it.tags.Functions</function-class>
 		<function-signature>
-			boolean contains( java.util.Collection, java.lang.Object )
+			boolean contains( java.lang.Object, java.lang.Object )
 		</function-signature>
 	</function>
 	<function>
@@ -2885,6 +2885,26 @@
 		<function-class>com.savvis.it.db.util.BeanUtil</function-class>
 		<function-signature>
 			java.lang.Object getNullSafeProperty( java.lang.Object, java.lang.String )
+		</function-signature>
+	</function>
+	<function>
+		<description>
+			This function returns the lower case version of the string passed in
+		</description>
+		<name>toLowerCase</name>
+		<function-class>com.savvis.it.tags.Functions</function-class>
+		<function-signature>
+			java.lang.String toLowerCase( java.lang.String )
+		</function-signature>
+	</function>
+	<function>
+		<description>
+			This function returns the upper case version of the string passed in
+		</description>
+		<name>toUpperCase</name>
+		<function-class>com.savvis.it.tags.Functions</function-class>
+		<function-signature>
+			java.lang.String toUpperCase( java.lang.String )
 		</function-signature>
 	</function>
 </taglib>
