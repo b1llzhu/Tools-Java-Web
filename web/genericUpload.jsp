@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.18 2008/10/27 19:28:27 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.19 2009/02/10 21:15:18 dyoung Exp $
 
 --%>
 
@@ -232,6 +232,38 @@
 										</form>
 									</c:if>
 									
+									<c:if test='${hasFileUploads eq "1"}'>
+										<% try { %>
+											<c:forEach items="${fileUploads}" var="fU">
+												<c:set var="fileUpload" value="${fU.value}" />
+
+												<form method="post" name="frm_${fileUpload.name}" enctype="multipart/form-data">
+													<input type="hidden" name="action" value="upload"/>
+													<input type="hidden" name="appl" value="${appl}"/>
+													<input type="hidden" name="config" value="${config}"/>
+													<input type="hidden" name="key" value="${key}"/>
+													<input type="hidden" name="fileUploadTarget" value="${fileUpload.target}"/>
+											
+													<span class="fileListHdr">${fileUpload.display}</span>
+													<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
+														<tr><th class="listTblHdr">Filename</th></tr>
+
+														<c:if test="${action.description != null}">
+															<tr><td class="actionDescription">${fileUpload.description}</td></tr>
+														</c:if>
+			
+														<tr><td style="width: 60%;" class="listCell"><input class="fileInput" type="file" name="file"/></td></tr>
+													</table>
+													<button onclick="frm_${fileUpload.name}.submit();">${fileUpload.buttonLabel}</button>
+													<br/><br/><br/>
+												</form>
+											</c:forEach>
+										<%  } catch(Exception e) {
+												e.printStackTrace(new java.io.PrintWriter(out));
+											} 
+										%>
+									</c:if>
+									
 									<c:if test='${hasActions eq "1"}'>
 										<span class="fileListHdr">Perform Actions</span>
 										<table width="100%" cellspacing="2" cellpadding="2" class="actionTbl">
@@ -249,7 +281,7 @@
 											
 
 												<tr><th class="listTblHdr">${action.display}</th></tr>
-												<c:if test="${action.display != null}">
+												<c:if test="${action.description != null}">
 													<tr><td class="actionDescription">${action.description}</td></tr>
 												</c:if>
 												
@@ -311,7 +343,7 @@
 									</c:if>
 									
 									<span class="fileListHdr">Information Logs</span>
-									<iframe frameborder="0" id="runInfoLog" src="runInfo?path=${keyMap.path}" 
+									<iframe frameborder="0" id="runInfoLog" src="runInfo?path=${keyMap.path}&runInfo=${keyMap.runInfo}" 
 										style="border-collapse: collapse; border: 0px; height: 300px; width: 100%;"></iframe>
 									<br/><br/><br/>
 								</td>
@@ -323,7 +355,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td colspan=2><img src="common/images/savvisLogo.jpg" width="300" align="right"/></td>
+				<td colspan=2><img src="common/images/savvisLogoRebranded.png" width="300" align="right"/></td>
 			</tr>
 		</table>		
 	</c:otherwise>
