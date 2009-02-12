@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.43 2009/02/10 21:19:48 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.44 2009/02/12 19:02:02 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.43 2009/02/10 21:19:48 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.44 2009/02/12 19:02:02 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -70,12 +70,19 @@ public class GenericUploadServlet extends SavvisServlet {
 	 */
 	protected void processRequest(String action, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
+		Map parmMap = request.getParameterMap();
+		for (int i = 0; i < parmMap.keySet().toArray().length; i++) {
+			Object key = parmMap.keySet().toArray()[i];
+			logger.info("key: " + key);
+			logger.info("parmMap.get(" + key + "): " + request.getParameter(key.toString()));
+		}
+
 		String jspPage = "genericUpload.jsp";
 		
 		String configFileExt = ".xml";
 		String configFileDefaultDir = "config/misc/";
 		
-		final Map<String, String> pageMap = new HashMap<String, String>();
+		final Map<String, Object> pageMap = new HashMap<String, Object>();
 
 		WindowsAuthenticationFilter.WindowsPrincipal winPrincipal = null;
 		
@@ -85,8 +92,7 @@ public class GenericUploadServlet extends SavvisServlet {
 		 * instead of only checking on a refresh and removing THAT key's thread
 		 * if it's not active anymore, we need to actually loop through EVERY
 		 * thread in the hash and check to see if we have any dead threads out
-		 * there - it's possible some threads could be left in the map if that
-		 * particular page isn't refreshed for a while
+		 * there - it's possible some threads could be left in the map if that		 * particular page isn't refreshed for a while
 		 */
 		if (threadChecker == null) {
 			threadChecker = new Thread() {
@@ -103,6 +109,7 @@ public class GenericUploadServlet extends SavvisServlet {
 							sleep(30000);
 						}
 					} catch (Exception e) {
+						logger.error("", e);
 						throw new RuntimeException(e);
 					}
 				}
@@ -119,6 +126,7 @@ public class GenericUploadServlet extends SavvisServlet {
 				basedir = basedir.substring(0, basedir.length()-1);
 			
 			winPrincipal = (WindowsAuthenticationFilter.WindowsPrincipal) request.getSession().getAttribute(WindowsAuthenticationFilter.AUTHENTICATION_PRINCIPAL_KEY);
+			pageMap.put("winPrincipal", winPrincipal);
 					
 			// load up the global context
 			globalContext.add("global", "username", winPrincipal.getName());
@@ -132,7 +140,7 @@ public class GenericUploadServlet extends SavvisServlet {
 			pageMap.put("appl", "".equals(request.getParameter("appl")) ? (String)request.getAttribute("appl") : request.getParameter("appl"));
 			if (ObjectUtil.isEmpty(pageMap.get("appl")))
 				pageMap.put("fatalMsg", getFatalMsg(pageMap)+"ERROR:  Missing required parameter (APPL) required.<br/>");
-			SystemUtil.setAPPL(pageMap.get("appl"));
+			SystemUtil.setAPPL(pageMap.get("appl").toString());
 
 			pageMap.put("config", "".equals(request.getParameter("config")) ? (String)request.getAttribute("config") : request.getParameter("config"));
 			if (ObjectUtil.isEmpty(pageMap.get("config"))) {
@@ -148,6 +156,30 @@ public class GenericUploadServlet extends SavvisServlet {
 			}
 			
 			pageMap.put("key", request.getParameter("key"));
+			
+			// if we have an effective user, store it away
+			pageMap.remove("effectiveUsername");
+			logger.info("request.getParameter(\"frmEffectiveUsername\"): (" + request.getParameter("frmEffectiveUsername") + ")");
+			logger.info("request.getParameter(\"effectiveUsername\"): (" + request.getParameter("effectiveUsername") + ")");
+			logger.info("request.getAttribute(\"effectiveUsername\"): " + request.getAttribute("effectiveUsername"));
+			Object newEffectiveUsername = request.getParameter("frmEffectiveUsername");
+			if (ObjectUtil.isEmpty(newEffectiveUsername)) {
+				newEffectiveUsername = request.getParameter("effectiveUsername");
+			}
+			if (ObjectUtil.isEmpty(newEffectiveUsername)) {
+				newEffectiveUsername = request.getAttribute("effectiveUsername");
+			}
+			logger.info("newEffectiveUsername: " + newEffectiveUsername);
+			
+			if (!ObjectUtil.isEmpty(newEffectiveUsername)) {
+				pageMap.put("effectiveUsername", newEffectiveUsername.toString());
+				
+				// if we switch back to ourselves, remove the effective user
+				if (winPrincipal.getName().equals(pageMap.get("effectiveUsername"))) {
+					pageMap.remove("effectiveUsername");
+				}
+				request.setAttribute("effectiveUsername", pageMap.get("effectiveUsername"));
+			}
 			
 			// if we have a fatal message - stop processing and skip to the end
 			if (!ObjectUtil.isEmpty(pageMap.get("fatalMsg"))) {
@@ -290,7 +322,7 @@ public class GenericUploadServlet extends SavvisServlet {
 								Thread t = new Thread() {
 									public void run() {
 										try {
-											SystemUtil.setAPPL(pageMap.get("appl"));
+											SystemUtil.setAPPL(pageMap.get("appl").toString());
 											new WebJobRunner(job, args.split(" ")).start();
 											SystemUtil.setAPPL(null);
 										} catch (Exception e) {
@@ -299,7 +331,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									}
 								};
 								if(pageMap.get("key") != null)
-									threadMap.put(pageMap.get("key"), t);
+									threadMap.put(pageMap.get("key").toString(), t);
 								t.start();
 								request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 							} else {
@@ -341,7 +373,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									Thread t = new Thread() {
 										public void run() {
 											try {
-												SystemUtil.setAPPL(pageMap.get("appl"));
+												SystemUtil.setAPPL(pageMap.get("appl").toString());
 												clp.run(cmd);
 												SystemUtil.setAPPL(null);
 											} catch (Exception e) {
@@ -350,7 +382,7 @@ public class GenericUploadServlet extends SavvisServlet {
 										}
 									};
 									if(pageMap.get("key") != null)
-										threadMap.put(pageMap.get("key"), t);
+										threadMap.put(pageMap.get("key").toString(), t);
 									t.start();
 									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 								} else {
@@ -410,7 +442,7 @@ public class GenericUploadServlet extends SavvisServlet {
 					// Process the uploaded items
 					Iterator iter = items.iterator();
 					FileItem uploadItem = null;
-					String fileUploadTarget = null;
+					String uploadName = null;
 					while (iter.hasNext()) {
 					    FileItem item = (FileItem) iter.next();
 			
@@ -419,8 +451,8 @@ public class GenericUploadServlet extends SavvisServlet {
 					    	uploadItem = item;
 					    }
 					    
-					    if ("fileUploadTarget".equals(item.getFieldName())) {
-					    	fileUploadTarget = item.getString();
+					    if ("uploadName".equals(item.getFieldName())) {
+					    	uploadName = item.getString();
 					    }
 					}
 					
@@ -428,18 +460,23 @@ public class GenericUploadServlet extends SavvisServlet {
 				        String fullFileName = uploadItem.getName();
 				        String fileName = StringUtil.getLastToken(fullFileName, '\\');
 
-				        // for legacy purposes, we may not have a file upload target, in this case, use "pending" like we used to
-				        if (ObjectUtil.isEmpty(fileUploadTarget)) {
-				        	fileUploadTarget = (String) directoriesMap.get("pending").get("path");
+				        // retrieve and use the file upload config, otherwise for legacy purposes, 
+				        // we have to use "pending" like we used to
+				        String destDir = "";
+				        Map fileUploadMap = null;
+				        if (!ObjectUtil.isEmpty(uploadName)) {
+				        	fileUploadMap = (Map)((Map)keyMap.get("fileUploads")).get(uploadName);
+				        	logger.info("fileUploadMap: " + fileUploadMap);
+				        	destDir = keyMap.get("path").toString() + "/" + fileUploadMap.get("target");				        	
 				        } else {
-				        	fileUploadTarget = keyMap.get("path").toString() + "/" + fileUploadTarget;				        	
+				        	destDir = (String) directoriesMap.get("pending").get("path");
 				        }
 
 			        	if (!ObjectUtil.isEmpty(fileName)) {
-					        if (!fileUploadTarget.endsWith("/"))
-					        	fileUploadTarget = fileUploadTarget.concat("/");
+					        if (!destDir.endsWith("/"))
+					        	destDir = destDir.concat("/");
 					        
-					        File fileToCreate = new File(fileUploadTarget + fileName);
+					        File fileToCreate = new File(destDir + fileName);
 					        
 					        // check to see if the file already exists
 					        if (fileToCreate.exists()) {
@@ -447,9 +484,16 @@ public class GenericUploadServlet extends SavvisServlet {
 					        	
 					        // otherwise, write the file
 					        } else {
-						        // if we have a reg ex, check to see if the file name matches it
-					        	if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx")) && !fileName.matches(keyMap.get("fileNameRegEx").toString())) {
+					        	// if we have a reg ex, check to see if the file name matches it
+				        		logger.info("fileName: " + fileName);
+					        	if (!ObjectUtil.isEmpty(fileUploadMap.get("fileNameRegEx")) && !fileName.matches(fileUploadMap.get("fileNameRegEx").toString())) {
+					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + fileUploadMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+				        	
+				        		// for legacy sake, check the old reg ex
+					        	} else if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx")) && !fileName.matches(keyMap.get("fileNameRegEx").toString())) {
 					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        		
+					        	// 
 					        	} else {
 						        	uploadItem.write(fileToCreate);
 						        	
@@ -635,6 +679,27 @@ public class GenericUploadServlet extends SavvisServlet {
 //					
 //				}
 
+				// determine if the user is a generic upload admin for this key
+				if (!ObjectUtil.isEmpty(keyMap.get("authorizedAdminList"))) {
+					AuthorizationObject authAdminObject = isAdmin(keyMap, winPrincipal);
+					if (authAdminObject.isAuthorized) {
+						request.setAttribute("isAdmin", "1");
+
+						// if an admin list is specified and
+						// if the current user is an admin and
+						// if the switch flag is on then
+						// retrieve the list of available users for this upload
+						if ("1".equals(request.getParameter("switch"))) {
+							
+							// for now, we'll use the authorizedUserList in the keyMap
+							// this might later be changed to pull from other authorization sources
+							request.setAttribute("effectiveUsers", keyMap.get("authorizedUserList"));
+						}
+					}
+					
+				}
+				
+				// pass along our switch variable
 				request.setAttribute("allowUpload", keyMap.get("allowUpload"));
 				request.setAttribute("keyMap", keyMap);
 				request.setAttribute("directories", keyMap.get("directories"));
@@ -651,6 +716,7 @@ public class GenericUploadServlet extends SavvisServlet {
 		request.setAttribute("appl", pageMap.get("appl"));
 		request.setAttribute("config", pageMap.get("config"));
 		request.setAttribute("key", pageMap.get("key"));
+		request.setAttribute("switch", request.getParameter("switch"));
 
 		// always put back in the logged in credentials
 		request.setAttribute("isLoggedIn", winPrincipal);
@@ -740,12 +806,12 @@ public class GenericUploadServlet extends SavvisServlet {
 		AuthorizationObject authObject = new AuthorizationObject();
 		
 		// always check for the authList for legacy compatability, then check for the newer "auth" sections for the different kinds
-			List authUserList = (List) keyMap.get("authorizedUserList");
-			if (!ObjectUtil.isEmpty(keyMap.get("authorizedUserList"))) {
+		List authUserList = (List) keyMap.get("authorizedUserList");
+		if (!ObjectUtil.isEmpty(keyMap.get("authorizedUserList"))) {
 			if (authUserList.contains(winPrincipal.getName().toLowerCase())) {
 				authObject.setIsAuthorized(true);
 			} else {
-				logger.info("current user (" + winPrincipal.getName() + ") is not authorized to use the file utility for (" + keyMap.get("type") + ")");
+//				logger.info("current user (" + winPrincipal.getName() + ") is not authorized to use the file utility for (" + keyMap.get("type") + ")");
 				authObject.setMessage("Sorry!  You don't have access to use the file utility for " + keyMap.get("type") + ".");
 				authObject.setIsAuthorized(false);
 			} 
@@ -755,7 +821,24 @@ public class GenericUploadServlet extends SavvisServlet {
 		
 		return authObject;
 	}
-	
+
+	private AuthorizationObject isAdmin(Map keyMap, WindowsPrincipal winPrincipal) throws Exception {
+		AuthorizationObject authObject = new AuthorizationObject();
+		
+		// always check for the authList for legacy compatability, then check for the newer "auth" sections for the different kinds
+		List authUserList = (List) keyMap.get("authorizedAdminList");
+		if (!ObjectUtil.isEmpty(keyMap.get("authorizedAdminList"))) {
+			if (authUserList.contains(winPrincipal.getName().toLowerCase())) {
+				authObject.setIsAuthorized(true);
+			} else {
+				authObject.setIsAuthorized(false);
+			} 
+			return authObject;
+		}
+
+		
+		return authObject;
+	}
 	/**
 	 * validate the incoming config
 	 * 
@@ -769,7 +852,7 @@ public class GenericUploadServlet extends SavvisServlet {
 	 * @return
 	 * @throws Exception
 	 */
-	private List<String> validateConfig(SimpleNode doc, Map<String, String> pageMap, Map<String, Map<String, Object>> configMap, WindowsPrincipal user) throws Exception {
+	private List<String> validateConfig(SimpleNode doc, Map<String, Object> pageMap, Map<String, Map<String, Object>> configMap, WindowsPrincipal user) throws Exception {
 		
 		List<String> messages = new ArrayList<String>();
 		
@@ -815,7 +898,33 @@ public class GenericUploadServlet extends SavvisServlet {
 								continue;
 							}
 						}
-						
+
+						// we want to process this section up at the top of this validation method
+						// because things below it might depend if they aren't an "admin"
+						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("{authorizedAdmins}"))) {
+							File file = new File(uploadNode.getTextContent("{authorizedAdmins}"));
+							if (!file.exists()) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " authorizedAdmins file (" + file.getAbsolutePath() + ") does not exist or cannot be found");
+							} else {
+								String s = FileUtil.loadFile(file.getAbsolutePath());
+								s = s.toLowerCase();
+								uploadMap.put("authorizedAdminList", StringUtil.toList(s, "\n "));
+
+								// let's go ahead and see if the user is an admin, since things below might
+								// depend on it
+								AuthorizationObject authAdminObject = isAdmin(uploadMap, (WindowsPrincipal)pageMap.get("winPrincipal"));
+								if (!authAdminObject.isAuthorized) {
+									pageMap.remove("effectiveUsername");
+								}
+
+							}
+						} else {
+							// without an admin list, we have no admins - so we therefore can have no "effectiveusers"
+							// kill it here in case someone snuck it in on the url
+							pageMap.remove("effectiveUsername");
+						}
+
+
 						if (!ObjectUtil.isEmpty(uploadNode.getAttribute("allowUpload"))) {
 							
 							if (!ObjectUtil.isEmpty(pageMap.get("key")))
@@ -846,16 +955,28 @@ public class GenericUploadServlet extends SavvisServlet {
 						if (ObjectUtil.isEmpty(uploadNode.getTextContent("path"))) {
 							messages.add("[Upload #" + uploadCnt + "]" + typeLog + " path keyword not found");
 						} else {
-							if (uploadNode.getTextContent("path").endsWith("/")) {
-								uploadMap.put("path", uploadNode.getTextContent("path").substring(0, uploadNode.getTextContent("path").length()-1));
-							} else {
-								uploadMap.put("path", uploadNode.getTextContent("path"));
+							String path = uploadNode.getTextContent("path");
+							if (path.endsWith("/")) {
+								path = path.substring(0, path.length()-1);
 							}
-							uploadMap.put("path", globalContext.keywordSubstitute(uploadMap.get("path").toString()));
+							
+							// if we are acting as another user, also need to substitute out here
+							if (!ObjectUtil.isEmpty(pageMap.get("effectiveUsername"))) {
+								path = path.replace(globalContext.get("global", "username"), pageMap.get("effectiveUsername").toString());
+							}
+							uploadMap.put("path", globalContext.keywordSubstitute(path));
 						}
 
 						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("runInfo"))) {
-							uploadMap.put("runInfo", globalContext.keywordSubstitute(uploadNode.getTextContent("runInfo")));
+							String runInfo = uploadNode.getTextContent("runInfo");
+							
+							runInfo = globalContext.keywordSubstitute(runInfo);
+							
+							// if we are acting as another user, also need to substitute out here
+							if (!ObjectUtil.isEmpty(pageMap.get("effectiveUsername"))) {
+								runInfo = runInfo.replace(globalContext.get("global", "username"), pageMap.get("effectiveUsername").toString());
+							}
+							uploadMap.put("runInfo", runInfo);
 						}
 
 						// process the directories
@@ -872,6 +993,10 @@ public class GenericUploadServlet extends SavvisServlet {
 									String directoryKey = null;
 									if (!ObjectUtil.isEmpty(directoryNode.getAttribute("key"))) {
 										directoryKey = globalContext.keywordSubstitute(directoryNode.getAttribute("key"));
+										
+										if (!ObjectUtil.isEmpty(pageMap.get("effectiveUsername"))) {
+											directoryKey = directoryKey.replace(globalContext.get("global", "username"), pageMap.get("effectiveUsername").toString());
+										}
 									} else {
 										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " directory " + j + " required a 'key' attribute");
 										continue;
@@ -984,7 +1109,7 @@ public class GenericUploadServlet extends SavvisServlet {
 								uploadMap.put("authorizedUserList", StringUtil.toList(s, "\n "));
 							}
 						}
-
+						
 						// look for actions
 						if (!ObjectUtil.isEmpty(uploadNode.getSimpleNode("{actions}"))) {
 							NodeList actions = uploadNode.getSimpleNode("{actions}").getChildNodes("action");
@@ -1097,7 +1222,16 @@ public class GenericUploadServlet extends SavvisServlet {
 									}
 									
 									if (!ObjectUtil.isEmpty(fileUploadNode.getTextContent("{target}"))) {
-										fileUploadMap.put("target", globalContext.keywordSubstitute(fileUploadNode.getTextContent("{target}")));
+										String target = fileUploadNode.getTextContent("{target}");
+										logger.info("target: " + target);
+										target = globalContext.keywordSubstitute(target);
+										
+										if (!ObjectUtil.isEmpty(pageMap.get("effectiveUsername"))) {
+											target = target.replace(globalContext.get("global", "username"), pageMap.get("effectiveUsername").toString());
+										}
+										
+										logger.info("target: " + target);
+										fileUploadMap.put("target", target);
 									} else {
 										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload [" + fileUploadNode.getAttribute("name") + "] must have target element");
 									}
