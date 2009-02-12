@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.19 2009/02/10 21:15:18 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.20 2009/02/12 19:01:04 dyoung Exp $
 
 --%>
 
@@ -26,6 +26,7 @@
 	<input type="hidden" name="download" value="1"/>
 	<input type="hidden" name="file" value=""/>
 	<input type="hidden" name="dir" value=""/>
+	<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}"/>
 </form>
 
 <form name="moveFileForm" method="post">
@@ -38,6 +39,7 @@
 	<input type="hidden" name="path" value=""/>
 	<input type="hidden" name="description" value=""/>
 	<input type="hidden" name="target" value=""/>
+	<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}"/>
 </form>
 
 <c:choose>
@@ -59,7 +61,12 @@
 									<a class="pageNav" href="?appl=${appl}&config=${config}">Refresh This Page</a>
 								</c:if>
 								<c:if test='${key ne "" and key != null and authorized}'>
-									<a class="pageNav" href="?appl=${appl}&config=${config}&key=${key}">Refresh This Page</a>
+									<c:if test='${isAdmin eq "1"}'>
+										<a class="pageNav" href="?appl=${appl}&config=${config}&effectiveUsername=${effectiveUsername}&key=${key}">Refresh This Page</a>
+									</c:if>
+									<c:if test='${isAdmin ne "1"}'>
+										<a class="pageNav" href="?appl=${appl}&config=${config}&key=${key}">Refresh This Page</a>
+									</c:if>
 									<br/><br/>
 									<a class="pageNav" href="?appl=${appl}&config=${config}">Return to Upload List</a>
 								</c:if>
@@ -73,11 +80,15 @@
 							<input type="hidden" name="appl" value="${appl}"/>
 							<input type="hidden" name="config" value="${config}"/>
 							<input type="hidden" name="key" value="${key}">
+							<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}">
 					</c:if>
 
 					<table width="100%" cellspacing="0" cellpadding="0">
 						<tr><td class="uploadHdr"><strong>File Upload Utility ${uploadKeyDisplay}</strong></td></tr>
 						<tr><td class="uploadTitle">Welcome ${winIsLoggedIn.name}!</td></tr>
+						<c:if test='${isAdmin eq "1" and !empty effectiveUsername}'>
+							<tr><td class="uploadSubTitle">You are currently acting as ${effectiveUsername}.</td></tr>
+						</c:if>
 					</table>
 					<br/>
 					
@@ -113,23 +124,26 @@
 					
 						<table width="100%" cellspacing="0" cellpadding="5">
 							<tr>
-								<td width="50%" valign="top">
-								
+								<td colspan="2" valign="top">
 									<c:if test='${message ne "" and message != null}'>
 										<table width="100%" cellspacing="0" cellpadding="0">
 											<tr><td class="bodyText">Messages:</td></tr>
 											<tr><td class="messageText">${message}</td></tr>
 										</table>
-										<br/></br>
+										<br/>
 									</c:if>	
 									<c:if test='${errMessage ne "" and errMessage != null}'>
 										<table width="100%" cellspacing="0" cellpadding="0">
 											<tr><td class="bodyText">Messages:</td></tr>
 											<tr><td class="messageTextError">${errMessage}</td></tr>
 										</table>
-										<br/></br>
+										<br/>
 									</c:if>		
-						
+								</td>
+							</tr>
+							<tr>
+								<td width="50%" valign="top">
+								
 									<c:forEach items="${directories}" var="d">
 										<c:set var="dir" value="${d.value}" />
 										<c:set var="classSuffix" value="" />
@@ -221,6 +235,7 @@
 											<input type="hidden" name="appl" value="${appl}"/>
 											<input type="hidden" name="config" value="${config}"/>
 											<input type="hidden" name="key" value="${key}"/>
+											<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}"/>
 									
 										<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
 											<span class="fileListHdr">Upload A File</span>
@@ -228,7 +243,7 @@
 											<tr><td style="width: 60%;" class="listCell"><input class="fileInput" type="file" name="hrFile"/></td></tr>
 										</table>
 										<button onclick="frm.submit();">Upload</button>
-										<br/><br/><br/>
+										<br/><br/>
 										</form>
 									</c:if>
 									
@@ -242,7 +257,9 @@
 													<input type="hidden" name="appl" value="${appl}"/>
 													<input type="hidden" name="config" value="${config}"/>
 													<input type="hidden" name="key" value="${key}"/>
-													<input type="hidden" name="fileUploadTarget" value="${fileUpload.target}"/>
+													<input type="hidden" name="uploadName" value="${fileUpload.name}"/>
+													<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}"/>
+													
 											
 													<span class="fileListHdr">${fileUpload.display}</span>
 													<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
@@ -340,6 +357,48 @@
 											%>
 										</table>
 										<br/><br/>
+									</c:if>
+									
+									<c:if test='${isAdmin eq "1" and switch ne "1"}'>
+										<form method="post" name="frmSwitch">
+											<input type="hidden" name="action" value="switch"/>
+											<input type="hidden" name="appl" value="${appl}"/>
+											<input type="hidden" name="config" value="${config}"/>
+											<input type="hidden" name="key" value="${key}"/>
+											<input type="hidden" name="switch" value="1"/>
+											<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}"/>
+									
+											<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
+												<span class="fileListHdr">Switch to Other User</span>
+												<tr><th class="listTblHdr">Username</th></tr>
+												<tr>
+													<td style="width: 60%;" class="listCell">
+														<button onclick="frmSwitch.submit();">Switch</button>
+													</td>
+												</tr>
+											</table>
+											<br/><br/>
+										</form>
+									</c:if>
+									<c:if test='${isAdmin eq "1" and switch eq "1"}'>
+										<form method="post" name="frmSwitchUser">
+											<input type="hidden" name="action" value="switch"/>
+											<input type="hidden" name="appl" value="${appl}"/>
+											<input type="hidden" name="config" value="${config}"/>
+											<input type="hidden" name="key" value="${key}"/>
+									
+											<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
+												<span class="fileListHdr">Switch to Other User</span>
+												<tr><th class="listTblHdr">Username</th></tr>
+												<tr>
+													<td style="width: 60%;" class="listCell">
+														<sv:select id="frmEffectiveUsername" name="frmEffectiveUsername" items="${effectiveUsers}"/>
+														&nbsp;&nbsp;<button onclick="frmSwitchUser.submit();">Switch To</button>
+													</td>
+												</tr>
+											</table>
+											<br/><br/>
+										</form>
 									</c:if>
 									
 									<span class="fileListHdr">Information Logs</span>
