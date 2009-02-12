@@ -116,6 +116,7 @@ public class GenericWSClientServlet extends SavvisServlet {
 		}
 		request.setAttribute("config", config);
 		request.setAttribute("appl", appl);
+		request.setAttribute("operation", operation);
 		request.setAttribute("winIsLoggedIn", winPrincipal);
 		
 		File configFile = new File(SystemUtil.getProperty("BASEDIR")+"/"+appl+"/etc/"+config+".xml");

@@ -36,14 +36,14 @@
 							Enter the input xml and click Execute<br>
 							WSDL:  <a href="${wsdl}">${wsdl}</a><br>
 							Operation:  
-							<sv:select name="operation" items="${operations}" addEmptyEntry="false"/>&nbsp;
+							<sv:select name="operation" items="${operations}" value="${operation}" addEmptyEntry="false"/>&nbsp;
 							<button onclick="svSubmitAction('sample', 'sampleWindow'); focusPopup('sampleWindow')"
 								accesskey="S"><u>S</u>how Sample XML</button>&nbsp;
 							<button onclick="svSubmitAction('useSample');"
 								accesskey="U"><u>U</u>se Sample XML</button><br>
 							<input type="file" name="xmlUpload" onchange="toggleUploadXmlButton(this.value)" size="75" class="button">&nbsp;
 							<button id='uploadXmlButton' disabled="disabled" onclick="uploadXml();"
-										>Upload Xml from File</button>&nbsp;
+										>Upload Xml from File</button>&nbsp; 
 						</td>
 						<td width="10%"></td>
 					</tr>

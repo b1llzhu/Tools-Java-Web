@@ -36,8 +36,7 @@
 										385
 									</optionDefinitionId>
 									<value>
-										Red Hat Enterprise Linux AS v4
-										32 bit Managed Operating System
+										Red Hat Enterprise Linux AS v4 32 bit Managed Operating System
 									</value>
 									<quantity>1</quantity>
 								</option>
@@ -54,6 +53,13 @@
 				<system>Acuity</system>
 				<accountNumber>1234</accountNumber>
 			</doesAccountHaveGoodCredit>
+		</sample>
+	</client>
+	<client appl="vantive" config="createWorkRequestWS">
+		<sample operation="getWorkRequest">
+			<getWorkRequest>
+				<workRequestId>455112</workRequestId>
+			</getWorkRequest>
 		</sample>
 	</client>
 	<client appl="vantive" config="createWorkRequestWS">
@@ -136,8 +142,7 @@
 											<nrcList>350</nrcList>
 										</price>
 										<value>
-											Cisco ASA with Intrusion
-											Detection
+											Cisco ASA with Intrusion Detection
 										</value>
 									</option>
 									<option>
@@ -251,8 +256,7 @@
 											<nrcList>350</nrcList>
 										</price>
 										<value>
-											Cisco ASA with Intrusion
-											Detection
+											Cisco ASA with Intrusion Detection
 										</value>
 									</option>
 									<option>
