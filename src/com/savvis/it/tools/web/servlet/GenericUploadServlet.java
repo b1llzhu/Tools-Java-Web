@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.44 2009/02/12 19:02:02 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.45 2009/02/12 20:44:17 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.44 2009/02/12 19:02:02 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.45 2009/02/12 20:44:17 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -485,16 +485,24 @@ public class GenericUploadServlet extends SavvisServlet {
 					        // otherwise, write the file
 					        } else {
 					        	// if we have a reg ex, check to see if the file name matches it
+					        	Boolean okToWrite = true;
 				        		logger.info("fileName: " + fileName);
-					        	if (!ObjectUtil.isEmpty(fileUploadMap.get("fileNameRegEx")) && !fileName.matches(fileUploadMap.get("fileNameRegEx").toString())) {
-					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + fileUploadMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        	if (fileUploadMap != null && !ObjectUtil.isEmpty(fileUploadMap.get("fileNameRegEx"))) {
+					        		if (!fileName.matches(fileUploadMap.get("fileNameRegEx").toString())) {
+					        			request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + fileUploadMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        			okToWrite = false;
+					        		}
 				        	
 				        		// for legacy sake, check the old reg ex
-					        	} else if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx")) && !fileName.matches(keyMap.get("fileNameRegEx").toString())) {
-					        		request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
-					        		
-					        	// 
-					        	} else {
+					        	} else if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx"))) {
+					        		if (!fileName.matches(keyMap.get("fileNameRegEx").toString())) {
+					        			request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        			okToWrite = false;
+					        		}
+
+					        	}
+					        	
+					        	if (okToWrite) {
 						        	uploadItem.write(fileToCreate);
 						        	
 						        	if (!ObjectUtil.isEmpty(keyMap.get("runInfo"))) {
