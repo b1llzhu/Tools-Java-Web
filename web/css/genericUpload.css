@@ -39,6 +39,12 @@ button, .button {
 	padding-top: 15px;		
 }
 
+.uploadSubTitle {
+	font-family: sans-serif;
+	font-size: 8pt;
+	color: #000;	
+}
+
 .pageNav {
 	font-family: sans-serif;
 	font-size:9pt;
