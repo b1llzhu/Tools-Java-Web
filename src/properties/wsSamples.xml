@@ -58,7 +58,7 @@
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="getWorkRequest">
 			<getWorkRequest>
-				<workRequestId>455112</workRequestId>
+				<workRequestId>418142</workRequestId>
 			</getWorkRequest>
 		</sample>
 	</client>
