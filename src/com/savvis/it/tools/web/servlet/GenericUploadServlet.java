@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.45 2009/02/12 20:44:17 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.46 2009/02/13 00:10:54 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.45 2009/02/12 20:44:17 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.46 2009/02/13 00:10:54 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -92,7 +92,8 @@ public class GenericUploadServlet extends SavvisServlet {
 		 * instead of only checking on a refresh and removing THAT key's thread
 		 * if it's not active anymore, we need to actually loop through EVERY
 		 * thread in the hash and check to see if we have any dead threads out
-		 * there - it's possible some threads could be left in the map if that		 * particular page isn't refreshed for a while
+		 * there - it's possible some threads could be left in the map if that		 
+		 * particular page isn't refreshed for a while
 		 */
 		if (threadChecker == null) {
 			threadChecker = new Thread() {
@@ -249,6 +250,13 @@ public class GenericUploadServlet extends SavvisServlet {
 			// PERFORM ACTION functionality
 			//////////////////////////////////////////////////////////////////////////////////////
 			Thread lkpThread = threadMap.get(pageMap.get("key"));
+
+			// if we notice the override directory for runInfo, that means
+			// we need to try to find a thread a different way
+			if (!ObjectUtil.isEmpty(configMap.get(pageMap.get("key")).get("runInfo"))) {
+				lkpThread = threadMap.get(pageMap.get("key")+winPrincipal.getName());
+			}
+			
 			Boolean processRunning = false;
 			if (!ObjectUtil.isEmpty(lkpThread)) {
 				if (lkpThread.isAlive()) {
@@ -330,8 +338,15 @@ public class GenericUploadServlet extends SavvisServlet {
 										}
 									}
 								};
-								if(pageMap.get("key") != null)
-									threadMap.put(pageMap.get("key").toString(), t);
+								if(pageMap.get("key") != null) {
+									String key = pageMap.get("key").toString();
+									// if we notice the override directory for runInfo, that means
+									// we need to tweak the key a bit
+									if (!ObjectUtil.isEmpty(keyMap.get("runInfo"))) {
+										key += winPrincipal.getName();
+									}
+									threadMap.put(key, t);
+								}
 								t.start();
 								request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 							} else {
@@ -381,8 +396,15 @@ public class GenericUploadServlet extends SavvisServlet {
 											}
 										}
 									};
-									if(pageMap.get("key") != null)
-										threadMap.put(pageMap.get("key").toString(), t);
+									if(pageMap.get("key") != null) {
+										String key = pageMap.get("key").toString();
+										// if we notice the override directory for runInfo, that means
+										// we need to tweak the key a bit
+										if (!ObjectUtil.isEmpty(keyMap.get("runInfo"))) {
+											key += winPrincipal.getName();
+										}
+										threadMap.put(key, t);
+									}
 									t.start();
 									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 								} else {
