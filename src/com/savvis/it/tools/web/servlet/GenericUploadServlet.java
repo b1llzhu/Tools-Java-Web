@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.46 2009/02/13 00:10:54 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.47 2009/02/13 20:20:02 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.46 2009/02/13 00:10:54 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.47 2009/02/13 20:20:02 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -70,12 +70,12 @@ public class GenericUploadServlet extends SavvisServlet {
 	 */
 	protected void processRequest(String action, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
-		Map parmMap = request.getParameterMap();
-		for (int i = 0; i < parmMap.keySet().toArray().length; i++) {
-			Object key = parmMap.keySet().toArray()[i];
-			logger.info("key: " + key);
-			logger.info("parmMap.get(" + key + "): " + request.getParameter(key.toString()));
-		}
+//		Map parmMap = request.getParameterMap();
+//		for (int i = 0; i < parmMap.keySet().toArray().length; i++) {
+//			Object key = parmMap.keySet().toArray()[i];
+//			logger.info("key: " + key);
+//			logger.info("parmMap.get(" + key + "): " + request.getParameter(key.toString()));
+//		}
 
 		String jspPage = "genericUpload.jsp";
 		
@@ -130,7 +130,7 @@ public class GenericUploadServlet extends SavvisServlet {
 			pageMap.put("winPrincipal", winPrincipal);
 					
 			// load up the global context
-			globalContext.add("global", "username", winPrincipal.getName());
+			globalContext.add("global", "username", winPrincipal.getName().toLowerCase());
 			globalContext.add("global", "url", request.getRequestURL() + "?" + request.getQueryString());
 			
 			//////////////////////////////////////////////////////////////////////////////////////
