@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.48 2009/02/19 19:24:54 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.49 2009/02/19 19:38:13 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.48 2009/02/19 19:24:54 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.49 2009/02/19 19:38:13 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -205,7 +205,8 @@ public class GenericUploadServlet extends SavvisServlet {
 			// finally, if we have an effective user, add it to the map
 			if (!ObjectUtil.isEmpty(newEffectiveUsername)) {
 				pageMap.put("effectiveUsername", newEffectiveUsername.toString());
-				
+				globalContext.add("global", "effectiveUsername", newEffectiveUsername);
+
 				// if we switch back to ourselves, remove the effective user
 				if (winPrincipal.getName().equals(pageMap.get("effectiveUsername"))) {
 					pageMap.remove("effectiveUsername");
