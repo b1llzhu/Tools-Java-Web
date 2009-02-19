@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.20 2009/02/12 19:01:04 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.21 2009/02/19 19:24:54 dyoung Exp $
 
 --%>
 
@@ -295,7 +295,7 @@
 													<input type="hidden" name="config" value="${config}"/>
 													<input type="hidden" name="key" value="${key}"/>
 													<input type="hidden" name="action_name" value="${action.name}"/>
-											
+													<input type="hidden" name="frmEffectiveUsername" value="${effectiveUsername}"/>
 
 												<tr><th class="listTblHdr">${action.display}</th></tr>
 												<c:if test="${action.description != null}">

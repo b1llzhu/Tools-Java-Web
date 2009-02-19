@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.47 2009/02/13 20:20:02 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.48 2009/02/19 19:24:54 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.47 2009/02/13 20:20:02 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.48 2009/02/19 19:24:54 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -160,18 +160,49 @@ public class GenericUploadServlet extends SavvisServlet {
 			
 			// if we have an effective user, store it away
 			pageMap.remove("effectiveUsername");
-			logger.info("request.getParameter(\"frmEffectiveUsername\"): (" + request.getParameter("frmEffectiveUsername") + ")");
-			logger.info("request.getParameter(\"effectiveUsername\"): (" + request.getParameter("effectiveUsername") + ")");
-			logger.info("request.getAttribute(\"effectiveUsername\"): " + request.getAttribute("effectiveUsername"));
+
+			// check any normal forms
 			Object newEffectiveUsername = request.getParameter("frmEffectiveUsername");
 			if (ObjectUtil.isEmpty(newEffectiveUsername)) {
 				newEffectiveUsername = request.getParameter("effectiveUsername");
 			}
+			logger.info("frm -> newEffectiveUsername: " + newEffectiveUsername);
+			
+			// check any multipart forms (need to do this because for an upload, the effective user is hidden inside the encoding
+			// we actually will also pick off the upload item and the file name here as well, because by picking off
+			// the data to check for the effective user name we are unable to pick it off again later on
+			FileItemFactory effFactory = new DiskFileItemFactory(0, null);
+			ServletFileUpload effUpload = new ServletFileUpload(effFactory);
+			boolean effIsMultipart = ServletFileUpload.isMultipartContent(request);
+			if (effIsMultipart) {
+				List items = effUpload.parseRequest(request);
+				Iterator iter = items.iterator();
+				while (iter.hasNext()) {
+					FileItem item = (FileItem) iter.next();
+				    if ("frmEffectiveUsername".equals(item.getFieldName())) {
+				    	newEffectiveUsername = item.getString();
+				    }
+				    
+				    // capture the file to upload
+				    if (!item.isFormField()) {
+				    	pageMap.put("uploadItem", item);
+				    }
+					    
+				    // caputre the filename to upload
+				    if ("uploadName".equals(item.getFieldName())) {
+				    	pageMap.put("uploadName", item.getString());
+				    }
+				}
+			}
+			logger.info("frm multipart -> newEffectiveUsername: " + newEffectiveUsername);
+			
+			// check the url
 			if (ObjectUtil.isEmpty(newEffectiveUsername)) {
 				newEffectiveUsername = request.getAttribute("effectiveUsername");
 			}
-			logger.info("newEffectiveUsername: " + newEffectiveUsername);
+			logger.info("url -> newEffectiveUsername: " + newEffectiveUsername);
 			
+			// finally, if we have an effective user, add it to the map
 			if (!ObjectUtil.isEmpty(newEffectiveUsername)) {
 				pageMap.put("effectiveUsername", newEffectiveUsername.toString());
 				
@@ -431,16 +462,11 @@ public class GenericUploadServlet extends SavvisServlet {
 			//////////////////////////////////////////////////////////////////////////////////////
 			// UPLOAD functionality
 			//////////////////////////////////////////////////////////////////////////////////////
-			// this section is only performed when the action <> choose
+			// this section is only performed when there is a file to upload
 			// only when the jsp is trying to upload a file OR the first time the JSP is hit
 			// for this reason, we lock down any processing to when the incoming form is multipart content
 			
-			// Create a factory for disk-based file items
-			FileItemFactory factory = new DiskFileItemFactory(0, null);
-			ServletFileUpload upload = new ServletFileUpload(factory);
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-			
-			if (isMultipart) {
+			if (pageMap.containsKey("uploadItem")) {
 
 				// verify the authorization (a second check - the first one is upon selecting the upload key)
 				Map keyMap = configMap.get(pageMap.get("key"));
@@ -452,33 +478,10 @@ public class GenericUploadServlet extends SavvisServlet {
 				if (!authObject.isAuthorized) {
 					request.setAttribute("errMessage", authObject.getMessage());
 
-//				if (!authUserList.contains(winPrincipal.getName().toLowerCase())) {
-//					logger.info("User (" + winPrincipal.getName() + ") is not authorized to upload files to (" + pageMap.get("key") + ")");
-//					request.setAttribute("errMessage", "Sorry!  You don't have access to upload files for " + pageMap.get("key") + ".");
-//					request.setAttribute("unauthorized", "true");
-//					
 				} else {
 
-					List items = upload.parseRequest(request);
-					
-					// Process the uploaded items
-					Iterator iter = items.iterator();
-					FileItem uploadItem = null;
-					String uploadName = null;
-					while (iter.hasNext()) {
-					    FileItem item = (FileItem) iter.next();
-			
-					    // Process a file upload
-					    if (!item.isFormField()) {
-					    	uploadItem = item;
-					    }
-					    
-					    if ("uploadName".equals(item.getFieldName())) {
-					    	uploadName = item.getString();
-					    }
-					}
-					
-					if (!ObjectUtil.isEmpty(uploadItem)) {
+					if (!ObjectUtil.isEmpty(pageMap.get("uploadItem"))) {
+						FileItem uploadItem = (FileItem) pageMap.get("uploadItem");
 				        String fullFileName = uploadItem.getName();
 				        String fileName = StringUtil.getLastToken(fullFileName, '\\');
 
@@ -486,8 +489,8 @@ public class GenericUploadServlet extends SavvisServlet {
 				        // we have to use "pending" like we used to
 				        String destDir = "";
 				        Map fileUploadMap = null;
-				        if (!ObjectUtil.isEmpty(uploadName)) {
-				        	fileUploadMap = (Map)((Map)keyMap.get("fileUploads")).get(uploadName);
+				        if (!ObjectUtil.isEmpty(pageMap.get("uploadName"))) {
+				        	fileUploadMap = (Map)((Map)keyMap.get("fileUploads")).get(pageMap.get("uploadName"));
 				        	logger.info("fileUploadMap: " + fileUploadMap);
 				        	destDir = keyMap.get("path").toString() + "/" + fileUploadMap.get("target");				        	
 				        } else {
