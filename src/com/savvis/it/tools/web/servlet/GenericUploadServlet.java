@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.49 2009/02/19 19:38:13 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.50 2009/02/19 19:41:19 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.49 2009/02/19 19:38:13 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.50 2009/02/19 19:41:19 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -285,7 +285,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 			// if we notice the override directory for runInfo, that means
 			// we need to try to find a thread a different way
-			if (!ObjectUtil.isEmpty(configMap.get(pageMap.get("key")).get("runInfo"))) {
+			if (!ObjectUtil.isEmpty(configMap.get(pageMap.get("key")).containsKey("runInfo"))) {
 				lkpThread = threadMap.get(pageMap.get("key")+winPrincipal.getName());
 			}
 			
