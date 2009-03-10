@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.51 2009/02/19 19:47:17 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.52 2009/03/10 16:24:01 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.51 2009/02/19 19:47:17 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.52 2009/03/10 16:24:01 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -1114,8 +1114,10 @@ public class GenericUploadServlet extends SavvisServlet {
 											// could be optional
 											if (!ObjectUtil.isEmpty(actionNode.getAttribute("fileAge")))
 												actionMap.put("fileAge", actionNode.getAttribute("fileAge"));
-											if (!ObjectUtil.isEmpty(actionNode.getAttribute("target")))
-												actionMap.put("target", actionNode.getAttribute("target"));
+											if (!ObjectUtil.isEmpty(actionNode.getAttribute("target"))) {
+												String target = globalContext.keywordSubstitute(actionNode.getAttribute("target"));
+												actionMap.put("target", target);
+											}
 											if (!ObjectUtil.isEmpty(actionNode.getAttribute("confirm")))
 												actionMap.put("confirm", actionNode.getAttribute("confirm"));
 											
