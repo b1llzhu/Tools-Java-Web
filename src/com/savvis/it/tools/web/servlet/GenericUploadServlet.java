@@ -50,11 +50,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.52 2009/03/10 16:24:01 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.53 2009/03/16 13:53:36 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.52 2009/03/10 16:24:01 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.53 2009/03/16 13:53:36 telrick Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -418,12 +418,18 @@ public class GenericUploadServlet extends SavvisServlet {
 									envList.add(key+"="+propertyMap.get(key));
 								clp.setEnvp((String[])envList.toArray(new String[] {}));
 								
+								final String[] inputs = (String[]) new ArrayList((List) cmdMap.get("inputs")).toArray(new String[] {});
+								for (int x = 0; x < inputs.length ; x++) {
+									inputs[x] = globalContext.keywordSubstitute(inputsContext.keywordSubstitute(inputs[x]));
+								}
+								logger.info("inputs = "+(ObjectUtil.toString(inputs)));
+								
 								if(async) {
 									Thread t = new Thread() {
 										public void run() {
 											try {
 												SystemUtil.setAPPL(pageMap.get("appl").toString());
-												clp.run(cmd);
+												clp.run(cmd, inputs);
 												SystemUtil.setAPPL(null);
 											} catch (Exception e) {
 												throw new RuntimeException(e);
@@ -442,7 +448,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									t.start();
 									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has been executed and is now running in the background.");
 								} else {
-									clp.run(cmd);
+									clp.run(cmd, inputs);
 									request.setAttribute("message", "The action \"" + actionMap.get("display") + "\" has completed.");
 								}
 								
@@ -1191,9 +1197,19 @@ public class GenericUploadServlet extends SavvisServlet {
 												SimpleNode cmdNode = new SimpleNode(actionNode.getSimpleNode("{cmds}").getChildNodes("cmd").item(k));
 												cmdMap.put("cmdString", cmdNode.getTextContent("{cmdString}"));
 												cmdMap.put("argString", cmdNode.getTextContent("{argString}"));
-												cmdMap.put("classpath", cmdNode.getTextContent("{jar}"));
 												cmdMap.put("startDir", cmdNode.getTextContent("{startDir}"));
 												cmdMap.put("logFile", cmdNode.getTextContent("{logFile}"));
+												
+												// get input values if present
+												List<String> inputList = new ArrayList<String>();
+												SimpleNode inputsNode = cmdNode.getSimpleNode("{inputs}");
+												if (!ObjectUtil.isEmpty(inputsNode)) {
+													for (int l = 0; l < inputsNode.getChildNodes("input").getLength(); l++) {
+														SimpleNode inputNode = new SimpleNode(inputsNode.getChildNodes("input").item(l));
+														inputList.add(inputNode.getTextContent());
+													}
+												}
+												cmdMap.put("inputs", inputList);
 												
 												// get property values if present
 												Map<String, String> propertyMap = new HashMap<String, String>();
