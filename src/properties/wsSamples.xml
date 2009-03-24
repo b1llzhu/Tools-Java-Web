@@ -46,6 +46,12 @@
 				</quote>
 			</priceQuote>
 		</sample>
+		<sample operation="getAddOnTerm">
+			<getAddOnTerm>
+				<parentAipId>46492</parentAipId>
+				<salesPackageId>152376</salesPackageId>
+			</getAddOnTerm>
+		</sample>
 	</client>
 	<client appl="finance" config="creditCheckWS">
 		<sample operation="doesAccountHaveGoodCredit">
