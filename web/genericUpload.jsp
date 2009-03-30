@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.21 2009/02/19 19:24:54 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.22 2009/03/30 18:25:03 dyoung Exp $
 
 --%>
 
@@ -147,7 +147,7 @@
 									<c:forEach items="${directories}" var="d">
 										<c:set var="dir" value="${d.value}" />
 										<c:set var="classSuffix" value="" />
-										<c:if test='${d.key eq "error"}'>
+										<c:if test='${d.key eq "error" or (!empty dir.error and dir.error eq "1")}'>
 											<c:set var="classSuffix" value="Err" />
 										</c:if>
 
@@ -156,14 +156,7 @@
 											<br/><span class="fileListSubHdr">${dir.subDescription}</span>
 										</c:if>
 
-										<c:choose>
-											<c:when test='${! empty dir.sizeAlgorithm}'>
-												<div style="overflow-y: scroll; overflow-x: none; height: ${dir.sizeAlgorithm}px;" width="100%">
-											</c:when>
-											<c:otherwise>
-												<div style="height: 50px;" width="100%">
-											</c:otherwise>
-										</c:choose>
+										<div style="overflow-y: scroll; overflow-x: none; height: ${dir.size}px;" width="100%">
 										<sv:dataTable data="${dir.data}" cellpadding="2" cellspacing="2" styleClass="listTbl">
 											<sv:dataTableRows rowVar="row">
 											<c:forEach items="${dir.columns}" var="c">
@@ -183,12 +176,15 @@
 												<c:if test='${column.name eq "lastModified"}'>
 													<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr${classSuffix}" />
 												</c:if>
+												<c:if test='${column.name eq "size"}'>
+													<sv:dataTableColumn title="${column.title}" styleClass="listCell" value="${row.size}" headerStyleClass="listTblHdr${classSuffix}" />
+												</c:if>
 											</c:forEach>
 											<c:forEach items="${dir.actions}" var="a">
 												<c:set var="action" value="${a.value}" />
 												<c:if test='${action.level eq "file"}'>
 													<c:choose>
-														<c:when test="${empty action.age}">
+														<c:when test="${empty action.fileAge}">
 															<c:choose>
 																<c:when test="${action.confirm eq '1'}">
 																	<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
@@ -263,13 +259,25 @@
 											
 													<span class="fileListHdr">${fileUpload.display}</span>
 													<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
-														<tr><th class="listTblHdr">Filename</th></tr>
+														<tr><th class="listTblHdr" colspan="3">Filename</th></tr>
 
 														<c:if test="${action.description != null}">
-															<tr><td class="actionDescription">${fileUpload.description}</td></tr>
+															<tr><td class="actionDescription" colspan="3">${fileUpload.description}</td></tr>
 														</c:if>
 			
-														<tr><td style="width: 60%;" class="listCell"><input class="fileInput" type="file" name="file"/></td></tr>
+														<tr>
+															<td colspan="3">
+																<input class="fileInput" type="file" name="file"/>
+															</td>
+														</tr>
+														
+														<c:if test="${!empty fileUpload.alias}">
+															<tr>
+																<td class="inputCell" style="text-align: right;">Alias (optional)</td>
+																<td width="5" class="inputCell"></td>
+																<td><input class="inputCell" type="text" name="alias" size="30" maxlength="40"/></td>
+															</tr>
+														</c:if>
 													</table>
 													<button onclick="frm_${fileUpload.name}.submit();">${fileUpload.buttonLabel}</button>
 													<br/><br/><br/>
@@ -315,17 +323,19 @@
 																<td width="5" class="inputCell"></td>
 																<td class="inputCell">
 																	<c:choose>
-																		<c:when test='${input.type eq "select" or input.type eq "SQLselect"}'>
+																		<c:when test='${input.type eq "select" or input.type eq "sqlselect" or input.type eq "fileselect" or input.type eq "cfgselect"}'>
 																			<sv:select id="${input.name}" name="${input.name}" title="${input.label}" items="${input.values}" 
 																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"/>
 																		</c:when>
 																		<c:when test='${input.type eq "date"}'>
-																			<sv:date id="${input.name}" name="${input.name}" title="${input.label}" 
+																			<sv:date id="${input.name}" name="${input.name}" title="${input.label}"
 																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"/>
 																		</c:when>
 																		<c:otherwise>
 																			<sv:input id="${input.name}" name="${input.name}" title="${input.label}" type="${input.type}" 
-																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"/>
+																						required="${input.required}" readonly="${input.readonly}" value="${input.defaultValue}"
+																						maxlength="${input.maxlength}" format="${input.format}" regex="${input.regex}" 
+																						regexValidationText="${input.regexValidationText}" />
 																		</c:otherwise>
 																	</c:choose>
 																</td>
@@ -343,7 +353,17 @@
 															<td class="actionBtnCell">A process is currently running... please wait...</td>
 														</c:when>
 														<c:otherwise>
-															<td><button onclick="svSetMyForm(document.forms['action_${action.name}']); svSubmitAction('execute');">${action.buttonLabel}</button></td>
+															<td>
+															<c:choose>
+																<c:when test="${action.confirm eq '1'}">
+																	<button onclick="Javascript:if (confirm('Are you sure you want to perform this action?')) { svSetMyForm(document.forms['action_${action.name}']); svSubmitAction('execute'); }">${action.buttonLabel}</button>
+																</c:when>
+																<c:otherwise>
+																	<button onclick="svSetMyForm(document.forms['action_${action.name}']); svSubmitAction('execute');">${action.buttonLabel}</button>
+																</c:otherwise>
+															</c:choose>
+															</td>
+															
 														</c:otherwise>
 													</c:choose>
 													
@@ -405,6 +425,37 @@
 									<iframe frameborder="0" id="runInfoLog" src="runInfo?path=${keyMap.path}&runInfo=${keyMap.runInfo}" 
 										style="border-collapse: collapse; border: 0px; height: 300px; width: 100%;"></iframe>
 									<br/><br/><br/>
+
+									<c:if test="${!empty keyMap.runInfoRefresh}">
+										<script language="javascript">
+											function refreshRunInfo() {
+												var runInfoFrame = document.getElementById('runInfoLog');
+												runInfoFrame.src = "runInfo?path=${keyMap.path}&runInfo=${keyMap.runInfo}";
+												setTimeout("refreshRunInfo()", ${keyMap.runInfoRefresh} * 1000);
+											}
+											refreshRunInfo();
+										</script>									
+									</c:if>
+									
+									<c:if test='${helpDir eq "1"}'>
+										<c:set var="help" value="${_help}" />
+										<span class="fileListHdr${classSuffix}">Help Documents</span>
+										<br/><span class="fileListSubHdr">Help documents, template descriptions, etc.</span>
+										<div style="height: 50px;" width="100%">
+										<sv:dataTable data="${help.data}" cellpadding="2" cellspacing="2" styleClass="listTbl">
+											<sv:dataTableRows rowVar="row">
+												<sv:dataTableColumn title="Filename" styleClass="listCell" value="${row.name}" 
+													linkClass="drillLink" linkHref="Javascript:document.downloadForm.file.value='${row.name}';document.downloadForm.dir.value='${d.key}';document.downloadForm.submit()" 
+													headerStyleClass="listTblHdr${classSuffix}" width="60%"/>														
+												<sv:dataTableColumn title="Size" styleClass="listCell" value="${row.size}" headerStyleClass="listTblHdr${classSuffix}" />
+												<sv:dataTableColumn title="Last Modified" styleClass="listCell" value="${row.lastModified}" headerStyleClass="listTblHdr${classSuffix}" />
+											</sv:dataTableRows>
+										</sv:dataTable>
+										</div>
+										<br/><br/><br/>
+									</c:if>
+									
+									
 								</td>
 							</tr>
 						</table>
