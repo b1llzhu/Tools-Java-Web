@@ -25,6 +25,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -50,11 +51,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.53 2009/03/16 13:53:36 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.54 2009/03/30 18:23:05 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.53 2009/03/16 13:53:36 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.54 2009/03/30 18:23:05 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -188,10 +189,16 @@ public class GenericUploadServlet extends SavvisServlet {
 				    	pageMap.put("uploadItem", item);
 				    }
 					    
-				    // caputre the filename to upload
+				    // capture the filename to upload
 				    if ("uploadName".equals(item.getFieldName())) {
 				    	pageMap.put("uploadName", item.getString());
 				    }
+				    
+				    // capture the filename alias
+				    if ("alias".equals(item.getFieldName())) {
+				    	pageMap.put("aliasName", item.getString());
+				    }
+
 				}
 			}
 			logger.info("frm multipart -> newEffectiveUsername: " + newEffectiveUsername);
@@ -493,6 +500,10 @@ public class GenericUploadServlet extends SavvisServlet {
 						FileItem uploadItem = (FileItem) pageMap.get("uploadItem");
 				        String fullFileName = uploadItem.getName();
 				        String fileName = StringUtil.getLastToken(fullFileName, '\\');
+				        
+				        if (!ObjectUtil.isEmpty(pageMap.get("aliasName"))) {
+				        	fileName = (String) pageMap.get("aliasName");
+				        }
 
 				        // retrieve and use the file upload config, otherwise for legacy purposes, 
 				        // we have to use "pending" like we used to
@@ -520,17 +531,24 @@ public class GenericUploadServlet extends SavvisServlet {
 					        } else {
 					        	// if we have a reg ex, check to see if the file name matches it
 					        	Boolean okToWrite = true;
-				        		logger.info("fileName: " + fileName);
 					        	if (fileUploadMap != null && !ObjectUtil.isEmpty(fileUploadMap.get("fileNameRegEx"))) {
 					        		if (!fileName.matches(fileUploadMap.get("fileNameRegEx").toString())) {
-					        			request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + fileUploadMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        			String msg = "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + fileUploadMap.get("fileNameRegExText") + ".  The file was not uploaded.";
+					        			if (!StringUtil.getLastToken(fullFileName, '\\').equals(fileName)) {
+					        				msg += "  The file was originally named (" + StringUtil.getLastToken(fullFileName, '\\') + ").";
+					        			}
+					        			request.setAttribute("errMessage", msg);
 					        			okToWrite = false;
 					        		}
 				        	
 				        		// for legacy sake, check the old reg ex
 					        	} else if (!ObjectUtil.isEmpty(keyMap.get("fileNameRegEx"))) {
 					        		if (!fileName.matches(keyMap.get("fileNameRegEx").toString())) {
-					        			request.setAttribute("errMessage", "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.");
+					        			String msg = "ERROR!  Filename Matching Error (" + fileName + ") doesn't match " + keyMap.get("fileNameRegExText") + ".  The file was not uploaded.";
+					        			if (!StringUtil.getLastToken(fullFileName, '\\').equals(fileName)) {
+					        				msg += "  The file was originally named (" + StringUtil.getLastToken(fullFileName, '\\') + ").";
+					        			}
+					        			request.setAttribute("errMessage", msg);
 					        			okToWrite = false;
 					        		}
 
@@ -539,12 +557,17 @@ public class GenericUploadServlet extends SavvisServlet {
 					        	if (okToWrite) {
 						        	uploadItem.write(fileToCreate);
 						        	
-						        	if (!ObjectUtil.isEmpty(keyMap.get("runInfo"))) {
+				        			String msg = "File " + fileName + " uploaded";
+				        			if (!StringUtil.getLastToken(fullFileName, '\\').equals(fileName)) {
+				        				msg += "  (orig. name [" + StringUtil.getLastToken(fullFileName, '\\') + "])";
+				        			}
+
+				        			if (!ObjectUtil.isEmpty(keyMap.get("runInfo"))) {
 										RunInfoUtil.addLogExplicit(keyMap.get("runInfo").toString(), fileToCreate, winPrincipal.getName(), new java.util.Date(), 
-												"File " + fileName + " uploaded");
+												msg);
 						        	} else {
 										RunInfoUtil.addLog(keyMap.get("path").toString(), fileToCreate, winPrincipal.getName(), new java.util.Date(), 
-												"File " + fileName + " uploaded");
+												msg);
 						        	}
 
 							        request.setAttribute("message", "The local file (" + fileName + ") has been successfully uploaded.");
@@ -673,7 +696,6 @@ public class GenericUploadServlet extends SavvisServlet {
 				Map keyMap = configMap.get(pageMap.get("key"));
 				
 				Map<String, Map<String, Object>> directoriesMap = (Map<String, Map<String, Object>>) keyMap.get("directories");
-//				logger.info("directoriesMap: " + directoriesMap);
 				
 				for (int i = 0; i < directoriesMap.keySet().size(); i++) {
 					String key = (String) directoriesMap.keySet().toArray()[i];
@@ -687,10 +709,48 @@ public class GenericUploadServlet extends SavvisServlet {
 						directoryMap.put("data", fileList);
 						
 						if (fileList.size() > 0) {
-							directoryMap.put("sizeAlgorithm", ((fileList.size() * 25) + 25) > 255 ? 255 : ((fileList.size() * 25) + 25));
+							if (ObjectUtil.isEmpty(directoryMap.get("size")) || "-999".equals(directoryMap.get("size"))) {
+								int alg = (fileList.size() * 25) + 25;
+								
+								// test 'all' integer code
+								if ("-999".equals(directoryMap.get("size"))) {
+									// as big as contents
+									directoryMap.put("size", alg);
+								} else {
+									// as big as max
+									if (alg > 255) {
+										directoryMap.put("size", 255);
+									} else {
+										directoryMap.put("size", alg);
+									}
+								}
+							}
+						} else {
+							directoryMap.put("size", 60);
 						}
 					}
 				}
+
+				// determine if a help directory exists, using the directories base path element
+				String helpPath = keyMap.get("path") + "/_help";
+				if (new File(helpPath).exists()) {
+					Map<String, Object> helpDirectoryMap = new HashMap<String, Object>();
+					
+					String directoryKey = "_help";
+	
+					helpDirectoryMap.put("display", "1");
+					helpDirectoryMap.put("writable", "0");
+					helpDirectoryMap.put("sort", "a");
+					helpDirectoryMap.put("description", "Help Documents");
+				
+					helpDirectoryMap.put("path", helpPath);
+
+					List<Map<String, String>> fileList = getFileList(helpDirectoryMap.get("path").toString(), null, helpDirectoryMap.get("sort").toString());
+					helpDirectoryMap.put("data", fileList);
+					
+					request.setAttribute("helpDir", "1");
+					request.setAttribute("_help", helpDirectoryMap);
+				}				
 				
 				if (StringUtil.hasValue(keyMap.get("name").toString()))
 					request.setAttribute("uploadKeyDisplay", " - " + keyMap.get("name").toString());
@@ -828,6 +888,7 @@ public class GenericUploadServlet extends SavvisServlet {
 					fileMap.put("name", file.getName());
 					fileMap.put("lastModified", df.format(file.lastModified()));
 					fileMap.put("path", file.getParent().replace('\\', '/'));
+					fileMap.put("size", FileUtils.byteCountToDisplaySize(file.length()));
 					fileMap.put("age", fileAge.toString());
 					
 //					logger.info("fileMap: " + fileMap);
@@ -1021,6 +1082,16 @@ public class GenericUploadServlet extends SavvisServlet {
 							uploadMap.put("runInfo", runInfo);
 						}
 
+						if (!ObjectUtil.isEmpty(uploadNode.getTextContent("runInfoRefresh"))) {
+							Integer runInfoRefresh = 10;
+							try {
+								runInfoRefresh = Integer.parseInt(uploadNode.getTextContent("runInfoRefresh"));
+							} catch (Exception e) {
+								messages.add("[Upload #" + uploadCnt + "]" + typeLog + " runInfoRefresh must be an integer");
+							}
+							uploadMap.put("runInfoRefresh", runInfoRefresh);
+						}
+
 						// process the directories
 						
 						if (!ObjectUtil.isEmpty(uploadNode.getSimpleNode("{directories}"))) {
@@ -1059,6 +1130,25 @@ public class GenericUploadServlet extends SavvisServlet {
 										}
 									}
 
+									if (!ObjectUtil.isEmpty(directoryNode.getAttribute("size"))) {
+										String s = directoryNode.getAttribute("size");
+										logger.info("s: " + s);
+										Integer size = 0;
+										if ("short".equals(s.toLowerCase())) {
+											size = 65;
+										} else if ("medium".equals(s.toLowerCase())) {
+											size = 150;
+										} else if ("tall".equals(s.toLowerCase())) {
+											size = 255;
+										} else if ("all".equals(s.toLowerCase())) {
+											size = -999;
+										} else {
+											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " directory " + j + " - 'size' value must be 'short', 'medium', or 'tall'");
+										}
+										logger.info("size: " + size);
+										directoryMap.put("size", size);
+									}
+
 									if (!ObjectUtil.isEmpty(directoryNode.getAttribute("sort")))
 										directoryMap.put("sort", ("a".equals(directoryNode.getAttribute("sort")) ? "a" : "d"));
 
@@ -1067,6 +1157,9 @@ public class GenericUploadServlet extends SavvisServlet {
 
 									if (!ObjectUtil.isEmpty(directoryNode.getTextContent("{subDescription}")))
 										directoryMap.put("subDescription", directoryNode.getTextContent("{subDescription}"));
+
+									if (!ObjectUtil.isEmpty(directoryNode.getAttribute("error")))
+										directoryMap.put("error", ("1".equals(directoryNode.getAttribute("error")) ? "1" : "0"));
 
 									// path validation
 									String path = uploadMap.get("path") + "/" + directoryKey;
@@ -1167,6 +1260,9 @@ public class GenericUploadServlet extends SavvisServlet {
 									// get action variables
 									actionMap.put("name", actionNode.getAttribute("name").replace(" ", "_"));
 									actionMap.put("type", actionNode.getAttribute("type"));
+									
+									if (!ObjectUtil.isEmpty(actionNode.getAttribute("confirm")))
+										actionMap.put("confirm", ("1".equals(actionNode.getAttribute("confirm")) ? "1" : "0"));
 									
 									actionMap.put("display", actionNode.getTextContent("{display}"));
 									actionMap.put("buttonLabel", actionNode.getTextContent("{buttonLabel}"));
@@ -1295,6 +1391,9 @@ public class GenericUploadServlet extends SavvisServlet {
 									fileUploadMap.put("description", fileUploadNode.getTextContent("{description}"));
 									fileUploadMap.put("fileNameRegEx", fileUploadNode.getTextContent("{fileNameRegEx}"));
 									fileUploadMap.put("fileNameRegExText", fileUploadNode.getTextContent("{fileNameRegExText}"));
+									
+									if (!ObjectUtil.isEmpty(fileUploadNode.getTextContent("alias")))
+										fileUploadMap.put("alias", ("1".equals(fileUploadNode.getTextContent("alias")) ? "1" : "0"));
 									
 									fileUploadsMap.put(fileUploadMap.get("name").toString(), (Object) fileUploadMap);
 								}
