@@ -36,7 +36,8 @@
 										385
 									</optionDefinitionId>
 									<value>
-										Red Hat Enterprise Linux AS v4 32 bit Managed Operating System
+										Red Hat Enterprise Linux AS v4
+										32 bit Managed Operating System
 									</value>
 									<quantity>1</quantity>
 								</option>
@@ -75,7 +76,7 @@
 					<contractTerm>12</contractTerm>
 					<createdBy>SSPortal</createdBy>
 					<currency>USD</currency>
-					<extId>12345</extId>
+					<extId></extId>
 					<holdDate>10/23/08</holdDate>
 					<insightOpportunityId>
 						145679.0
@@ -87,245 +88,57 @@
 					<services>
 						<accountRequests>
 							<accountRequest>
-								Managed Firewall 2.0 IDC
-								<aipId></aipId>
 								<accountId>12255</accountId>
-								<billingSiteId>264061</billingSiteId>
-								<extId></extId>
+								<billingSiteId>227822</billingSiteId>
+								<extId />
 								<ownershipCompanyId>
-									174153
+									168745
 								</ownershipCompanyId>
 								<productType>
 									Service Package
 								</productType>
 								<quantity>1</quantity>
 								<requestType>Add</requestType>
-								<salesPackageId>152376</salesPackageId>
-								<accountRequests>
-									<accountRequest>
-										<aipId></aipId>
-										<accountId>12255</accountId>
-										<billingSiteId>
-											264061
-										</billingSiteId>
-										<extId></extId>
-										<ownershipCompanyId>
-											174153
-										</ownershipCompanyId>
-										<parentAipId></parentAipId>
-										<productType>
-											Add-On
-										</productType>
-										<quantity>2</quantity>
-										<requestType>Add</requestType>
-										<salesPackageId>
-											124743
-										</salesPackageId>
-										<options></options>
-										<price>
-											<mrrNet>1275.0</mrrNet>
-											<nrcNet>250.0</nrcNet>
-										</price>
-									</accountRequest>
-								</accountRequests>
+								<salesPackageId>170378</salesPackageId>
+								<accountRequests />
 								<options>
 									<option>
 										<optionDefinitionId>
-											389
+											193
 										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>Small</value>
+										<value>ZZNJ3</value>
 									</option>
 									<option>
 										<optionDefinitionId>
-											390
+											580
 										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
 										<value>
-											Cisco ASA with Intrusion Detection
+											0.5 CPU Core / 2 GB RAM
 										</value>
 									</option>
 									<option>
 										<optionDefinitionId>
-											391
+											579
 										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
 										<value>
-											Yes-Active/Passive
+											Red Hat Enterprise Linux AS
+											v4 32 bit Managed Operating
+											System
 										</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											392
-										</optionDefinitionId>
 										<price>
 											<mrrList>400</mrrList>
 											<nrcList>350</nrcList>
 										</price>
-										<value></value>
 									</option>
 									<option>
 										<optionDefinitionId>
-											393
+											578
 										</optionDefinitionId>
+										<value>Standard</value>
 										<price>
-											<mrrList>400</mrrList>
+											<mrrList>500</mrrList>
 											<nrcList>350</nrcList>
 										</price>
-										<value>Not Required</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											394
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>10</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											186
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value></value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											171
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>ZZAT1</value>
-									</option>
-								</options>
-								<price>
-									<mrrNet>1000.0</mrrNet>
-									<nrcNet>500.0</nrcNet>
-								</price>
-								<notes>
-									<note>
-										<action>Comment</action>
-										<subject>foo</subject>
-										<body>asdf1234</body>
-									</note>
-								</notes>
-							</accountRequest>
-							<accountRequest>
-								Managed Firewall 2.0 IDC (Change)
-								<aipId>46492</aipId>
-								<accountId>12255</accountId>
-								<billingSiteId>264061</billingSiteId>
-								<extId></extId>
-								<ownershipCompanyId>
-									174153
-								</ownershipCompanyId>
-								<productType>
-									Service Package
-								</productType>
-								<quantity>1</quantity>
-								<requestType>Change</requestType>
-								<salesPackageId>152376</salesPackageId>
-								<accountRequests></accountRequests>
-								<options>
-									<option>
-										<optionDefinitionId>
-											389
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>Small</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											390
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>
-											Cisco ASA with Intrusion Detection
-										</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											391
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>
-											Yes-Active/Passive
-										</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											392
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value></value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											393
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>Not Required</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											394
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>12</value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											186
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value></value>
-									</option>
-									<option>
-										<optionDefinitionId>
-											171
-										</optionDefinitionId>
-										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
-										</price>
-										<value>ZZAT1</value>
 									</option>
 								</options>
 								<price>
