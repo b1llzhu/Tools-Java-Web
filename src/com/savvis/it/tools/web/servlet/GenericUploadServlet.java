@@ -51,11 +51,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the home page functionality 
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.54 2009/03/30 18:23:05 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.55 2009/04/03 16:33:20 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {	
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.54 2009/03/30 18:23:05 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.55 2009/04/03 16:33:20 dyoung Exp $";
 	
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -889,7 +889,7 @@ public class GenericUploadServlet extends SavvisServlet {
 					fileMap.put("lastModified", df.format(file.lastModified()));
 					fileMap.put("path", file.getParent().replace('\\', '/'));
 					fileMap.put("size", FileUtils.byteCountToDisplaySize(file.length()));
-					fileMap.put("age", fileAge.toString());
+					fileMap.put("age", StringUtil.pad(fileAge.toString(), "0", 20));
 					
 //					logger.info("fileMap: " + fileMap);
 					fileList.add(fileMap);
@@ -1212,7 +1212,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 											// could be optional
 											if (!ObjectUtil.isEmpty(actionNode.getAttribute("fileAge")))
-												actionMap.put("fileAge", actionNode.getAttribute("fileAge"));
+												actionMap.put("fileAge", StringUtil.pad(actionNode.getAttribute("fileAge"), "0", 20));
 											if (!ObjectUtil.isEmpty(actionNode.getAttribute("target"))) {
 												String target = globalContext.keywordSubstitute(actionNode.getAttribute("target"));
 												actionMap.put("target", target);

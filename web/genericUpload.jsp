@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.22 2009/03/30 18:25:03 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.23 2009/04/03 16:33:20 dyoung Exp $
 
 --%>
 
@@ -183,39 +183,45 @@
 											<c:forEach items="${dir.actions}" var="a">
 												<c:set var="action" value="${a.value}" />
 												<c:if test='${action.level eq "file"}'>
-													<c:choose>
-														<c:when test="${empty action.fileAge}">
-															<c:choose>
-																<c:when test="${action.confirm eq '1'}">
-																	<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
-																		linkHref="Javascript:if (confirm('Are you sure you want to ${action.description} this file?')) { document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit(); }" 
-																		headerStyleClass="listTblHdr" width="10%" />
-																</c:when>
-																<c:otherwise>
-																	<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
-																		linkHref="Javascript:document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit()" 
-																		headerStyleClass="listTblHdr" width="10%" />
-																</c:otherwise>
-															</c:choose>
-														</c:when>
-														<c:when test="${!empty action.age and row.age < action.fileAge}">
-															<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
-														</c:when>
-														<c:when test="${!empty action.age and row.age >= action.fileAge}">
-															<c:choose>
-																<c:when test="${row.confirm == 1}">
-																	<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
-																		linkHref="Javascript:if (confirm('Are you sure you want to ${action.description} this file?')) { document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit(); }" 
-																		headerStyleClass="listTblHdr" width="10%" />
-																</c:when>
-																<c:otherwise>
-																	<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
-																		linkHref="Javascript:document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit()" 
-																		headerStyleClass="listTblHdr" width="10%" />
-																</c:otherwise>
-															</c:choose>
-														</c:when>
-													</c:choose>
+													<c:if test="${empty row}">
+														<sv:dataTableColumn title="" styleClass="listCell" value="" linkClass="drillLink" 
+															headerStyleClass="listTblHdr" width="10%" />
+													</c:if>
+													<c:if test="${!empty row}">
+														<c:choose>
+															<c:when test="${empty action.fileAge}">
+																<c:choose>
+																	<c:when test="${action.confirm eq '1'}">
+																		<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
+																			linkHref="Javascript:if (confirm('Are you sure you want to ${action.description} this file?')) { document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit(); }" 
+																			headerStyleClass="listTblHdr" width="10%" />
+																	</c:when>
+																	<c:otherwise>
+																		<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
+																			linkHref="Javascript:document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit()" 
+																			headerStyleClass="listTblHdr" width="10%" />
+																	</c:otherwise>
+																</c:choose>
+															</c:when>
+															<c:when test="${!empty action.fileAge and row.age < action.fileAge}">
+																<sv:dataTableColumn title=" " styleClass="listCell" value="" headerStyleClass="listTblHdr" width="10%" />
+															</c:when>
+															<c:when test="${!empty action.fileAge and row.age >= action.fileAge}">
+																<c:choose>
+																	<c:when test="${row.confirm == 1}">
+																		<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
+																			linkHref="Javascript:if (confirm('Are you sure you want to ${action.description} this file?')) { document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit(); }" 
+																			headerStyleClass="listTblHdr" width="10%" />
+																	</c:when>
+																	<c:otherwise>
+																		<sv:dataTableColumn title=" " styleClass="listCell" value="${action.description}" linkClass="drillLink" 
+																			linkHref="Javascript:document.moveFileForm.type.value='${action.type}';document.moveFileForm.file.value='${row.name}';document.moveFileForm.path.value='${row.path}';document.moveFileForm.description.value='${action.description}';document.moveFileForm.target.value='${action.target}';document.moveFileForm.submit()" 
+																			headerStyleClass="listTblHdr" width="10%" />
+																	</c:otherwise>
+																</c:choose>
+															</c:when>
+														</c:choose>
+													</c:if>
 												</c:if>
 											</c:forEach>
 											</sv:dataTableRows>
