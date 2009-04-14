@@ -24,11 +24,11 @@ import com.savvis.it.util.XmlUtil;
  * This class handles the processing and creation of generic inputs for web pages. 
  * 
  * @author David R Young
- * @version $Id: InputFieldHandler.java,v 1.8 2009/03/30 18:09:32 dyoung Exp $
+ * @version $Id: InputFieldHandler.java,v 1.9 2009/04/14 18:21:47 dyoung Exp $
  */
 public class InputFieldHandler {	
 	private static Logger logger = Logger.getLogger(InputFieldHandler.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.8 2009/03/30 18:09:32 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/bean/Attic/InputFieldHandler.java,v 1.9 2009/04/14 18:21:47 dyoung Exp $";
 	
 	/*
 	 * Valid types of inputs:
@@ -96,7 +96,6 @@ public class InputFieldHandler {
 			if (!ObjectUtil.isEmpty(inputNode.getTextContent("regEx"))) {
 				input.setRegex(inputNode.getTextContent("regEx"));
 				
-				logger.info("inputNode.getTextContent(\"regExText\"): " + inputNode.getTextContent("regExText"));
 				if (!ObjectUtil.isEmpty(inputNode.getTextContent("regExText"))) {
 					input.setRegexValidationText(inputNode.getTextContent("regExText"));
 				}
