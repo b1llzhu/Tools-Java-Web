@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.24 2009/04/14 18:24:52 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.25 2009/04/14 18:38:55 dyoung Exp $
 
 --%>
 
@@ -429,7 +429,7 @@
 										</form>
 									</c:if>
 
-									<c:if test="${keyMap.pathValid and (empty keyMap.runInfoValid or (!empty keyMap.runInfoValid and keyMap.runInfoValid))}">
+									<c:if test="${keyMap.pathValid and keyMap.dirPathsValid and (empty keyMap.runInfoValid or (!empty keyMap.runInfoValid and keyMap.runInfoValid))}">
 										<span class="fileListHdr">Information Logs</span>
 										<iframe frameborder="0" id="runInfoLog" src="runInfo?path=${keyMap.path}&runInfo=${keyMap.runInfo}" 
 											style="border-collapse: collapse; border: 0px; height: 300px; width: 100%;"></iframe>
