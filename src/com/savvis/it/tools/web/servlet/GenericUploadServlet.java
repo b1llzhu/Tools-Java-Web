@@ -3,8 +3,11 @@
  */
 package com.savvis.it.tools.web.servlet;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.SimpleDateFormat;
@@ -18,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,10 +31,17 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.savvis.it.db.DBUtil;
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.filter.WindowsAuthenticationFilter.WindowsPrincipal;
 import com.savvis.it.job.Job;
@@ -46,16 +58,18 @@ import com.savvis.it.util.SimpleNode;
 import com.savvis.it.util.StringUtil;
 import com.savvis.it.util.SystemUtil;
 import com.savvis.it.util.XmlUtil;
+import com.savvis.it.validation.Input;
+import com.savvis.it.validation.InputValidator;
 
 /**
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.56 2009/04/14 18:24:52 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.57 2009/04/20 14:55:55 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.56 2009/04/14 18:24:52 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.57 2009/04/20 14:55:55 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -538,7 +552,6 @@ public class GenericUploadServlet extends SavvisServlet {
 						Map fileUploadMap = null;
 						if (!ObjectUtil.isEmpty(pageMap.get("uploadName"))) {
 							fileUploadMap = (Map) ((Map) keyMap.get("fileUploads")).get(pageMap.get("uploadName"));
-							logger.info("fileUploadMap: " + fileUploadMap);
 							destDir = keyMap.get("path").toString() + "/" + fileUploadMap.get("target");
 						} else {
 							destDir = (String) directoriesMap.get("pending").get("path");
@@ -549,6 +562,7 @@ public class GenericUploadServlet extends SavvisServlet {
 								destDir = destDir.concat("/");
 
 							File fileToCreate = new File(destDir + fileName);
+							File tempFile = null;
 
 							// check to see if the file already exists
 							if (fileToCreate.exists()) {
@@ -585,8 +599,189 @@ public class GenericUploadServlet extends SavvisServlet {
 
 								}
 
+								// as a file check, validate the file if we have been configured to do so
+								if (okToWrite && !ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
+									Map validationsMap = (Map) fileUploadMap.get("validations");
+
+									// create a temp file object to write the file to for validation
+									String extension = StringUtil.getLastToken(fileName, '.');
+									
+									tempFile = File.createTempFile(fileName, "."+extension);
+								    
+							        // delete temp file when program exits.
+									tempFile.deleteOnExit();
+
+									// write the file to a temp location for validation
+									uploadItem.write(tempFile);
+
+									// handle excel files specially
+									if ("xls".equals(extension)) {
+										tempFile = createDelimitedFileFromXls(tempFile, ".csv", validationsMap.get("delimiter").toString(), 0);
+									}
+
+									NodeList inputs = (NodeList) validationsMap.get("inputs");
+									
+									List<String> inputList = new ArrayList<String>();
+									for (int j = 0; j < inputs.getLength(); j++) {
+										SimpleNode inputNode = new SimpleNode(inputs.item(j));
+										inputList.add(inputNode.getAttribute("name"));
+									}
+									request.setAttribute("inputList", inputList);
+									
+									BufferedReader fileInput = new BufferedReader(new FileReader(tempFile));
+									Integer lineIndex = -1;
+									String line = null;
+									
+									List<LineValidationObject> lineValidations = new ArrayList<LineValidationObject>();
+									Boolean passedValdiation = true;
+									Map<String, Boolean> cacheKeys = new HashMap<String, Boolean>();
+									while ((line = fileInput.readLine()) != null) {
+										lineIndex++;
+										
+										Boolean skipLineValidation = false;
+										Context c = new Context();
+
+										char delim = validationsMap.get("delimiter").toString().toCharArray()[0];
+										String[] lineValues = StringUtil.split(line, delim, '"');
+
+										LineValidationObject validationObject = new LineValidationObject();
+										
+										// set true until we have row rule validations
+										validationObject.setValid(true);
+										
+										if (ObjectUtil.isEmpty(line.trim())) {
+											validationObject.addMessage("Skipping, line is blank");
+											skipLineValidation = true;
+										}
+										
+										if (!ObjectUtil.isEmpty(validationsMap.get("startIndex")) && 
+												lineIndex < Integer.parseInt(validationsMap.get("startIndex").toString())) {
+											validationObject.addMessage("Skipping, assumed column headers");
+											skipLineValidation = true;
+										}
+
+										// pad the line in case we were given less than we need
+										if (inputs.getLength() > lineValues.length) {
+											// loop starting at the end of the lineValues array to 
+											// the max number of cols we should have from the inputs list
+											// and add on blanks
+											for (int i = lineValues.length; i < inputs.getLength(); i++) {
+												lineValues = (String[]) ArrayUtils.add(lineValues, "");
+											}
+										}
+
+										// validate the line
+										List<Input> inputObjs = InputValidator.validate(inputs, lineValues);
+										
+										// parse the return
+										for (int i = 0; i < inputObjs.size(); i++) {
+											Input inputObj = inputObjs.get(i);
+											String cacheKey = "COL"+inputObj.getName();
+											c.add("ROW", inputObj.getName(), inputObj.getValue());
+											
+											if (skipLineValidation) {
+												validationObject.addDataColumn(inputObj.getName(), inputObj.getValue(), true, null);
+												continue;
+											} else {
+												if (inputObj.getReturnCode() != 0) {
+													okToWrite = false;
+													passedValdiation = false;
+													String msg = "";
+													for (int j = 0; j < inputObj.getMessages().size(); j++) {
+														msg += inputObj.getMessages().get(j) + "|";
+														validationObject.addMessage(inputObj.getMessages().get(j));
+													}
+													if (msg.length() > 0)
+														msg = msg.substring(0, msg.length()-1);
+													
+													validationObject.addDataColumn(inputObj.getName(), inputObj.getValue(), false, msg);
+													cacheKeys.put(inputObj.getName(), false);
+												} else {
+													validationObject.addDataColumn(inputObj.getName(), inputObj.getValue(), true, null);
+													cacheKeys.put(inputObj.getName(), true);
+												}
+												
+											}
+										}
+										
+										/*
+										 * now perform any row-level validations
+										 */
+										if (!skipLineValidation && !ObjectUtil.isEmpty(validationsMap.get("rowRules"))) {
+											
+											List<Map<String, Object>> rowRules = (List<Map<String, Object>>) validationsMap.get("rowRules");
+											for (Map<String, Object> rule : rowRules) {
+												String code = c.keywordSubstitute(""+rule.get("code"));
+												String cacheKey = c.keywordSubstitute(""+rule.get("cacheKey"));
+												String errorText = c.keywordSubstitute(""+rule.get("errorText"));
+												
+												// if we've already processed this rule for the cacheKey values, skip it
+												// and use the previously validated messages
+												logger.info("cacheKeys.get(" + cacheKey + "): " + cacheKeys.get(cacheKey));
+												if (!ObjectUtil.isEmpty(cacheKeys.get(cacheKey))) {
+													logger.info("pulling from cacheKeys");
+													
+													if (cacheKeys.get(cacheKey) == false) {
+														validationObject.addMessage(errorText);
+														validationObject.setValid(false);
+													}
+													
+													continue;
+												}
+												
+												// otherwise, process all supported rules
+												if ("js".equals(rule.get("type"))) {
+													
+													ScriptEngineManager manager = new ScriptEngineManager();
+													ScriptEngine engine = manager.getEngineByName("js");
+													engine.put("result", 0);
+													engine.eval(code);
+													String result = engine.get("result").toString();
+													if (!"0".equals(result)) {
+														validationObject.addMessage(errorText);
+														validationObject.setValid(false);
+														cacheKeys.put(cacheKey, false);
+													} else {
+														cacheKeys.put(cacheKey, true);
+													}
+												} else if ("sql".equals(rule.get("type"))) {
+													try {
+														List results = DBUtil.executeQuery(rule.get("dbDriver").toString(), code);
+														
+														if (results != null && !rule.get("rowsFoundGood").equals(results.size())) {
+															validationObject.addMessage(errorText);
+															cacheKeys.put(cacheKey, false);
+														} else {
+															cacheKeys.put(cacheKey, true);
+														}
+													} catch (Exception e) {
+														logger.error("Error running sql row rule", e);
+														validationObject.addMessage(e.getMessage());
+													}
+												} else {
+													validationObject.addMessage("Unsupported rowRule type (" + rule.get("type") +")");
+												}
+												
+											}
+										}
+										
+										lineValidations.add(validationObject);
+									}
+									fileInput.close();
+									
+									request.setAttribute("validationOK", passedValdiation);
+									if (!passedValdiation) {
+										request.setAttribute("lineValidations", lineValidations);
+									}
+								}
+								
 								if (okToWrite) {
-									uploadItem.write(fileToCreate);
+									
+									if (!ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
+										FileUtil.moveFile(tempFile, fileToCreate);
+									} else {
+										uploadItem.write(fileToCreate);
+									}
 
 									String msg = "File " + fileName + " uploaded";
 									if (!StringUtil.getLastToken(fullFileName, '\\').equals(fileName)) {
@@ -809,8 +1004,10 @@ public class GenericUploadServlet extends SavvisServlet {
 					}
 				}
 
-				if (StringUtil.hasValue(keyMap.get("name").toString()))
+				if (StringUtil.hasValue(keyMap.get("name").toString())) {
 					request.setAttribute("uploadKeyDisplay", " - " + keyMap.get("name").toString());
+					request.setAttribute("uploadName", keyMap.get("name").toString());
+				}
 
 				if (!ObjectUtil.isEmpty(keyMap.get("fileUploads"))) {
 					request.setAttribute("hasFileUploads", "1");
@@ -1533,6 +1730,116 @@ public class GenericUploadServlet extends SavvisServlet {
 									if (!ObjectUtil.isEmpty(fileUploadNode.getTextContent("alias")))
 										fileUploadMap.put("alias", ("1".equals(fileUploadNode.getTextContent("alias")) ? "1" : "0"));
 
+									
+									// look for file validations
+									if (!ObjectUtil.isEmpty(fileUploadNode.getSimpleNode("{validations}"))) {
+										SimpleNode validationsNode = fileUploadNode.getSimpleNode("{validations}");
+										Map<String, Object> validationsMap = new HashMap<String, Object>();
+										
+										if (ObjectUtil.isEmpty(validationsNode.getTextContent("delimiter"))) {
+											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " must have a delimiter child node in the validations node");
+										} else {
+											validationsMap.put("delimiter", validationsNode.getTextContent("delimiter"));
+										}
+										
+										if (ObjectUtil.isEmpty(validationsNode.getTextContent("{startIndex}"))) {
+											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " must have a startIndex child node in the validations node");
+										} else {
+											Integer startIndex = null;
+											try {
+												startIndex = Integer.parseInt(validationsNode.getTextContent("startIndex"));
+											} catch (Exception e) {
+												messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " startIndex must be an integer");
+											}
+											validationsMap.put("startIndex", startIndex);
+										}
+
+										// look for input config
+										if (!ObjectUtil.isEmpty(validationsNode.getSimpleNode("{inputs}"))) {
+											NodeList inputs = validationsNode.getSimpleNode("{inputs}").getChildNodes("input");
+											validationsMap.put("inputs", inputs);
+										} else {
+											messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " must have inputs defined for validations");
+										}
+
+										// look for row rules
+										if (!ObjectUtil.isEmpty(validationsNode.getSimpleNode("{rowRules}"))) {
+											NodeList ruleNodes = validationsNode.getSimpleNode("{rowRules}").getChildNodes("rule");
+											List<Object> rowRules = new ArrayList<Object>();
+											
+											for (int l = 0; l < ruleNodes.getLength(); l++) {
+												SimpleNode ruleNode = new SimpleNode(ruleNodes.item(l));
+												Map<String, String> ruleMap = new HashMap<String, String>();
+
+												// rules must have a name, error text, and a service section
+												if (ObjectUtil.isEmpty(ruleNode.getTextContent("name"))) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " must have a name");
+												} else {
+													ruleMap.put("name", ruleNode.getTextContent("name"));
+												}
+
+												if (ObjectUtil.isEmpty(ruleNode.getTextContent("errorText"))) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " must have an errorText node");
+												} else {
+													ruleMap.put("errorText", ruleNode.getTextContent("errorText"));
+												}
+
+												if (ObjectUtil.isEmpty(ruleNode.getTextContent("cacheKey"))) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " must have a cacheKey node");
+												} else {
+													ruleMap.put("cacheKey", ruleNode.getTextContent("cacheKey"));
+												}
+
+												// inspect the service node
+												if (ObjectUtil.isEmpty(ruleNode.getTextContent("service"))) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " must have a service node");
+												} else {
+													SimpleNode serviceNode = ruleNode.getSimpleNode("service");
+													
+													if (ObjectUtil.isEmpty(serviceNode.getTextContent("type"))) {
+														messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " must have a service type");
+													} else {
+														ruleMap.put("type", serviceNode.getTextContent("type").toLowerCase());
+														
+														if ("js".equals(ruleMap.get("type"))) {
+															
+														} else if ("sql".equals(ruleMap.get("type"))) {
+															
+															// driver is required
+															logger.info("serviceNode: " + serviceNode);
+															logger.info("serviceNode.getTextContent(\"dbDriver\"): " + serviceNode.getTextContent("dbDriver"));
+															if (ObjectUtil.isEmpty(serviceNode.getTextContent("dbDriver"))) {
+																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of sql type must have a service dbDriver node");
+															} else {
+																ruleMap.put("dbDriver", serviceNode.getTextContent("dbDriver"));
+															}
+
+															if (ObjectUtil.isEmpty(serviceNode.getTextContent("rowsFoundGood"))) {
+																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of sql type must have a service rowsFoundGood node");
+															} else {
+																ruleMap.put("rowsFoundGood", serviceNode.getTextContent("rowsFoundGood"));
+															}
+														} else {
+															messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of contains unsupported rowRule type " + ruleMap.get("type"));
+														}
+													}
+
+													if (ObjectUtil.isEmpty(serviceNode.getTextContent("code"))) {
+														messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " must have a service code node");
+													} else {
+														ruleMap.put("code", serviceNode.getTextContent("code"));
+													}
+												}
+
+												rowRules.add(ruleMap);
+											}
+											
+											validationsMap.put("rowRules", rowRules);
+										}
+
+										fileUploadMap.put("validations", validationsMap);
+									}
+									
 									fileUploadsMap.put(fileUploadMap.get("name").toString(), (Object) fileUploadMap);
 								}
 
@@ -1572,4 +1879,137 @@ public class GenericUploadServlet extends SavvisServlet {
 			this.message = message;
 		}
 	}
+	
+	public class LineValidationObject {
+		/** list of messages for the row */
+		private List<String> messages = new ArrayList<String>();
+		/** ordered map of row data */
+		private LinkedHashMap<String, Object> content = new LinkedHashMap<String, Object>();
+		/** flag denoting if the row passed validation */
+		String valid;
+		
+		public void addDataColumn(String columnName, String data, Boolean valid, String message) {
+			Map<String, Object> columnMap = new HashMap<String, Object>();
+			columnMap.put("column", convertStringToProper(columnName));
+			columnMap.put("data", data);
+			
+			if (valid) {
+				columnMap.put("valid", "0");
+			} else {
+				columnMap.put("valid", "1");
+			}
+			
+			if (!ObjectUtil.isEmpty(message))
+				columnMap.put("message", message);
+			
+			content.put(columnName, columnMap);
+		}
+		public void addMessage(String message) {
+			messages.add(message);
+		}
+		public List<String> getMessages() {
+			return messages;
+		}
+		public void setMessages(List<String> messages) {
+			this.messages = messages;
+		}
+		public LinkedHashMap<String, Object> getContent() {
+			return content;
+		}
+		public void setContent(LinkedHashMap<String, Object> content) {
+			this.content = content;
+		}
+		public String getValid() {
+			return valid;
+		}
+		public void setValid(Boolean valid) {
+			if (valid) {
+				this.valid = "0";
+			} else {
+				this.valid = "1";
+			}
+		}
+	}
+
+	private String convertStringToProper(String s) {
+		String s2 = "";
+		s = StringUtil.upperCaseFirstLetter(s);
+		if (!s.contains(" ")) {
+			// skip beginning caps, then replace all other caps with space-caps
+			Boolean begin = false;
+			for (int i = 0; i < s.length(); i++) {
+				if (s.substring(i, i+1).matches("[a-z]")) {
+					begin = true;
+				}
+				if (begin) {
+					if (s.substring(i, i+1).matches("[A-Z]")) {
+						s2 += " " + s.substring(i, i+1);
+					} else {
+						s2 += s.substring(i, i+1);
+					}
+				}else {
+					s2 += s.substring(i, i+1);
+				}
+			}
+		} else {
+			s2 = s;
+		}
+		return s2;
+	}
+
+	private File createDelimitedFileFromXls(File file, String extension, String delim, Integer sheetNum) {
+		File csvFile = null;
+
+		try {
+			POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(file));
+			HSSFSheet sheet = new HSSFWorkbook(fs).getSheetAt(sheetNum);
+			List<String> rowList = new ArrayList<String>();
+
+			for (int i = 0; i <= sheet.getLastRowNum(); i++) {
+				HSSFRow row = sheet.getRow(i);
+				String rowString = "";
+				for (int j = 0; j <= row.getLastCellNum(); j++) {
+					String cellValue = getCellValue(sheet, i, j);
+					rowString += cellValue + delim;
+				}
+				rowList.add(rowString);
+			}
+			logger.info("rowList: " + rowList);
+			
+			// create the csv file
+			String csvPath = file.getAbsolutePath().replace(file.getName(), "");
+			if (!csvPath.endsWith("/"))
+				csvPath += "/";
+			String csvFileName = file.getName().replace(".xls", extension);
+			
+			csvFile = new File(csvPath + csvFileName);
+			FileUtil.saveFile(csvFile, rowList);
+			
+		} catch (Exception e) {
+			logger.error("", e);
+		}
+
+		return csvFile;
+	}
+	
+	public static String getCellValue(HSSFSheet sheet, int row, int column) {
+		if(sheet.getRow(row) == null || sheet.getRow(row).getCell((short)column) == null)
+			return "";
+		int type = sheet.getRow(row).getCell((short)column).getCellType();
+		if(type == HSSFCell.CELL_TYPE_NUMERIC) {
+			Double value = sheet.getRow(row).getCell((short)column).getNumericCellValue();
+			try {
+				return ""+value.longValue();
+			} catch (Exception e) {
+				// the value apparently wasn't an integer
+			}
+			if(value == null)
+				return "";
+			return ""+value;
+		} 
+		if(sheet.getRow(row).getCell((short)column).getRichStringCellValue() == null)
+			return "";
+		return sheet.getRow(row).getCell((short)column).getRichStringCellValue().getString();
+	}
+
 }

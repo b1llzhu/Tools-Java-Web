@@ -58,7 +58,7 @@ button, .button {
 
 .bodyText {
 	font-family: sans-serif;
-	font-size:8pt;
+	font-size: 9pt;
 	color: #000;
 }
 
@@ -75,7 +75,7 @@ button, .button {
 
 .fileListHdr {
 	font-family: sans-serif;
-	font-size:10pt;
+	font-size:9pt;
 	font-weight: bold;
 	color: #003399;
 }
@@ -88,7 +88,7 @@ button, .button {
 }
 .fileListHdrErr {
 	font-family: sans-serif;
-	font-size:10pt;
+	font-size:9pt;
 	font-weight: bold;
 	color: #ff0000;
 }
@@ -213,3 +213,118 @@ button, .button {
 	font-size: 8pt;
 	text-align: left;
 }
+
+.validationTbl {
+	border-collapse: collapse;
+	border-top: 1px solid #003399;
+	border-bottom: 1px solid #003399;
+	margin-bottom: 3px;
+	width: 100%;
+}
+
+.validationTblHdr {
+	background-color: #ddd;
+	color: #003399;
+	font-family: sans-serif;
+	font-size: 7pt;
+	font-weight: bold;
+	text-align: left;
+}
+
+.validationTblHdrErr {
+	background-color: #ddd;
+	color: #ff0000;
+	font-family: sans-serif;
+	font-size: 8pt;
+	font-weight: bold;
+	text-align: left;
+}
+
+.validationRow {
+	border-collapse: collapse;
+	color: #aaa;
+}
+
+.validationRowErr {
+	border-collapse: collapse;
+	font-weight: bold;
+	color: #ff0000;
+}
+
+.validationCell {
+	border-collapse: collapse;
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
+	font-family: sans-serif;
+	font-size: 7pt;
+	text-align: left;
+	vertical-align: top;
+}
+
+.validationCellMsg {
+	border-collapse: collapse;
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
+	font-family: sans-serif;
+	font-size: 7pt;
+	text-align: left;
+	vertical-align: top;
+	background-color: #fff;
+	color: #000;
+	font-weight: normal;
+}
+
+.validationCellErr {
+	border-collapse: collapse;
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
+	font-family: sans-serif;
+	font-size: 7pt;
+	text-align: left;
+	vertical-align: top;
+	background-color: yellow;
+	color: #000;
+}
+
+.validationLink {
+	font-family: sans-serif;
+	font-size:8pt;
+	color: #003399;
+	text-decoration: none;	
+}
+
+.validationLink:hover {
+	text-decoration: underline;
+}
+
+.validationContentHdr {
+	width: 100%;
+	border-collapse: collapse;
+	border: 1px solid #fff;
+	padding: 3px;
+	font-family: sans-serif;
+	font-size: 9pt;
+	font-weight: bold;
+	text-align: left;
+	vertical-align: top;
+	color: #fff;
+	background-color: #003399;
+	margin-bottom: 2px;
+}
+
+.uploadUserInfo {
+	font-family: sans-serif;
+	font-size: 10pt;
+	color: #000;	
+	padding-top: 10px;
+}
+
+.uploadSubTitle {
+	font-family: sans-serif;
+	font-size: 8pt;
+	color: #000;	
+}
+
