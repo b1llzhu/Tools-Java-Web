@@ -65,11 +65,11 @@ import com.savvis.it.validation.InputValidator;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.57 2009/04/20 14:55:55 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.58 2009/04/20 15:56:00 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.57 2009/04/20 14:55:55 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.58 2009/04/20 15:56:00 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -562,7 +562,7 @@ public class GenericUploadServlet extends SavvisServlet {
 								destDir = destDir.concat("/");
 
 							File fileToCreate = new File(destDir + fileName);
-							File tempFile = null;
+							File fileToRead = null;
 
 							// check to see if the file already exists
 							if (fileToCreate.exists()) {
@@ -606,17 +606,18 @@ public class GenericUploadServlet extends SavvisServlet {
 									// create a temp file object to write the file to for validation
 									String extension = StringUtil.getLastToken(fileName, '.');
 									
-									tempFile = File.createTempFile(fileName, "."+extension);
+									fileToRead = File.createTempFile(fileName, "."+extension);
 								    
-							        // delete temp file when program exits.
-									tempFile.deleteOnExit();
-
 									// write the file to a temp location for validation
-									uploadItem.write(tempFile);
-
+									uploadItem.write(fileToRead);
+									
 									// handle excel files specially
+									File tempFile = null;
+									logger.info("extension: " + extension);
 									if ("xls".equals(extension)) {
-										tempFile = createDelimitedFileFromXls(tempFile, ".csv", validationsMap.get("delimiter").toString(), 0);
+										tempFile = createDelimitedFileFromXls(fileToRead, ".csv", validationsMap.get("delimiter").toString(), 0);
+									} else {
+										tempFile = fileToRead;
 									}
 
 									NodeList inputs = (NodeList) validationsMap.get("inputs");
@@ -778,7 +779,7 @@ public class GenericUploadServlet extends SavvisServlet {
 								if (okToWrite) {
 									
 									if (!ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
-										FileUtil.moveFile(tempFile, fileToCreate);
+										FileUtil.moveFile(fileToRead, fileToCreate);
 									} else {
 										uploadItem.write(fileToCreate);
 									}
