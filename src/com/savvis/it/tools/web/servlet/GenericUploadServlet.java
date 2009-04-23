@@ -65,11 +65,11 @@ import com.savvis.it.validation.InputValidator;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.58 2009/04/20 15:56:00 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.59 2009/04/23 19:46:45 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.58 2009/04/20 15:56:00 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.59 2009/04/23 19:46:45 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -1293,13 +1293,14 @@ public class GenericUploadServlet extends SavvisServlet {
 								String s = FileUtil.loadFile(file.getAbsolutePath());
 								s = s.toLowerCase();
 								List<String> sList = StringUtil.toList(s, "\n ");
+								List<String> usersList = new ArrayList<String>();
 								for (String sL : sList) {
-									if (sL.startsWith("#"))
-										sList.remove(sL);
+									if (StringUtil.hasValue(sL) && !sL.startsWith("#"))
+										usersList.add(sL);
 								}
-								Collections.sort(sList);
+								Collections.sort(usersList);
 
-								uploadMap.put("authorizedUserList", sList);
+								uploadMap.put("authorizedUserList", usersList);
 							}
 						}
 
@@ -1971,11 +1972,10 @@ public class GenericUploadServlet extends SavvisServlet {
 				String rowString = "";
 				for (int j = 0; j <= row.getLastCellNum(); j++) {
 					String cellValue = getCellValue(sheet, i, j);
-					rowString += cellValue + delim;
+					rowString += "\"" + cellValue + "\"" + delim;
 				}
 				rowList.add(rowString);
 			}
-			logger.info("rowList: " + rowList);
 			
 			// create the csv file
 			String csvPath = file.getAbsolutePath().replace(file.getName(), "");
