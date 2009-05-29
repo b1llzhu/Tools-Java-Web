@@ -59,17 +59,17 @@ import com.savvis.it.util.StringUtil;
 import com.savvis.it.util.SystemUtil;
 import com.savvis.it.util.XmlUtil;
 import com.savvis.it.validation.Input;
-import com.savvis.it.tools.validation.InputValidator;
+import com.savvis.it.validation.InputValidator;
 
 /**
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.60 2009/05/29 14:51:51 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.61 2009/05/29 14:56:25 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.60 2009/05/29 14:51:51 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.61 2009/05/29 14:56:25 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -613,6 +613,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									
 									// handle excel files specially
 									File tempFile = null;
+									logger.info("extension: " + extension);
 									if ("xls".equals(extension)) {
 										tempFile = createDelimitedFileFromXls(fileToRead, ".csv", validationsMap.get("delimiter").toString(), 0);
 									} else {
@@ -634,7 +635,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									
 									List<LineValidationObject> lineValidations = new ArrayList<LineValidationObject>();
 									Boolean passedValdiation = true;
-									Map<String, Object> cacheKeys = new HashMap<String, Object>();
+									Map<String, Boolean> cacheKeys = new HashMap<String, Boolean>();
 									while ((line = fileInput.readLine()) != null) {
 										lineIndex++;
 										
@@ -684,6 +685,7 @@ public class GenericUploadServlet extends SavvisServlet {
 												continue;
 											} else {
 												if (inputObj.getReturnCode() != 0) {
+													okToWrite = false;
 													passedValdiation = false;
 													String msg = "";
 													for (int j = 0; j < inputObj.getMessages().size(); j++) {
@@ -694,8 +696,10 @@ public class GenericUploadServlet extends SavvisServlet {
 														msg = msg.substring(0, msg.length()-1);
 													
 													validationObject.addDataColumn(inputObj.getName(), inputObj.getValue(), false, msg);
+													cacheKeys.put(inputObj.getName(), false);
 												} else {
 													validationObject.addDataColumn(inputObj.getName(), inputObj.getValue(), true, null);
+													cacheKeys.put(inputObj.getName(), true);
 												}
 												
 											}
@@ -712,6 +716,20 @@ public class GenericUploadServlet extends SavvisServlet {
 												String cacheKey = c.keywordSubstitute(""+rule.get("cacheKey"));
 												String errorText = c.keywordSubstitute(""+rule.get("errorText"));
 												
+												// if we've already processed this rule for the cacheKey values, skip it
+												// and use the previously validated messages
+												logger.info("cacheKeys.get(" + cacheKey + "): " + cacheKeys.get(cacheKey));
+												if (!ObjectUtil.isEmpty(cacheKeys.get(cacheKey))) {
+													logger.info("pulling from cacheKeys");
+													
+													if (cacheKeys.get(cacheKey) == false) {
+														validationObject.addMessage(errorText);
+														validationObject.setValid(false);
+													}
+													
+													continue;
+												}
+												
 												// otherwise, process all supported rules
 												if ("js".equals(rule.get("type"))) {
 													
@@ -723,24 +741,19 @@ public class GenericUploadServlet extends SavvisServlet {
 													if (!"0".equals(result)) {
 														validationObject.addMessage(errorText);
 														validationObject.setValid(false);
-														passedValdiation = false;
+														cacheKeys.put(cacheKey, false);
+													} else {
+														cacheKeys.put(cacheKey, true);
 													}
 												} else if ("sql".equals(rule.get("type"))) {
 													try {
-														List results = null;
+														List results = DBUtil.executeQuery(rule.get("dbDriver").toString(), code);
 														
-														if (cacheKeys.containsKey(cacheKey)) {
-															results = (List)cacheKeys.get(cacheKey);
-														} else {
-															results = DBUtil.executeQuery(rule.get("dbDriver").toString(), code);
-															cacheKeys.put(cacheKey, results);
-														}
-
-														Integer rowsFoundGood = (Integer)rule.get("rowsFoundGood");
-														if ((results == null & rowsFoundGood != 0) || 
-																(results != null && !ObjectUtil.areObjectsEqual(rowsFoundGood, results.size()))) {
+														if (results != null && !rule.get("rowsFoundGood").equals(results.size())) {
 															validationObject.addMessage(errorText);
-															passedValdiation = false;
+															cacheKeys.put(cacheKey, false);
+														} else {
+															cacheKeys.put(cacheKey, true);
 														}
 													} catch (Exception e) {
 														logger.error("Error running sql row rule", e);
@@ -761,9 +774,6 @@ public class GenericUploadServlet extends SavvisServlet {
 									if (!passedValdiation) {
 										request.setAttribute("lineValidations", lineValidations);
 									}
-									
-									if (!passedValdiation)
-										okToWrite = false;
 								}
 								
 								if (okToWrite) {
@@ -818,6 +828,7 @@ public class GenericUploadServlet extends SavvisServlet {
 					} else {
 						Map keyMap = configMap.get(pageMap.get("key"));
 						Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
+						logger.info("directoriesMap: " + directoriesMap);
 						request.setAttribute("win", winPrincipal);
 						request.setAttribute("file", downloadFile);
 						request.setAttribute("addtl", downloadKey);
@@ -1760,7 +1771,7 @@ public class GenericUploadServlet extends SavvisServlet {
 											
 											for (int l = 0; l < ruleNodes.getLength(); l++) {
 												SimpleNode ruleNode = new SimpleNode(ruleNodes.item(l));
-												Map<String, Object> ruleMap = new HashMap<String, Object>();
+												Map<String, String> ruleMap = new HashMap<String, String>();
 
 												// rules must have a name, error text, and a service section
 												if (ObjectUtil.isEmpty(ruleNode.getTextContent("name"))) {
@@ -1797,6 +1808,8 @@ public class GenericUploadServlet extends SavvisServlet {
 														} else if ("sql".equals(ruleMap.get("type"))) {
 															
 															// driver is required
+															logger.info("serviceNode: " + serviceNode);
+															logger.info("serviceNode.getTextContent(\"dbDriver\"): " + serviceNode.getTextContent("dbDriver"));
 															if (ObjectUtil.isEmpty(serviceNode.getTextContent("dbDriver"))) {
 																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of sql type must have a service dbDriver node");
 															} else {
@@ -1806,13 +1819,7 @@ public class GenericUploadServlet extends SavvisServlet {
 															if (ObjectUtil.isEmpty(serviceNode.getTextContent("rowsFoundGood"))) {
 																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of sql type must have a service rowsFoundGood node");
 															} else {
-																Integer rowsFoundGood = null;
-																try {
-																	rowsFoundGood = Integer.parseInt(serviceNode.getTextContent("rowsFoundGood"));
-																	ruleMap.put("rowsFoundGood", rowsFoundGood);
-																} catch (Exception e) {
-																	messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of sql type must have a rowsFoundGood value that is an integer");
-																}
+																ruleMap.put("rowsFoundGood", serviceNode.getTextContent("rowsFoundGood"));
 															}
 														} else {
 															messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of contains unsupported rowRule type " + ruleMap.get("type"));
