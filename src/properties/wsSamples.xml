@@ -69,6 +69,71 @@
 			</getWorkRequest>
 		</sample>
 	</client>
+	<client appl="siebel" config="customerSpacesWS">
+		<sample operation="getCustomerSpaceListWithDBCode">
+			<getCustomerSpaceListWithDBCode>
+				<arg0>287881</arg0>
+				<arg1>PRIMARY</arg1>
+			</getCustomerSpaceListWithDBCode>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getOrderNotesByIdAndType">
+			<getOrderNotesByIdAndType>
+				<orderId>1234</orderId>
+				<type>1234</type>
+			</getOrderNotesByIdAndType>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getOrderByCustomerAndStatus">
+			<getOrderByCustomerAndStatus>
+				<customerNumber>215873</customerNumber>
+				<status>CO</status>
+				<customerId>167723</customerId>
+			</getOrderByCustomerAndStatus>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getPvcsByIdAndType">
+			<getPvcsByIdAndType>
+				<id>190790</id>
+				<type>SIP</type>
+			</getPvcsByIdAndType>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getCustomerDetailsByCustomerNum">
+			<getCustomerDetailsByCustomerNum>
+				<customerNumber>215873</customerNumber>
+				<customerId>167723</customerId>
+			</getCustomerDetailsByCustomerNum>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getOptionsByIdAndType">
+			<getOptionsByIdAndType>
+				<id>177642</id>
+				<type>SIP</type>
+			</getOptionsByIdAndType>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getActiveServicesByCustomer">
+			<getActiveServicesByCustomer>
+				<customerNumber>215873</customerNumber>
+				<customerId>167723</customerId>
+			</getActiveServicesByCustomer>
+		</sample>
+	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="getOrderDetailsByOrderId">
+			<getOrderDetailsByOrderId>
+				<orderId>72051</orderId>
+				<customerId>174414</customerId>
+			</getOrderDetailsByOrderId>
+		</sample>
+	</client>
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="createWorkRequest">
 			<createWorkRequest>
