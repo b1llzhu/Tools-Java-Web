@@ -136,12 +136,16 @@
 	</client>
 	<client appl="vantive" config="orderWS">
 		<sample operation="closeOrder">
-			<workRequestId>458949</workRequestId>
+			<closeOrder>
+				<workRequestId>458949</workRequestId>
+			</closeOrder>
 		</sample>
 	</client>
 	<client appl="vantive" config="customerWS">
 		<sample operation="getBillingSites">
-			<companyId>174414</companyId>
+			<getBillingSites>
+				<companyId>174414</companyId>
+			</getBillingSites>
 		</sample>
 	</client>
 	<client appl="vantive" config="createWorkRequestWS">
