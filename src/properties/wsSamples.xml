@@ -134,6 +134,16 @@
 			</getOrderDetailsByOrderId>
 		</sample>
 	</client>
+	<client appl="vantive" config="orderWS">
+		<sample operation="closeOrder">
+			<workRequestId>458949</workRequestId>
+		</sample>
+	</client>
+	<client appl="vantive" config="customerWS">
+		<sample operation="getBillingSites">
+			<companyId>174414</companyId>
+		</sample>
+	</client>
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="createWorkRequest">
 			<createWorkRequest>

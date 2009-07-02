@@ -4,6 +4,7 @@
 	<entry appl="vantive" config="createWorkRequestWS"/>
 	<entry appl="vantive" config="aipWS"/>
 	<entry appl="vantive" config="orderWS"/>
+	<entry appl="vantive" config="customerWS"/>
 	<entry appl="finance" config="creditCheckWS"/>
 	<entry appl="siebel" config="customerSpacesWS"/>
 </wsIndex>
