@@ -148,6 +148,49 @@
 			</getBillingSites>
 		</sample>
 	</client>
+	<client appl="vantive" config="noteWS">
+		<sample operation="getNote">
+			<getNote>
+			  <objectType>BR_ACTIVITY</objectType>
+			  <noteId>2003492.0</noteId>
+			</getNote>
+		</sample>
+	</client>
+	<client appl="vantive" config="noteWS">
+		<sample operation="getNoteList">
+			<getNoteList>
+			  <objectType>BR_ACTIVITY</objectType>
+			  <objectId>476771.0</objectId>
+			</getNoteList>
+		</sample>
+	</client>
+	<client appl="vantive" config="noteWS">
+		<sample operation="saveNote">
+			<saveNote>
+			  <note>
+			    <action>Comment</action>
+			    <createdBy>user</createdBy>
+			    <note>note body</note>
+			    <objectId>476771</objectId>
+			    <objectType>BR_ACTIVITY</objectType>
+			    <subject>note subject</subject>
+			    <visibility>All</visibility>
+			  </note>
+			</saveNote>
+		</sample>
+	</client>
+	<client appl="vantive" config="noteWS">
+		<sample operation="appendNote">
+			<appendNote>
+			  <note>
+			    <modifiedBy>user</modifiedBy>
+			    <note>append this</note>
+			    <noteId>5765022</noteId>
+			    <objectType>BR_ACTIVITY</objectType>
+			  </note>
+			</appendNote>
+		</sample>
+	</client>
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="createWorkRequest">
 			<createWorkRequest>
