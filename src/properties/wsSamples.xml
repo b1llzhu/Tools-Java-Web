@@ -166,16 +166,34 @@
 	</client>
 	<client appl="vantive" config="noteWS">
 		<sample operation="saveNote">
+			update note sample
 			<saveNote>
-			  <note>
-			    <action>Comment</action>
-			    <createdBy>user</createdBy>
-			    <note>note body</note>
-			    <objectId>476771</objectId>
-			    <objectType>BR_ACTIVITY</objectType>
-			    <subject>note subject</subject>
-			    <visibility>All</visibility>
-			  </note>
+				<note>
+					<action>Comment</action>
+					<createdBy></createdBy>
+					<modifiedBy>user</modifiedBy>
+					<noteId>5765048</noteId>
+					<note>note body</note>
+					<objectId>508959</objectId>
+					<objectType>BR_ACTIVITY</objectType>
+					<subject>note subject</subject>
+					<visibility>All</visibility>
+				</note>
+			</saveNote>
+
+			create note sample
+			<saveNote>
+				<note>
+					<action>Comment</action>
+					<createdBy>user</createdBy>
+					<modifiedBy></modifiedBy>
+					<noteId></noteId>
+					<note>note body</note>
+					<objectId>508959</objectId>
+					<objectType>BR_ACTIVITY</objectType>
+					<subject>note subject</subject>
+					<visibility>All</visibility>
+				</note>
 			</saveNote>
 		</sample>
 	</client>
