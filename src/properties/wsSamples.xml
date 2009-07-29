@@ -36,8 +36,7 @@
 										385
 									</optionDefinitionId>
 									<value>
-										Red Hat Enterprise Linux AS v4
-										32 bit Managed Operating System
+										Red Hat Enterprise Linux AS v4 32 bit Managed Operating System
 									</value>
 									<quantity>1</quantity>
 								</option>
@@ -247,13 +246,11 @@
 											579
 										</optionDefinitionId>
 										<value>
-											Red Hat Enterprise Linux AS
-											v4 32 bit Managed Operating
-											System
+											Red Hat Enterprise Linux AS v4 32 bit Managed Operating System
 										</value>
 										<price>
-											<mrrList>400</mrrList>
-											<nrcList>350</nrcList>
+											<mrrNet>400</mrrNet>
+											<nrcNet>350</nrcNet>
 										</price>
 									</option>
 									<option>
@@ -261,9 +258,10 @@
 											578
 										</optionDefinitionId>
 										<value>Standard</value>
+										<variableUsageRate>13.5</variableUsageRate>
 										<price>
-											<mrrList>500</mrrList>
-											<nrcList>350</nrcList>
+											<mrrNet>500</mrrNet>
+											<nrcNet>350</nrcNet>
 										</price>
 									</option>
 								</options>
