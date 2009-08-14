@@ -62,10 +62,12 @@
 		</sample>
 	</client>
 	<client appl="finance" config="creditCheckWS">
-		<getCreditLimit>
-			<system>Acuity</system>
-			<accountNumber>1234</accountNumber>
-		</getCreditLimit>
+		<sample operation="getCreditLimit">
+			<getCreditLimit>
+				<system>Acuity</system>
+				<accountNumber>1234</accountNumber>
+			</getCreditLimit>
+		</sample>
 	</client>
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="getWorkRequest">
