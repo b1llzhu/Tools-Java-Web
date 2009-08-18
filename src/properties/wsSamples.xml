@@ -202,6 +202,44 @@
 			</appendNote>
 		</sample>
 	</client>
+	<client appl="vantive" config="groupWS">
+		<sample operation="saveGroup">
+			<saveGroup>
+				<group>
+					<createdBy>user</createdBy>
+					<modifiedBy>user</modifiedBy>
+					<groupDefName>Cloud Server Pool</groupDefName>
+					<name>Test Group</name>
+					<groupId>39192</groupId>
+					<note>Group Description</note>
+					<status>Active</status>
+					<groupMembers>
+						<objectType>SITE</objectType>
+						<objectUniqueName>S00189</objectUniqueName>
+					</groupMembers>
+					<groupMembers>
+						<objectType>INSTALLED</objectType>
+						<objectId>2137</objectId>
+					</groupMembers>
+				</group>
+			</saveGroup>
+		</sample>
+	</client>
+	<client appl="vantive" config="groupWS">
+		<sample operation="getGroupByDefAndName">
+			<getGroupByDefAndName>
+				<definitionName>Cloud Server Pool</definitionName>
+				<groupName>Test Group</groupName>
+			</getGroupByDefAndName>
+		</sample>
+	</client>
+	<client appl="vantive" config="groupWS">
+		<sample operation="getGroup">
+			<getGroup>
+				<groupId>39192</groupId>
+			</getGroup>
+		</sample>
+	</client>
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="createWorkRequest">
 			<createWorkRequest>
