@@ -48,7 +48,6 @@ import com.savvis.it.job.Job;
 import com.savvis.it.job.WebJobRunner;
 import com.savvis.it.servlet.SavvisServlet;
 import com.savvis.it.tools.RunInfoUtil;
-import com.savvis.it.tools.web.bean.InputFieldHandler;
 import com.savvis.it.util.CommandLineProcess;
 import com.savvis.it.util.Context;
 import com.savvis.it.util.FileUtil;
@@ -60,16 +59,17 @@ import com.savvis.it.util.SystemUtil;
 import com.savvis.it.util.XmlUtil;
 import com.savvis.it.validation.Input;
 import com.savvis.it.validation.InputValidator;
+import com.savvis.it.web.util.InputFieldHandler;
 
 /**
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.61 2009/05/29 14:56:25 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.62 2009/10/01 19:10:16 telrick Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.61 2009/05/29 14:56:25 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.62 2009/10/01 19:10:16 telrick Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
