@@ -34,6 +34,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -65,15 +66,16 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.62 2009/10/01 19:10:16 telrick Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.63 2009/10/02 19:32:39 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.62 2009/10/01 19:10:16 telrick Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.63 2009/10/02 19:32:39 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
 	private static Thread threadChecker = null;
+	private static SimpleDateFormat excelToCSVdateFormat = new SimpleDateFormat("MM/dd/yyyy");
 
 	/**
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -1998,15 +2000,25 @@ public class GenericUploadServlet extends SavvisServlet {
 			return "";
 		int type = sheet.getRow(row).getCell((short)column).getCellType();
 		if(type == HSSFCell.CELL_TYPE_NUMERIC) {
-			Double value = sheet.getRow(row).getCell((short)column).getNumericCellValue();
-			try {
-				return ""+value.longValue();
-			} catch (Exception e) {
-				// the value apparently wasn't an integer
+			if(HSSFDateUtil.isCellDateFormatted(sheet.getRow(row).getCell((short)column))) {
+				try{
+					return excelToCSVdateFormat.format(sheet.getRow(row).getCell((short)column).getDateCellValue());
+				}catch(Exception e) {
+					if(sheet.getRow(row).getCell((short)column).getRichStringCellValue() == null)
+						return "";
+					return sheet.getRow(row).getCell((short)column).getRichStringCellValue().getString();
+				}
+			}else{
+				Double value = sheet.getRow(row).getCell((short)column).getNumericCellValue();
+				try {
+					return ""+value.longValue();
+				} catch (Exception e) {
+					// the value apparently wasn't an integer
+				}
+				if(value == null)
+					return "";
+				return ""+value;
 			}
-			if(value == null)
-				return "";
-			return ""+value;
 		} 
 		if(sheet.getRow(row).getCell((short)column).getRichStringCellValue() == null)
 			return "";
