@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.63 2009/10/02 19:32:39 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.64 2009/10/19 20:24:21 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.63 2009/10/02 19:32:39 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.64 2009/10/19 20:24:21 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -302,12 +302,11 @@ public class GenericUploadServlet extends SavvisServlet {
 
 				Map<String, String> upload = new HashMap<String, String>();
 				upload.put("name", uploadData[0]);
-				upload.put("key", uploadData[1]);
 
 				// authorize the user to see the upload
 				AuthorizationObject authObject = isAuthorized(configMap.get(uploadData[1]), winPrincipal);
 
-				if (authObject.isAuthorized)
+				if (authObject != null && authObject.isAuthorized)
 					uploads.add(upload);
 			}
 			request.setAttribute("uploads", uploads);
@@ -1971,12 +1970,25 @@ public class GenericUploadServlet extends SavvisServlet {
 
 			for (int i = 0; i <= sheet.getLastRowNum(); i++) {
 				HSSFRow row = sheet.getRow(i);
+				
+				if(ObjectUtil.isEmpty(row)) {
+					continue;
+				}
+				
 				String rowString = "";
+				boolean hasValue = false;
 				for (int j = 0; j <= row.getLastCellNum(); j++) {
 					String cellValue = getCellValue(sheet, i, j);
 					rowString += "\"" + cellValue + "\"" + delim;
+					if(!ObjectUtil.isEmpty(cellValue)) {
+						hasValue = true;
+					}
 				}
-				rowList.add(rowString);
+				
+				//only add the row if at least one cell has a value
+				if(hasValue) {
+					rowList.add(rowString);
+				}
 			}
 			
 			// create the csv file
