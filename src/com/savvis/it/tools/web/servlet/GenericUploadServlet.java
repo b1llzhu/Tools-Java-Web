@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.64 2009/10/19 20:24:21 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.65 2009/10/19 20:34:24 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.64 2009/10/19 20:24:21 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.65 2009/10/19 20:34:24 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -302,6 +302,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 				Map<String, String> upload = new HashMap<String, String>();
 				upload.put("name", uploadData[0]);
+				upload.put("key", uploadData[1]);
 
 				// authorize the user to see the upload
 				AuthorizationObject authObject = isAuthorized(configMap.get(uploadData[1]), winPrincipal);
