@@ -69,6 +69,22 @@
 			</getCreditLimit>
 		</sample>
 	</client>
+	<client appl="finance" config="creditCheckWS">
+		<sample operation="getAvailableToSpend">
+			<getAvailableToSpend>
+				<system>Portal</system>
+				<accountNumber>309318</accountNumber>
+			</getAvailableToSpend>
+		</sample>
+	</client>
+	<client appl="finance" config="creditCheckWS">
+		<sample operation="trackCloudSpend">
+			<trackCloudSpend>
+				<aip>74053</aip>
+				<amount>3000</amount>
+			</trackCloudSpend>
+		</sample>
+	</client>	
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="getWorkRequest">
 			<getWorkRequest>
@@ -173,7 +189,6 @@
 	</client>
 	<client appl="vantive" config="noteWS">
 		<sample operation="saveNote">
-		 <samples>
 			<saveNote>
 				<note>
 					<action>Comment</action>
@@ -187,7 +202,6 @@
 					<visibility>All</visibility>
 				</note>
 			</saveNote>
-			</samples>
 		</sample>
 	</client>
 	<client appl="vantive" config="noteWS">
