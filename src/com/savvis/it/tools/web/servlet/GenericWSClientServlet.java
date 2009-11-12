@@ -27,12 +27,15 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 import com.savvis.it.filter.WindowsAuthenticationFilter;
 import com.savvis.it.servlet.SavvisServlet;
+import com.savvis.it.util.Context;
 import com.savvis.it.util.FileUtil;
 import com.savvis.it.util.ObjectUtil;
+import com.savvis.it.util.PropertyManager;
 import com.savvis.it.util.SimpleNode;
 import com.savvis.it.util.StringUtil;
 import com.savvis.it.util.SystemUtil;
@@ -74,15 +77,19 @@ public class GenericWSClientServlet extends SavvisServlet {
 				client.setConfig(entry.getAttribute("config"));
 				client.setAppl(entry.getAttribute("appl"));
 				File configFile = new File(SystemUtil.getProperty("BASEDIR")+"/"+client.getAppl()+"/etc/"+client.getConfig()+".xml");
-				SimpleNode ws = new SimpleNode(XmlUtil.loadDocumentFromFile(
-							""+configFile).getFirstChild()).getSimpleNode("{ws}");
-				client.setTitle(ws.getTextContent("{title}"));
-				String title = toTitle(client.getAppl());
-				if(applMap.get(title) == null)
-					applMap.put(title, new TreeSet());
-				applMap.get(title).add(client);
-				request.setAttribute("appls", applMap);
+				if(!configFile.exists())
+					continue;
+				Document wsConfig = XmlUtil.loadDocumentFromFile(""+configFile);
+				if(wsConfig != null) {
+					SimpleNode ws = new SimpleNode(wsConfig.getFirstChild()).getSimpleNode("{ws}");
+					client.setTitle(ws.getTextContent("{title}"));
+					String title = toTitle(client.getAppl());
+					if(applMap.get(title) == null)
+						applMap.put(title, new TreeSet());
+					applMap.get(title).add(client);
+				}
 			}
+			request.setAttribute("appls", applMap);
 		
 			forward("/jsp/ws/index.jsp", request, response);
 			return;
@@ -158,7 +165,11 @@ logger.info("action = "+(action));
 			return;
 		}
 		
-		String wsdl = ws.getTextContent("{wsdl}");
+		Context context = new Context();
+		String tomcatBasedir = System.getProperty("catalina.home");
+		PropertyManager properties = new PropertyManager(false, true, false, tomcatBasedir+"/etc/appServer.properties");
+		context.add("APP_SERVER", properties.getProperties());
+		String wsdl = context.keywordSubstitute(ws.getTextContent("{wsdl}"));
 		String endpoint = ws.getTextContent("{endpoint}");
 		GenericWebServiceClient client = new GenericWebServiceClient(wsdl, endpoint);
 		request.setAttribute("operations", client.getAvailableOperations());
