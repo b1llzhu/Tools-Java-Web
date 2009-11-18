@@ -161,6 +161,7 @@
 		<sample operation="closeOrder">
 			<closeOrder>
 				<workRequestId>458949</workRequestId>
+				<closeType>CLOSE</closeType>
 			</closeOrder>
 		</sample>
 	</client>
