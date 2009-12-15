@@ -173,6 +173,14 @@
 			</getBillingSites>
 		</sample>
 	</client>
+	<client appl="vantive" config="siteWS">
+		<sample operation="cloneBillingSite">
+			<cloneBillingSite>
+				<siteId>603722.00000</siteId>
+				<toBillingSystem>Portal</toBillingSystem>
+			</cloneBillingSite>
+		</sample>
+	</client>
 	<client appl="vantive" config="noteWS">
 		<sample operation="getNote">
 			<getNote>
