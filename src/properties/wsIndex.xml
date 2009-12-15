@@ -7,7 +7,7 @@
 	<entry appl="vantive" config="customerWS"/>
 	<entry appl="vantive" config="noteWS"/>
 	<entry appl="vantive" config="groupWS"/>
-	<entry appl="vantive" config="noteWS"/>
+	<entry appl="vantive" config="siteWS"/>
 	<entry appl="finance" config="creditCheckWS"/>
 	<entry appl="siebel" config="customerSpacesWS"/>
 </wsIndex>
