@@ -166,6 +166,64 @@
 			</closeOrder>
 		</sample>
 	</client>
+	
+	<client appl="vantive" config="orderWS">
+		<sample operation="changeARStatus">
+			<changeARStatus>
+				<accountRequestOrderList>
+					<accountRequestId>131007.0</accountRequestId>
+					<status>Active</status>
+				</accountRequestOrderList>
+				<accountRequestOrderList>
+					<accountRequestId>110114.0</accountRequestId>
+					<status>Active</status>
+				</accountRequestOrderList>
+				<accountRequestOrderList>	
+					<accountRequestId>14872.0</accountRequestId>
+					<status>Active</status>
+				</accountRequestOrderList>
+				<allOrNone>false</allOrNone>
+				<invokingUser>VER51083</invokingUser>
+				<invokingSystem>BssService</invokingSystem>
+			</changeARStatus>
+		</sample>
+	</client>
+	
+		<client appl="vantive" config="orderWS">
+		<sample operation="initiateARBilling">
+			<initiateARBilling>
+				<accountRequestOrderList>
+					<accountRequestId>131007.0</accountRequestId>
+					<transactDate>2010-01-15</transactDate>
+				</accountRequestOrderList>
+				<accountRequestOrderList>
+					<accountRequestId>110114.0</accountRequestId>
+					<transactDate>2010-01-15</transactDate>
+				</accountRequestOrderList>
+				<accountRequestOrderList>	
+					<accountRequestId>14872.0</accountRequestId>
+					<transactDate>2010-01-15</transactDate>
+				</accountRequestOrderList>
+				<allOrNone>false</allOrNone>
+				<invokingUser>VER51083</invokingUser>
+				<invokingSystem>BssService</invokingSystem>
+			</initiateARBilling>
+		</sample>
+	</client>
+	
+	<client appl="vantive" config="orderWS">
+		<sample operation="initiateCWPBilling">
+			<initiateCWPBilling>
+				<connectivityWPId>155738.0</connectivityWPId>
+				<transactDate>2010-01-15</transactDate>
+				<invokingUser>VER51083</invokingUser>
+				<invokingSystem>BssService</invokingSystem>
+			</initiateCWPBilling>
+		</sample>
+	</client>
+	
+	
+	
 	<client appl="vantive" config="customerWS">
 		<sample operation="getBillingSites">
 			<getBillingSites>
