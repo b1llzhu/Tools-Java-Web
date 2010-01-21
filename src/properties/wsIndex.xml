@@ -9,5 +9,6 @@
 	<entry appl="vantive" config="groupWS"/>
 	<entry appl="vantive" config="siteWS"/>
 	<entry appl="finance" config="creditCheckWS"/>
+	<entry appl="finance" config="invoiceWS"/>
 	<entry appl="siebel" config="customerSpacesWS"/>
 </wsIndex>
