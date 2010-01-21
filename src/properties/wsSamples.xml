@@ -85,6 +85,16 @@
 			</trackCloudSpend>
 		</sample>
 	</client>	
+	<client appl="finance" config="invoiceWS">
+		<sample operation="getInvoices">
+			<getInvoices>
+				<system>Portal</system>
+				<accountNumber>604745</accountNumber>
+				<invokingUser>me</invokingUser>
+				<invokingSystem>ws_tester</invokingSystem>
+			</getInvoices>
+		</sample>
+	</client>
 	<client appl="vantive" config="createWorkRequestWS">
 		<sample operation="getWorkRequest">
 			<getWorkRequest>
