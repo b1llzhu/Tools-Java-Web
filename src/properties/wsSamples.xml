@@ -173,6 +173,9 @@
 				<workRequestId>458949</workRequestId>
 				<closeType>CLOSE</closeType>
 				<transactDate>2009-11-25</transactDate>
+				<connectivityWPId></connectivityWPId>
+				<invokingUser>testuser</invokingUser>
+				<invokingSystem>BssService</invokingSystem>
 			</closeOrder>
 		</sample>
 	</client>
