@@ -183,18 +183,18 @@
 	<client appl="vantive" config="orderWS">
 		<sample operation="changeARStatus">
 			<changeARStatus>
-				<accountRequestOrderList>
+				<accountRequestOrder>
 					<accountRequestId>131007.0</accountRequestId>
 					<status>Active</status>
-				</accountRequestOrderList>
-				<accountRequestOrderList>
+				</accountRequestOrder>
+				<accountRequestOrder>
 					<accountRequestId>110114.0</accountRequestId>
 					<status>Active</status>
-				</accountRequestOrderList>
-				<accountRequestOrderList>	
+				</accountRequestOrder>
+				<accountRequestOrder>	
 					<accountRequestId>14872.0</accountRequestId>
 					<status>Active</status>
-				</accountRequestOrderList>
+				</accountRequestOrder>
 				<allOrNone>false</allOrNone>
 				<invokingUser>VER51083</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
@@ -205,18 +205,18 @@
 		<client appl="vantive" config="orderWS">
 		<sample operation="initiateARBilling">
 			<initiateARBilling>
-				<accountRequestOrderList>
+				<accountRequestOrder>
 					<accountRequestId>131007.0</accountRequestId>
 					<transactDate>2010-01-15</transactDate>
-				</accountRequestOrderList>
-				<accountRequestOrderList>
+				</accountRequestOrder>
+				<accountRequestOrder>
 					<accountRequestId>110114.0</accountRequestId>
 					<transactDate>2010-01-15</transactDate>
-				</accountRequestOrderList>
-				<accountRequestOrderList>	
+				</accountRequestOrder>
+				<accountRequestOrder>	
 					<accountRequestId>14872.0</accountRequestId>
 					<transactDate>2010-01-15</transactDate>
-				</accountRequestOrderList>
+				</accountRequestOrder>
 				<allOrNone>false</allOrNone>
 				<invokingUser>VER51083</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
