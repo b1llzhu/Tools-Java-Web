@@ -183,53 +183,62 @@
 	<client appl="vantive" config="orderWS">
 		<sample operation="changeARStatus">
 			<changeARStatus>
-				<accountRequestOrder>
-					<accountRequestId>131007.0</accountRequestId>
-					<status>Active</status>
-				</accountRequestOrder>
-				<accountRequestOrder>
-					<accountRequestId>110114.0</accountRequestId>
-					<status>Active</status>
-				</accountRequestOrder>
-				<accountRequestOrder>	
-					<accountRequestId>14872.0</accountRequestId>
-					<status>Active</status>
-				</accountRequestOrder>
+				<changeARStatusParam>
+					<accountRequests>
+						<accountRequest>
+							<accountRequestId>131007.0</accountRequestId>
+							<status>Active</status>
+						</accountRequest>
+						<accountRequest>
+							<accountRequestId>110114.0</accountRequestId>
+							<status>Active</status>
+						</accountRequest>
+						<accountRequest>
+							<accountRequestId>14872.0</accountRequestId>
+							<status>Active</status>
+						</accountRequest>
+					</accountRequests>
+				</changeARStatusParam>
 				<allOrNone>false</allOrNone>
-				<invokingUser>VER51083</invokingUser>
+				<invokingUser>WSTester</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
 			</changeARStatus>
 		</sample>
 	</client>
 	
-		<client appl="vantive" config="orderWS">
+	<client appl="vantive" config="orderWS">
 		<sample operation="initiateARBilling">
-			<initiateARBilling>
-				<accountRequestOrder>
-					<accountRequestId>131007.0</accountRequestId>
-					<transactDate>2010-01-15</transactDate>
-				</accountRequestOrder>
-				<accountRequestOrder>
-					<accountRequestId>110114.0</accountRequestId>
-					<transactDate>2010-01-15</transactDate>
-				</accountRequestOrder>
-				<accountRequestOrder>	
-					<accountRequestId>14872.0</accountRequestId>
-					<transactDate>2010-01-15</transactDate>
-				</accountRequestOrder>
+			<initiateARBilling>	
+				<initiateARBillingParam>
+					<accountRequests>
+						<accountRequest>
+							<accountRequestId>131007.0</accountRequestId>
+							<transactDate>2010-01-15</transactDate>
+						</accountRequest>
+						<accountRequest>
+							<accountRequestId>110114.0</accountRequestId>
+							<transactDate>2010-01-15</transactDate>						
+						</accountRequest>
+						<accountRequest>
+							<accountRequestId>14872.0</accountRequestId>
+							<transactDate>2010-01-15</transactDate>
+						</accountRequest>
+					</accountRequests>
+				</initiateARBillingParam>
 				<allOrNone>false</allOrNone>
-				<invokingUser>VER51083</invokingUser>
+				<invokingUser>WSTester</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
 			</initiateARBilling>
 		</sample>
 	</client>
+	
 	
 	<client appl="vantive" config="orderWS">
 		<sample operation="initiateCWPBilling">
 			<initiateCWPBilling>
 				<connectivityWPId>155738.0</connectivityWPId>
 				<transactDate>2010-01-15</transactDate>
-				<invokingUser>VER51083</invokingUser>
+				<invokingUser>WSTester</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
 			</initiateCWPBilling>
 		</sample>
@@ -252,6 +261,101 @@
 			</cloneBillingSite>
 		</sample>
 	</client>
+	
+		<client appl="vantive" config="siteWS">
+		<sample operation="createSite">
+			<createSite>
+				<site>
+					<companyName>Test Company</companyName>
+					<companyAbbr>TCN</companyAbbr>
+					<siteName>Jamie's Test Site</siteName>
+					<billingSystem>Portal</billingSystem>
+					<savvisCompanyName>Savvis Communications Corporation</savvisCompanyName>
+					<customerNumber>123456789</customerNumber>
+					<taxExempt>No</taxExempt>
+					<taxNumber>111111</taxNumber>
+					<currencyCode>USD</currencyCode>
+					<siteType>Customer</siteType>
+					<streetAddress></streetAddress>
+					<city></city>
+					<postalCode></postalCode>
+					<countryName>USA</countryName>
+					<stateOrProvinceName>Missouri</stateOrProvinceName>
+					<address1></address1>
+					<address2></address2>
+					<addrNumberPrefix></addrNumberPrefix>
+					<addrNumberSuffix></addrNumberSuffix>
+					<addrNumber>123</addrNumber>
+					<streetDirPrefix>NW</streetDirPrefix>
+					<streetDirSuffix></streetDirSuffix>
+					<streetName>Easy Street</streetName>
+					<streetType></streetType>
+					<locDes1>BLDG</locDes1>
+					<locDes2>WING</locDes2>
+					<locDes3>APT</locDes3>
+					<locValue1>1</locValue1>
+					<locValue2>2</locValue2>
+					<locValue3>3</locValue3>
+					<contacts>
+						<mainContact>
+							<companyId>201861.0</companyId>
+							<email>jamie.carson@savvis.net</email>
+							<firstName>Jamie</firstName>
+							<id></id>
+						    <lastName>Carson</lastName>
+						    <phoneNumber>+01(314)628-7944</phoneNumber>
+						    <siteId>604062</siteId>
+						</mainContact>
+						<billingContact>
+							<companyId>201861.0</companyId>
+							<email>jamie.carson@savvis.net</email>
+							<firstName>Jamie</firstName>
+							<id></id>
+							<lastName>Carson</lastName>
+							<phoneNumber>+01(314)628-7944</phoneNumber>
+							<siteId>604062</siteId>
+						</billingContact>
+					</contacts>
+					<!--
+					<responsibilities>
+						<responsibility>
+							<role></role>
+							<responsibilityClass></responsibilityClass>
+							<companyId></companyId>
+							<email></email>
+							<firstName></firstName>
+							<lastName></lastName>
+							<phoneNumber></phoneNumber>
+							<siteId></siteId>
+						</responsibility>					
+					</responsibilities>
+					-->
+				</site>
+				<invokingUser>WSTester</invokingUser>
+				<invokingSystem>BssService</invokingSystem>
+			</createSite>
+		</sample>
+	</client>
+	
+	
+	<client appl="vantive" config="siteWS">
+		<sample operation="createCompany">
+			<createCompany>
+				<company>
+					<companyName>Test Company</companyName>
+					<companyAbbr>TCN</companyAbbr>
+					<type>Customer</type>
+					<DUNS>123456789</DUNS>
+					<parentCompanyId>201854.0</parentCompanyId>
+					<parentCompanyName>Jamie's Test Company</parentCompanyName>
+					<parentCompanyAbbr>jctc</parentCompanyAbbr>
+				</company>
+				<invokingUser>WSTester</invokingUser>
+				<invokingSystem>BssService</invokingSystem>
+			</createCompany>
+		</sample>
+	</client>
+	
 	<client appl="vantive" config="noteWS">
 		<sample operation="getNote">
 			<getNote>
