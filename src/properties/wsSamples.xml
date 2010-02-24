@@ -277,8 +277,8 @@
 					<currencyCode>USD</currencyCode>
 					<siteType>Customer</siteType>
 					<streetAddress></streetAddress>
-					<city></city>
-					<postalCode></postalCode>
+					<city>Town and Country</city>
+					<postalCode>63017</postalCode>
 					<countryName>USA</countryName>
 					<stateOrProvinceName>Missouri</stateOrProvinceName>
 					<address1></address1>
@@ -316,20 +316,18 @@
 							<siteId>604062</siteId>
 						</billingContact>
 					</contacts>
-					<!--
-					<responsibilities>
-						<responsibility>
-							<role></role>
-							<responsibilityClass></responsibilityClass>
-							<companyId></companyId>
-							<email></email>
-							<firstName></firstName>
-							<lastName></lastName>
-							<phoneNumber></phoneNumber>
-							<siteId></siteId>
-						</responsibility>					
-					</responsibilities>
-					-->
+					<notes>
+						<note>
+							<action>Comment</action>
+							<subject>foo</subject>
+							<body>asdf1234</body>
+						</note>
+						<note>
+							<action>Comment2</action>
+							<subject>foo2</subject>
+							<body>asdf12345</body>
+						</note>
+					</notes>
 				</site>
 				<invokingUser>WSTester</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
