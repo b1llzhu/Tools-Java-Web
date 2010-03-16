@@ -64,7 +64,7 @@ function svSubmitToPopup(action, target, width, height, menubar, location, statu
 
 // submit form[0] with the specified action and optional target to a simple popup window
 function svSubmitToStrippedDownPopup(action, target, width, height, initialPage) {
-	return submitToPopup(action, target, width, height, false, false, false, "yes", "yes", null, initialPage);
+	return svSubmitToPopup(action, target, width, height, false, false, false, "yes", "yes", null, initialPage);
 }
 
 // shows or hides a div tag or element
@@ -149,8 +149,17 @@ function svToggleVisibility(id) {
 }
 
 // gets the value of an input field by name
-function svGetInputValue(fieldName) {
-		var input = svGetInput(fieldName);
+function svGetInputValue(fieldName, elements) {
+	return svGetInputValueForInput(svGetInput(fieldName, elements));
+}
+
+// gets the value of an input field by name
+function svGetInputValueById(fieldId, elements) {
+	return svGetInputValueForInput(svGetElement(fieldId, elements));
+}
+
+// gets the value of an input field by name
+function svGetInputValueForInput(input) {
 		if(!input)
 			return null;
 		if(input.type && (input.type == 'text' || input.type == 'hidden' || input.type == 'textarea')){
@@ -197,21 +206,62 @@ function svGetInputValue(fieldName) {
 		}
 }
 
+// gets an input field by name
+function svGetInput(fieldName, elements) {
+		if(!fieldName)
+			return null;
+		if(elements) {
+			var element = elements[fieldName];
+			if(element)
+				return element;
+		}	
+		var element = svGetMyForm().elements[fieldName];
+		if(!element)
+				element = document.getElementsByName(fieldName);
+		if(!element)
+				element = document.getElementsById(fieldName);
+		return element;
+}
+
+// gets any element by id
+function svGetElement(id, elements) {
+	if(!id)
+		return null;
+	if(elements) {
+		var element = elements[id];
+		if(element)
+			return element;
+	}	
+		
+	var element = document.getElementById(id);
+	if(!element)
+		element = document.getElementsByName(id);
+	return element;
+}
+
 // sets the value of an input field by name
-function svSetInputValue(fieldName, value) {
-		var input = svGetInput(fieldName);
-		if(input.type && (input.type == 'text' || input.type == 'hidden' || input.type == 'textarea')) {
+function svSetInputValue(fieldName, value, elements) {
+		svSetInputValueForInput(svGetInput(fieldName, elements), value);
+}
+
+// sets the value of an input field by name
+function svSetInputValueById(fieldId, value, elements) {
+		svSetInputValueForInput(svGetElement(fieldId, elements), value);
+}
+
+// sets the value of an input field 
+function svSetInputValueForInput(input, value) {
+	if(input.type) {
+		var type = input.type;
+		if(type == 'text' || type == 'hidden' || type == 'textarea') {
 				input.value = value;
-				if(input.type == 'hidden') {
-					if(svGetElement(input.id+"DynaModeDiv"))
-						svGetElement(input.id+"DynaModeDiv").innerHTML = value;
-					if(svGetInput(fieldName+"DynaModeTextInput"))
-						svSetInputValue(fieldName+"DynaModeTextInput", value);
+				if(type == 'hidden') {
+					svSetDynaInputValue(input, value)
 				}
 				return;
 		}
 
-		if(input.type && input.type == 'select-one') {
+		if(type == 'select-one') {
 				for( var x = 0 ; x < input.options.length ; x++ ) {
 						if(input.options[x].value == value) {
 								input.selectedIndex = x;
@@ -225,20 +275,50 @@ function svSetInputValue(fieldName, value) {
 						}
 				}
 		}
-		if(input.type && (input.type == 'radio' || input.type == 'checkbox')) {
+		if(type == 'radio' || type == 'checkbox') {
 				input.checked = value;
 				return;
 		}
+	}
 		
-		if(input.length && input[0] && input[0].type == 'radio') {
-			for( var x = 0 ; x < input.length ; x++ ) {
-				if(input[x].value == value) {
-					input[x].checked = true;
-					return;
-				}
+	if(input.length && input[0] && input[0].type == 'radio') {
+		for( var x = 0 ; x < input.length ; x++ ) {
+			if(input[x].value == value) {
+				input[x].checked = true;
+				return;
 			}
 		}
+	}
 				
+}
+
+function svSetDynaInputValue(input, value) {
+	svSetDynaDiv(input, value);
+	svSetDynaTextInput(input, value);
+}
+
+var dynaDivMap;
+function getDynaDivMap() {
+	if(!dynaDivMap) {
+		dynaDivMap = new Object();
+		var divs = document.getElementsByTagName("div");
+		for( var x = 0 ; x < divs.length ; x++) {
+			dynaDivMap[divs[x].id] = divs[x];
+		}
+	}
+	return dynaDivMap;
+}
+
+function svSetDynaDiv(input, value) {
+	var dynaModeDiv = getDynaDivMap()[input.id+"DynaModeDiv"];
+	if(dynaModeDiv) 
+		dynaModeDiv.innerHTML = value;
+}
+
+function svSetDynaTextInput(input, value) {
+	var dynaModeTextInput = svGetElement(input.id+"DynaModeTextInput");
+	if(dynaModeTextInput)
+		dynaModeTextInput.value = value;
 }
 
 // sets a checkbox checked property and synchronizes it with hidden text field
@@ -279,28 +359,6 @@ function svSetCheckbox(fieldName, action) {
 		alert('Unknown value[' + value + '] for checkbox[' + fieldName + ']');
 	}
 	return;
-}
-
-// gets an input field by name
-function svGetInput(fieldName) {
-		if(!fieldName)
-			return null;
-		var element = svGetMyForm().elements[fieldName];
-		if(!element)
-				element = document.getElementsByName(fieldName);
-		if(!element)
-				element = document.getElementsById(fieldName);
-		return element;
-}
-
-// gets any element by id
-function svGetElement(id) {
-	if(!id)
-		return null;
-	var element = document.getElementById(id);
-	if(!element)
-		element = document.getElementsByName(id);
-	return element;
 }
 
 function svSetRequired(fieldName, required, className) {
@@ -844,12 +902,14 @@ function convertMultiSelectToField(srcList, fld, separator) {
 
 // function to handle any nuances that are needed to perform to get the form
 // ready for submission
-function svPrepareFormForSubmit(frm) {
-	for( var x = 0 ; x < frm.elements.length ; x++ ) {
+var multiSelectIdArray = new Array();
+function svPrepareFormForSubmit() {
+	for( var x = 0 ; x < multiSelectIdArray.length ; x++ ) {
+		var multiSelect = svGetElement(multiSelectIdArray[x]);
  
 		// Auto-select all entries in any "right-side" dual-multi select boxes
-		if (frm.elements[x].id.substring(0, 14) == 'dualListRight_' && frm.elements[x].type.substring(0, 6) == 'select') {
-			var selObj = document.getElementById(frm.elements[x].id);
+		if (multiSelect.id.substring(0, 14) == 'dualListRight_' && multiSelect.type.substring(0, 6) == 'select') {
+			var selObj = document.getElementById(multiSelect.id);
 			for (var i=0; i < selObj.options.length; i++) {
 				selObj.options[i].selected = true;
 			}		
@@ -1012,4 +1072,36 @@ if(typeof HTMLElement!="undefined" && !HTMLElement.prototype.insertAdjacentEleme
 		var parsedText = document.createTextNode(txtStr)
 		this.insertAdjacentElement(where,parsedText)
 	}
+}
+
+// creates a div on the fly
+function svNewDiv(e, id, innerHTML, styleClass, absolute, backgroundColor) {
+	var eDiv = document.createElement("DIV");
+	eDiv.id = id;
+	if(!(!innerHTML || innerHTML == null)) {
+		eDiv.innerHTML = "<table cellspacing='0' cellpadding='1' "
+					+"style='border: black 1px solid; BACKGROUND-COLOR: white;' id='"
+					+id+"_table'><tr><td nowrap style='PADDING-LEFT: 10px; PADDING-RIGHT: 10px'>"+innerHTML+"</td></tr></table>";
+	}
+	document.body.appendChild(eDiv);
+	var table = svGetElement(id+"_table");
+	eDiv.style.width = xWidth(table);
+	eDiv.style.height = xHeight(table);
+	eDiv.style.left = xPageX(e)+(xWidth(e)/2)-(xWidth(eDiv)/2);
+	eDiv.style.top = xPageY(e)-(xHeight(table)+3);
+	if(!absolute || absolute == null)
+		eDiv.style.position = "absolute";
+	else
+		eDiv.style.position = absolute;
+	if(!(!backgroundColor || backgroundColor == null))
+		eDiv.style.backgroundColor = backgroundColor;
+	return eDiv;
+}
+
+function svShowInfo(e, info) {
+	svNewDiv(e, e.id+"_svInfoDiv", info);
+}
+
+function svHideInfo(e, info) {
+	document.body.removeChild(svGetElement(e.id+"_svInfoDiv"));
 }

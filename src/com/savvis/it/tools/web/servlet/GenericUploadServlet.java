@@ -59,18 +59,18 @@ import com.savvis.it.util.StringUtil;
 import com.savvis.it.util.SystemUtil;
 import com.savvis.it.util.XmlUtil;
 import com.savvis.it.validation.Input;
-import com.savvis.it.validation.InputValidator;
+import com.savvis.it.tools.validation.InputValidator;
 import com.savvis.it.web.util.InputFieldHandler;
 
 /**
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.65 2009/10/19 20:34:24 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.66 2010/03/16 20:36:56 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.65 2009/10/19 20:34:24 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.66 2010/03/16 20:36:56 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();

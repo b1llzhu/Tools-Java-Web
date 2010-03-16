@@ -27,3 +27,7 @@
 	<br/><br/><br/>
 </c:if>
 
+<c:if test="${!empty errorMsg}">
+	<span class="messageTextError">${errorMsg}</span>
+</c:if>
+

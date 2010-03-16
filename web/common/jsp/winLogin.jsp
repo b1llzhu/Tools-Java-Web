@@ -89,7 +89,7 @@
 		</tr>
 	</table>
 	<br/><br/>
-	<img src="common/images/savvisLogo.jpg" width="210" align="center">
+	<img src="common/images/savvisLogoRebranded.png" width="210" align="center">
 	</p>
 </form>
 </body>
