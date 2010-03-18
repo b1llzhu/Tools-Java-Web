@@ -266,12 +266,10 @@
 		<sample operation="createSite">
 			<createSite>
 				<site>
-					<companyName>Test Company</companyName>
-					<companyAbbr>TCN</companyAbbr>
+					<customerId>168745.0</customerId>
 					<siteName>Jamie's Test Site</siteName>
 					<billingSystem>Portal</billingSystem>
 					<savvisCompanyName>Savvis Communications Corporation</savvisCompanyName>
-					<customerNumber>123456789</customerNumber>
 					<taxExempt>No</taxExempt>
 					<taxNumber>111111</taxNumber>
 					<currencyCode>USD</currencyCode>
@@ -304,7 +302,6 @@
 							<id></id>
 						    <lastName>Carson</lastName>
 						    <phoneNumber>+01(314)628-7944</phoneNumber>
-						    <siteId>604062</siteId>
 						</mainContact>
 						<billingContact>
 							<companyId>201861.0</companyId>
@@ -313,8 +310,10 @@
 							<id></id>
 							<lastName>Carson</lastName>
 							<phoneNumber>+01(314)628-7944</phoneNumber>
-							<siteId>604062</siteId>
 						</billingContact>
+						<salesRepContact>
+							<clockId>11643</clockId>
+						</salesRepContact>
 					</contacts>
 					<notes>
 						<note>
