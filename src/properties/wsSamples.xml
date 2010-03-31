@@ -110,6 +110,24 @@
 			</getCustomerSpaceListWithDBCode>
 		</sample>
 	</client>
+	<client appl="sap" config="tokenWS">
+		<sample operation="getCustomerByToken">
+			<getCustomerByToken>
+			  <token>DF3381B325B54FF19E8D00144F784DFC</token>
+			  <invokingUser>user</invokingUser>
+			  <invokingSystem>system</invokingSystem>
+			</getCustomerByToken>
+		</sample>
+	</client>
+		<client appl="sap" config="tokenWS">
+		<sample operation="invalidateCustomerToken">
+			<invalidateCustomerToken>
+			  <token>DF3381B325B54FF19E8D00144F784DFC</token>
+			  <invokingUser>user</invokingUser>
+			  <invokingSystem>system</invokingSystem>
+			</invalidateCustomerToken>
+		</sample>
+	</client>
 	<client appl="vantive" config="orderWS">
 		<sample operation="getOrderNotesByIdAndType">
 			<getOrderNotesByIdAndType>

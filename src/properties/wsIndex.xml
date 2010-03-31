@@ -11,4 +11,5 @@
 	<entry appl="finance" config="creditCheckWS"/>
 	<entry appl="finance" config="invoiceWS"/>
 	<entry appl="siebel" config="customerSpacesWS"/>
+	<entry appl="sap" config="tokenWS"/>
 </wsIndex>
