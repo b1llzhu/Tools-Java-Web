@@ -358,12 +358,9 @@
 			<createCompany>
 				<company>
 					<companyName>Test Company</companyName>
-					<companyAbbr>TCN</companyAbbr>
 					<type>Customer</type>
 					<DUNS>123456789</DUNS>
 					<parentCompanyId>201854.0</parentCompanyId>
-					<parentCompanyName>Jamie's Test Company</parentCompanyName>
-					<parentCompanyAbbr>jctc</parentCompanyAbbr>
 				</company>
 				<invokingUser>WSTester</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
