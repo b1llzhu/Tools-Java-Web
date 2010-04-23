@@ -361,6 +361,7 @@
 					<type>Customer</type>
 					<DUNS>123456789</DUNS>
 					<parentCompanyId>201854.0</parentCompanyId>
+					<sapId>12345</sapId>
 				</company>
 				<invokingUser>WSTester</invokingUser>
 				<invokingSystem>BssService</invokingSystem>
