@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.66 2010/03/16 20:36:56 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.67 2010/04/26 18:06:59 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.66 2010/03/16 20:36:56 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.67 2010/04/26 18:06:59 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -750,9 +750,12 @@ public class GenericUploadServlet extends SavvisServlet {
 												} else if ("sql".equals(rule.get("type"))) {
 													try {
 														List results = DBUtil.executeQuery(rule.get("dbDriver").toString(), code);
+														String size = ((Integer)results.size()).toString();
 														
-														if (results != null && !rule.get("rowsFoundGood").equals(results.size())) {
+														if (!ObjectUtil.areObjectsEqual(rule.get("rowsFoundGood"), size)) {
+															logger.info("adding errorText: " + errorText);
 															validationObject.addMessage(errorText);
+															validationObject.setValid(false);
 															cacheKeys.put(cacheKey, false);
 														} else {
 															cacheKeys.put(cacheKey, true);
