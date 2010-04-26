@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.67 2010/04/26 18:06:59 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.68 2010/04/26 20:41:02 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.67 2010/04/26 18:06:59 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.68 2010/04/26 20:41:02 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -727,6 +727,7 @@ public class GenericUploadServlet extends SavvisServlet {
 													if (cacheKeys.get(cacheKey) == false) {
 														validationObject.addMessage(errorText);
 														validationObject.setValid(false);
+														passedValdiation = false;
 													}
 													
 													continue;
@@ -744,28 +745,35 @@ public class GenericUploadServlet extends SavvisServlet {
 														validationObject.addMessage(errorText);
 														validationObject.setValid(false);
 														cacheKeys.put(cacheKey, false);
+														passedValdiation = false;
 													} else {
 														cacheKeys.put(cacheKey, true);
 													}
 												} else if ("sql".equals(rule.get("type"))) {
 													try {
 														List results = DBUtil.executeQuery(rule.get("dbDriver").toString(), code);
+														logger.info("results: " + results);
 														String size = ((Integer)results.size()).toString();
+														logger.info("size: " + size);
 														
 														if (!ObjectUtil.areObjectsEqual(rule.get("rowsFoundGood"), size)) {
-															logger.info("adding errorText: " + errorText);
+															logger.info("error, adding errorText: " + errorText);
 															validationObject.addMessage(errorText);
 															validationObject.setValid(false);
 															cacheKeys.put(cacheKey, false);
+															passedValdiation = false;
 														} else {
+															logger.info("successful");
 															cacheKeys.put(cacheKey, true);
 														}
 													} catch (Exception e) {
 														logger.error("Error running sql row rule", e);
 														validationObject.addMessage(e.getMessage());
+														passedValdiation = false;
 													}
 												} else {
 													validationObject.addMessage("Unsupported rowRule type (" + rule.get("type") +")");
+													passedValdiation = false;
 												}
 												
 											}
@@ -778,6 +786,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									request.setAttribute("validationOK", passedValdiation);
 									if (!passedValdiation) {
 										request.setAttribute("lineValidations", lineValidations);
+										okToWrite = false;
 									}
 								}
 								
