@@ -49,6 +49,7 @@ import com.savvis.it.job.Job;
 import com.savvis.it.job.WebJobRunner;
 import com.savvis.it.servlet.SavvisServlet;
 import com.savvis.it.tools.RunInfoUtil;
+import com.savvis.it.tools.validation.InputValidator;
 import com.savvis.it.util.CommandLineProcess;
 import com.savvis.it.util.Context;
 import com.savvis.it.util.FileUtil;
@@ -59,18 +60,17 @@ import com.savvis.it.util.StringUtil;
 import com.savvis.it.util.SystemUtil;
 import com.savvis.it.util.XmlUtil;
 import com.savvis.it.validation.Input;
-import com.savvis.it.tools.validation.InputValidator;
 import com.savvis.it.web.util.InputFieldHandler;
 
 /**
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.68 2010/04/26 20:41:02 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.69 2010/04/28 22:02:28 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.68 2010/04/26 20:41:02 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.69 2010/04/28 22:02:28 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -576,6 +576,8 @@ public class GenericUploadServlet extends SavvisServlet {
 								// if we have a reg ex, check to see if the file
 								// name matches it
 								Boolean okToWrite = true;
+								List<String> outputLines = new ArrayList<String>();
+
 								if (fileUploadMap != null && !ObjectUtil.isEmpty(fileUploadMap.get("fileNameRegEx"))) {
 									if (!fileName.matches(fileUploadMap.get("fileNameRegEx").toString())) {
 										String msg = "ERROR!  Filename Matching Error (" + fileName + ") doesn't match "
@@ -603,6 +605,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 								// as a file check, validate the file if we have been configured to do so
 								if (okToWrite && !ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
+
 									Map validationsMap = (Map) fileUploadMap.get("validations");
 
 									// create a temp file object to write the file to for validation
@@ -637,7 +640,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									
 									List<LineValidationObject> lineValidations = new ArrayList<LineValidationObject>();
 									Boolean passedValdiation = true;
-									Map<String, Boolean> cacheKeys = new HashMap<String, Boolean>();
+									Map<String, Object> cacheKeys = new HashMap<String, Object>();
 									while ((line = fileInput.readLine()) != null) {
 										lineIndex++;
 										
@@ -673,14 +676,13 @@ public class GenericUploadServlet extends SavvisServlet {
 											}
 										}
 
-										// validate the line
-										List<Input> inputObjs = InputValidator.validate(inputs, lineValues);
+										// validate the line, getting a context back in return
+										List<Input> inputObjs = InputValidator.validate(c, "ROW", inputs, lineValues);
+										logger.info("validated context: " + c);
 										
 										// parse the return
 										for (int i = 0; i < inputObjs.size(); i++) {
 											Input inputObj = inputObjs.get(i);
-											String cacheKey = "COL"+inputObj.getName();
-											c.add("ROW", inputObj.getName(), inputObj.getValue());
 											
 											if (skipLineValidation) {
 												validationObject.addDataColumn(inputObj.getName(), inputObj.getValue(), true, null);
@@ -720,22 +722,26 @@ public class GenericUploadServlet extends SavvisServlet {
 												
 												// if we've already processed this rule for the cacheKey values, skip it
 												// and use the previously validated messages
-												logger.info("cacheKeys.get(" + cacheKey + "): " + cacheKeys.get(cacheKey));
-												if (!ObjectUtil.isEmpty(cacheKeys.get(cacheKey))) {
-													logger.info("pulling from cacheKeys");
+												logger.debug("cacheKeys.get(" + cacheKey + "): " + cacheKeys.get(cacheKey));
+												logger.debug("cacheKeys.containsKey(cacheKey): " + cacheKeys.containsKey(cacheKey));
+												if (cacheKeys.containsKey(cacheKey)) {
+													logger.debug("found cachekey (" + cacheKey + ") in cacheKeys");
 													
-													if (cacheKeys.get(cacheKey) == false) {
+													// if we've already processed this rule, check to see if
+													// we have a value - if it's empty, then our rule is false,
+													// no need to process again
+													if (ObjectUtil.isEmpty(cacheKeys.get(cacheKey))) {
 														validationObject.addMessage(errorText);
 														validationObject.setValid(false);
 														passedValdiation = false;
+														continue;
 													}
-													
-													continue;
 												}
 												
 												// otherwise, process all supported rules
 												if ("js".equals(rule.get("type"))) {
 													
+													// successful javascript rules return a 0, all else is bad
 													ScriptEngineManager manager = new ScriptEngineManager();
 													ScriptEngine engine = manager.getEngineByName("js");
 													engine.put("result", 0);
@@ -747,24 +753,70 @@ public class GenericUploadServlet extends SavvisServlet {
 														cacheKeys.put(cacheKey, false);
 														passedValdiation = false;
 													} else {
-														cacheKeys.put(cacheKey, true);
+														cacheKeys.put(cacheKey, result);
 													}
 												} else if ("sql".equals(rule.get("type"))) {
+													
+													// successful sql rows match the rowsFoundGood number
+													// we query and return the first row and if we have
+													// an extraCols list, we'll use those to set extra
+													// values into the context
 													try {
-														List results = DBUtil.executeQuery(rule.get("dbDriver").toString(), code);
-														logger.info("results: " + results);
-														String size = ((Integer)results.size()).toString();
+														Map results = null;
+														logger.info("searching for cacheKey (" + cacheKey + ") in cacheKeys (" + cacheKeys.containsKey(cacheKey) + ")");
+														if (cacheKeys.containsKey(cacheKey)) {
+															logger.info("pulling results from cache for key (" + cacheKey + ")");
+															results = (Map) cacheKeys.get(cacheKey);
+														} else {
+															logger.info("executing query for key (" + cacheKey + ")");
+															results = DBUtil.executeQueryOneRow(rule.get("dbDriver").toString(), code);
+														}
+														logger.debug("resultMap: " + results);
+														Integer sz = 0;
+														if (!ObjectUtil.isEmpty(results)) {
+															sz = results.keySet().size();
+														}
+														String size = sz.toString();
 														logger.info("size: " + size);
 														
 														if (!ObjectUtil.areObjectsEqual(rule.get("rowsFoundGood"), size)) {
 															logger.info("error, adding errorText: " + errorText);
 															validationObject.addMessage(errorText);
 															validationObject.setValid(false);
-															cacheKeys.put(cacheKey, false);
+															
+															// add a key to the cachekeys map so we don't perform the lookup again,
+															// and make sure to put a null value for the key to show that it was a 
+															// failed validation
+															cacheKeys.put(cacheKey, null);
 															passedValdiation = false;
 														} else {
 															logger.info("successful");
-															cacheKeys.put(cacheKey, true);
+															
+															// check to see if we have extra cols to pull out of the resultMap
+															if (rule.containsKey("extraCols")) {
+																List extraCols = (List) rule.get("extraCols");
+																logger.info("extraCols: " + extraCols);
+																for (int i = 0; i < extraCols.size(); i++) {
+																	Map<String, String> extraColMap = (Map<String, String>) extraCols.get(i);
+																	logger.info("extraColMap: " + extraColMap);
+																	
+																	// check the result map
+																	if (results.containsKey(extraColMap.get("alias"))) {
+																		logger.info("adding extra col ROW context value with name (" + extraColMap.get("name") + ") and value (" + results.get(extraColMap.get("alias")) + ")");
+																		c.add("ROW", extraColMap.get("name"), results.get(extraColMap.get("alias")));
+																	} else {
+																		logger.info("couldn't find alias (" + extraColMap.get("alias") + " in resultMap (" + results + ")");
+																		validationObject.addMessage("Unable to find column " + extraColMap.get("name") + " in rule " + rule.get("name"));
+																		validationObject.setValid(false);
+																		passedValdiation = false;
+																	}
+																}
+																
+															}
+																
+															// we just want to make sure we put the results into the cache keys
+															// to pull them the next time
+															cacheKeys.put(cacheKey, results);
 														}
 													} catch (Exception e) {
 														logger.error("Error running sql row rule", e);
@@ -774,11 +826,25 @@ public class GenericUploadServlet extends SavvisServlet {
 												} else {
 													validationObject.addMessage("Unsupported rowRule type (" + rule.get("type") +")");
 													passedValdiation = false;
-												}
-												
+												}												
 											}
 										}
 										
+										/*
+										 * now check to see if we have any outputs we need to create
+										 * (only need if we haven't yet failed somewhere and we actually
+										 * have outputs)
+										 */
+										if (!skipLineValidation && passedValdiation && !ObjectUtil.isEmpty(validationsMap.get("outputs"))) {
+											List<Map<String, Object>> outputs = (List<Map<String, Object>>) validationsMap.get("outputs");
+											String newLine = "";
+											for (Map<String, Object> output : outputs) {
+												String s = c.keywordSubstitute(""+output.get("value"));
+												newLine += s + validationsMap.get("delimiter");
+											}
+											outputLines.add(newLine);
+										}
+
 										lineValidations.add(validationObject);
 									}
 									fileInput.close();
@@ -791,9 +857,14 @@ public class GenericUploadServlet extends SavvisServlet {
 								}
 								
 								if (okToWrite) {
-									
 									if (!ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
-										FileUtil.moveFile(fileToRead, fileToCreate);
+										// if we have output lines, use them to write a new file - otherwise,
+										// we use the file we uploaded with no modifications
+										if (outputLines.size() > 0) {
+											FileUtil.saveFile(fileToCreate, outputLines);
+										} else {
+											FileUtil.moveFile(fileToRead, fileToCreate);
+										}
 									} else {
 										uploadItem.write(fileToCreate);
 									}
@@ -842,7 +913,7 @@ public class GenericUploadServlet extends SavvisServlet {
 					} else {
 						Map keyMap = configMap.get(pageMap.get("key"));
 						Map<String, Map<String, String>> directoriesMap = (Map<String, Map<String, String>>) keyMap.get("directories");
-						logger.info("directoriesMap: " + directoriesMap);
+						logger.debug("directoriesMap: " + directoriesMap);
 						request.setAttribute("win", winPrincipal);
 						request.setAttribute("file", downloadFile);
 						request.setAttribute("addtl", downloadKey);
@@ -881,7 +952,7 @@ public class GenericUploadServlet extends SavvisServlet {
 								request.setAttribute("fatalMsg", "ERROR: Invalid value for target directory (" + actionTarget + ".<br/>");
 							} else {
 								// log and perform the move
-								logger.info("keyMap.get(\"path\") + directoriesMap.get(moveTarget).get(\"path\") + moveFile: " + keyMap.get("path")
+								logger.debug("keyMap.get(\"path\") + directoriesMap.get(moveTarget).get(\"path\") + moveFile: " + keyMap.get("path")
 										+ directoriesMap.get(actionTarget).get("path") + actionFile);
 								FileUtil.moveFile(actionFilePath + actionFile, directoriesMap.get(actionTarget).get("path") + actionFile);
 
@@ -1785,7 +1856,7 @@ public class GenericUploadServlet extends SavvisServlet {
 											
 											for (int l = 0; l < ruleNodes.getLength(); l++) {
 												SimpleNode ruleNode = new SimpleNode(ruleNodes.item(l));
-												Map<String, String> ruleMap = new HashMap<String, String>();
+												Map<String, Object> ruleMap = new HashMap<String, Object>();
 
 												// rules must have a name, error text, and a service section
 												if (ObjectUtil.isEmpty(ruleNode.getTextContent("name"))) {
@@ -1822,8 +1893,6 @@ public class GenericUploadServlet extends SavvisServlet {
 														} else if ("sql".equals(ruleMap.get("type"))) {
 															
 															// driver is required
-															logger.info("serviceNode: " + serviceNode);
-															logger.info("serviceNode.getTextContent(\"dbDriver\"): " + serviceNode.getTextContent("dbDriver"));
 															if (ObjectUtil.isEmpty(serviceNode.getTextContent("dbDriver"))) {
 																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " of sql type must have a service dbDriver node");
 															} else {
@@ -1845,12 +1914,68 @@ public class GenericUploadServlet extends SavvisServlet {
 													} else {
 														ruleMap.put("code", serviceNode.getTextContent("code"));
 													}
+
+													// check for extra columns
+													if (!ObjectUtil.isEmpty(serviceNode.getSimpleNode("{extraCols}"))) {
+														NodeList extraColNodes = serviceNode.getSimpleNode("{extraCols}").getChildNodes("extraCol");
+														List<Object> extraCols = new ArrayList<Object>();
+														
+														for (int k = 0; k < extraColNodes.getLength(); k++) {
+															SimpleNode extraColNode = new SimpleNode(extraColNodes.item(k));
+															Map<String, String> extraColMap = new HashMap<String, String>();
+
+															// extra cols must have a name attribute and text content
+															if (ObjectUtil.isEmpty(extraColNode.getAttribute("name"))) {
+																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " service extra col " + k + " must have a name attribute");
+															} else {
+																extraColMap.put("name", extraColNode.getAttribute("name"));
+															}
+
+															if (ObjectUtil.isEmpty(extraColNode.getTextContent())) {
+																messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " rule " + l + " service extra col " + k + " must have text content");
+															} else {
+																extraColMap.put("alias", extraColNode.getTextContent());
+															}
+
+															extraCols.add(extraColMap);
+														}
+														
+														ruleMap.put("extraCols", extraCols);
+													}
 												}
 
 												rowRules.add(ruleMap);
 											}
 											
 											validationsMap.put("rowRules", rowRules);
+										}
+										
+										// look for outputs
+										if (!ObjectUtil.isEmpty(validationsNode.getSimpleNode("{outputs}"))) {
+											NodeList outputNodes = validationsNode.getSimpleNode("{outputs}").getChildNodes("output");
+											List<Object> outputs = new ArrayList<Object>();
+											
+											for (int l = 0; l < outputNodes.getLength(); l++) {
+												SimpleNode outputNode = new SimpleNode(outputNodes.item(l));
+												Map<String, Object> outputMap = new HashMap<String, Object>();
+
+												// output nodes must have a name attribute and text content
+												if (ObjectUtil.isEmpty(outputNode.getAttribute("name"))) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " output " + l + " must have a name attribute");
+												} else {
+													outputMap.put("name", outputNode.getAttribute("name"));
+												}
+
+												if (ObjectUtil.isEmpty(outputNode.getTextContent())) {
+													messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload " + fileUploadMap.get("name") + " output " + l + " must have text content");
+												} else {
+													outputMap.put("value", outputNode.getTextContent());
+												}
+
+												outputs.add(outputMap);
+											}
+											
+											validationsMap.put("outputs", outputs);
 										}
 
 										fileUploadMap.put("validations", validationsMap);
