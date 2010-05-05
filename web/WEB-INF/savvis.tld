@@ -236,6 +236,12 @@
    <rtexprvalue>true</rtexprvalue>
    <type>java.lang.String</type>
   </attribute>
+  <attribute>
+   <name>p13nSavedSearch</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+   <description>Set this value to true if you would like this input to be eligible for a Saved Search.</description>   
+  </attribute>
  </tag>
  <tag>
   <name>select</name>
@@ -442,6 +448,22 @@
    <type>boolean</type>
   </attribute>
   <attribute>
+   <name>p13nKey</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>p13nSavedSearch</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+   <description>Set this value to true if you would like this input to be eligible for a Saved Search.</description>   
+  </attribute>
+  <attribute>
+   <name>defaultValue</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>  
+  <attribute>
    <description>The labels to use in the dropdown</description>
    <name>labels</name>
    <rtexprvalue>true</rtexprvalue>
@@ -591,6 +613,30 @@
   </attribute>
   <attribute>
    <name>columns</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>p13nKey</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>p13nJavaScriptUponSave</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+   <description>This is the JavaScript method that will be automatically called upon saving a list of personalized fields chosen by the user for a list display.  For instance,
+   when the user has selected his/her desired fields for display on the list config popup, and clicks the Saved button, the list config popup will automatically call the passed
+   in JavaScript method, followed by automatically closing the list config popup.  It's designed to be a convenience for the user, so he/she does not need to manually kick-off
+   the display list functionality in order to see the new layout.  Here's an example of this value-> window.opener.top.myEnvisionIframe.search()</description>
+  </attribute>
+  <attribute>
+   <name>downloadToExcel</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute> 
+  <attribute>
+   <name>javaScriptUponDownloadToExcelClick</name>
    <rtexprvalue>true</rtexprvalue>
    <type>java.lang.String</type>
   </attribute>
@@ -1012,6 +1058,11 @@
   </attribute>
   <attribute>
    <name>actionColumn</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+  <attribute>
+   <name>p13nDefaultColumn</name>
    <rtexprvalue>true</rtexprvalue>
    <type>boolean</type>
   </attribute>
@@ -1524,6 +1575,12 @@
    <rtexprvalue>true</rtexprvalue>
    <type>java.lang.String</type>
   </attribute>
+  <attribute>
+   <name>p13nSavedSearch</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+   <description>Set this value to true if you would like this input to be eligible for a Saved Search.</description>  
+  </attribute>  
  </tag>
  <tag>
   <name>head</name>
@@ -1553,6 +1610,26 @@
    <rtexprvalue>true</rtexprvalue>
    <type>boolean</type>
   </attribute>
+  <attribute>
+   <name>p13nSavedSearch</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+   <description>Set this value to true if you would like the Head tag to support Saved Searches.  This is the indicator/flag telling the Head tag to print the 
+   Saved Search related JavaScript methods.  In conjunction with this flag, you must also set the p13nSavedSearch value to true for all your input values.  By setting
+   the p13nSavedSearch flag to true for your input tags, the inputs will then be populated in the Saved Search JavaScript Array list that is constructed in the Head tag.</description>  
+  </attribute>
+  <attribute>
+   <name>p13nKey</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>p13nExecuteSearchJavaScriptMethod</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+   <description>This is the JavaScript method that should be fired when the user clicks on one of his/her saved searches in the Saved Search drop-down.
+   Here is an example -> search()</description>  
+  </attribute>  
  </tag>
  <tag>
   <name>alertMessages</name>
@@ -2839,6 +2916,23 @@
    <name>disableOnClick</name>
    <rtexprvalue>true</rtexprvalue>
    <type>java.lang.Boolean</type>
+  </attribute>
+ </tag>
+ <tag>
+  <name>p13nSavedSearch</name>
+  <tag-class>com.savvis.it.tags.P13NSavedSearchTagHandler</tag-class>
+  <body-content>scriptless</body-content>
+  <description>This tag is used to display a list of the user's Saved Searches from which the user can choose.  This tag also
+  		supports deleting Saved Searches and saving new Saved Searches.</description>
+  <attribute>
+   <name>test</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>p13nKey</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
   </attribute>
  </tag>
  <function>

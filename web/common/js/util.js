@@ -1,3 +1,7 @@
+document.write('<script type="text/javascript" src="dwr/interface/P13NService.js"></script>');
+document.write('<script type="text/javascript" src="dwr/engine.js"></script>');
+document.write('<script type="text/javascript" src="dwr/util.js"></script>');
+
 // submit form[0] with the specified action and optional target
 function svSubmitAction(action, target) {
 	if(!svValidateForm()) 
