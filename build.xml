@@ -33,7 +33,7 @@
 		of them to create the desired distributable.
 	-->
 	<target name="dist" description="Creates the environment specific file for distribution"
-				depends="copy-common-web">
+				depends="copy-common-web">	
 		<antcall target="war"/>
 	</target>
 	

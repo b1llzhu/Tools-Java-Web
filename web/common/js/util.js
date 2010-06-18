@@ -5,7 +5,7 @@ document.write('<script type="text/javascript" src="dwr/util.js"></script>');
 // submit form[0] with the specified action and optional target
 function svSubmitAction(action, target) {
 	if(!svValidateForm()) 
-		return;
+		return false;
 	var temp;
 	if(target) {
 		temp = svGetMyForm().target;
@@ -16,12 +16,13 @@ function svSubmitAction(action, target) {
 	svGetMyForm().submit();
 	if(target)
 		svGetMyForm().target = temp;
+	return true;
 }
 
 // submit form[0] with the specified action and index and optional target
 function svSubmitActionAndIndex(action, index, target) {
 	if(!svValidateForm()) 
-		return;
+		return false;
 	var temp;
 	if(target) {
 		temp = svGetMyForm().target;
@@ -32,12 +33,13 @@ function svSubmitActionAndIndex(action, index, target) {
 	svGetMyForm().submit();
 	if(target) 
 		svGetMyForm().target = temp;
+	return true;
 }
 
 // submit form[0] with the specified action, setting an Id field and optional target
 function svSubmitActionAndId(action, index, target) {
 	if(!svValidateForm()) 
-		return;
+		return false;
 	var temp;
 	if(target) {
 		temp = svGetMyForm().target;

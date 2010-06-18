@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.70 2010/05/05 15:15:27 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.71 2010/06/18 20:01:37 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.70 2010/05/05 15:15:27 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.71 2010/06/18 20:01:37 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -861,6 +861,9 @@ public class GenericUploadServlet extends SavvisServlet {
 										// if we have output lines, use them to write a new file - otherwise,
 										// we use the file we uploaded with no modifications
 										if (outputLines.size() > 0) {
+											// need to make sure it's a csv
+											if (!fileToCreate.getName().toLowerCase().endsWith(".csv"))
+												fileToCreate = new File(destDir + fileName + ".csv");
 											FileUtil.saveFile(fileToCreate, outputLines);
 										} else {
 											FileUtil.moveFile(fileToRead, fileToCreate);
