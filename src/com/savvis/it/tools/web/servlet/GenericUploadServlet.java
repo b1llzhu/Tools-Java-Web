@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.71 2010/06/18 20:01:37 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.72 2010/06/30 21:35:55 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.71 2010/06/18 20:01:37 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.72 2010/06/30 21:35:55 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -2164,10 +2164,13 @@ public class GenericUploadServlet extends SavvisServlet {
 			}else{
 				Double value = sheet.getRow(row).getCell((short)column).getNumericCellValue();
 				try {
-					return ""+value.longValue();
-				} catch (Exception e) {
-					// the value apparently wasn't an integer
-				}
+					String returnValue = ""+new Double(value);
+					if (returnValue.endsWith(".0")){ 
+						return StringUtil.removeLastToken(returnValue, '.');
+					}
+					return returnValue;
+				} catch (Exception e) { } // the value apparently wasn't an integer
+				
 				if(value == null)
 					return "";
 				return ""+value;
