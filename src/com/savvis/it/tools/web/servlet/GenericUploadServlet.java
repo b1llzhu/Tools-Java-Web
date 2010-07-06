@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.73 2010/07/06 21:08:50 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.74 2010/07/06 21:50:15 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.73 2010/07/06 21:08:50 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.74 2010/07/06 21:50:15 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -641,6 +641,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									List<LineValidationObject> lineValidations = new ArrayList<LineValidationObject>();
 									Boolean passedValidation = true;
 									Map<String, Object> cacheKeys = new HashMap<String, Object>();
+									Map<String, Object> colCacheKeys = new HashMap<String, Object>();
 									while ((line = fileInput.readLine()) != null) {
 										
 										boolean passedInputValidation = true;
@@ -680,7 +681,7 @@ public class GenericUploadServlet extends SavvisServlet {
 										}
 
 										// validate the line, getting a context back in return
-										List<Input> inputObjs = InputValidator.validate(c, "ROW", inputs, lineValues);
+										List<Input> inputObjs = InputValidator.validate(c, "ROW", inputs, lineValues, colCacheKeys);
 										logger.info("validated context: " + c);
 										
 										// parse the return
