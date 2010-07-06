@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.72 2010/06/30 21:35:55 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.73 2010/07/06 21:08:50 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.72 2010/06/30 21:35:55 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.73 2010/07/06 21:08:50 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -639,9 +639,12 @@ public class GenericUploadServlet extends SavvisServlet {
 									String line = null;
 									
 									List<LineValidationObject> lineValidations = new ArrayList<LineValidationObject>();
-									Boolean passedValdiation = true;
+									Boolean passedValidation = true;
 									Map<String, Object> cacheKeys = new HashMap<String, Object>();
 									while ((line = fileInput.readLine()) != null) {
+										
+										boolean passedInputValidation = true;
+										
 										lineIndex++;
 										
 										Boolean skipLineValidation = false;
@@ -690,7 +693,8 @@ public class GenericUploadServlet extends SavvisServlet {
 											} else {
 												if (inputObj.getReturnCode() != 0) {
 													okToWrite = false;
-													passedValdiation = false;
+													passedValidation = false;
+													passedInputValidation = false;
 													String msg = "";
 													for (int j = 0; j < inputObj.getMessages().size(); j++) {
 														msg += inputObj.getMessages().get(j) + "|";
@@ -709,16 +713,37 @@ public class GenericUploadServlet extends SavvisServlet {
 											}
 										}
 										
+										HashMap rowDependencyMap = new HashMap();
+										rowDependencyMap.clear();
+										
 										/*
-										 * now perform any row-level validations
+										 * now perform any row-level validations if we haven't had any column errors
 										 */
-										if (!skipLineValidation && !ObjectUtil.isEmpty(validationsMap.get("rowRules"))) {
+										if (passedInputValidation && !skipLineValidation && !ObjectUtil.isEmpty(validationsMap.get("rowRules"))) {
 											
 											List<Map<String, Object>> rowRules = (List<Map<String, Object>>) validationsMap.get("rowRules");
 											for (Map<String, Object> rule : rowRules) {
 												String code = c.keywordSubstitute(""+rule.get("code"));
-												String cacheKey = c.keywordSubstitute(""+rule.get("cacheKey"));
+												String cacheKey = c.keywordSubstitute(""+rule.get("name")+rule.get("cacheKey"));
 												String errorText = c.keywordSubstitute(""+rule.get("errorText"));
+												
+												// check that a row rule dependency did not already fail
+												boolean depRuleFailed = false;
+												if(rule.containsKey("dependencyRuleList")) {
+													List dependencyRuleList = (List)rule.get("dependencyRuleList");
+													for (Object depRuleName : dependencyRuleList) {
+														if(rowDependencyMap.containsKey((String)depRuleName) && Boolean.FALSE.equals(rowDependencyMap.get((String)depRuleName))) {
+															logger.info("Skipping rule " + rule.get("name") + " already failed for dependent rule " + (String)depRuleName);
+															cacheKeys.put(cacheKey, null);
+															depRuleFailed = true;
+															break;
+														}
+													}
+												}
+												
+												if(depRuleFailed) {
+													continue;
+												}
 												
 												// if we've already processed this rule for the cacheKey values, skip it
 												// and use the previously validated messages
@@ -733,7 +758,8 @@ public class GenericUploadServlet extends SavvisServlet {
 													if (ObjectUtil.isEmpty(cacheKeys.get(cacheKey))) {
 														validationObject.addMessage(errorText);
 														validationObject.setValid(false);
-														passedValdiation = false;
+														passedValidation = false;
+														rowDependencyMap.put(rule.get("name"), false);
 														continue;
 													}
 												}
@@ -751,7 +777,8 @@ public class GenericUploadServlet extends SavvisServlet {
 														validationObject.addMessage(errorText);
 														validationObject.setValid(false);
 														cacheKeys.put(cacheKey, false);
-														passedValdiation = false;
+														passedValidation = false;
+														rowDependencyMap.put(rule.get("name"), false);
 													} else {
 														cacheKeys.put(cacheKey, result);
 													}
@@ -788,7 +815,8 @@ public class GenericUploadServlet extends SavvisServlet {
 															// and make sure to put a null value for the key to show that it was a 
 															// failed validation
 															cacheKeys.put(cacheKey, null);
-															passedValdiation = false;
+															passedValidation = false;
+															rowDependencyMap.put(rule.get("name"), false);
 														} else {
 															logger.info("successful");
 															
@@ -808,7 +836,8 @@ public class GenericUploadServlet extends SavvisServlet {
 																		logger.info("couldn't find alias (" + extraColMap.get("alias") + " in resultMap (" + results + ")");
 																		validationObject.addMessage("Unable to find column " + extraColMap.get("name") + " in rule " + rule.get("name"));
 																		validationObject.setValid(false);
-																		passedValdiation = false;
+																		rowDependencyMap.put(rule.get("name"), false);
+																		passedValidation = false;
 																	}
 																}
 																
@@ -821,11 +850,11 @@ public class GenericUploadServlet extends SavvisServlet {
 													} catch (Exception e) {
 														logger.error("Error running sql row rule", e);
 														validationObject.addMessage(e.getMessage());
-														passedValdiation = false;
+														passedValidation = false;
 													}
 												} else {
 													validationObject.addMessage("Unsupported rowRule type (" + rule.get("type") +")");
-													passedValdiation = false;
+													passedValidation = false;
 												}												
 											}
 										}
@@ -835,7 +864,7 @@ public class GenericUploadServlet extends SavvisServlet {
 										 * (only need if we haven't yet failed somewhere and we actually
 										 * have outputs)
 										 */
-										if (!skipLineValidation && passedValdiation && !ObjectUtil.isEmpty(validationsMap.get("outputs"))) {
+										if (!skipLineValidation && passedValidation && !ObjectUtil.isEmpty(validationsMap.get("outputs"))) {
 											List<Map<String, Object>> outputs = (List<Map<String, Object>>) validationsMap.get("outputs");
 											String newLine = "";
 											for (Map<String, Object> output : outputs) {
@@ -849,8 +878,8 @@ public class GenericUploadServlet extends SavvisServlet {
 									}
 									fileInput.close();
 									
-									request.setAttribute("validationOK", passedValdiation);
-									if (!passedValdiation) {
+									request.setAttribute("validationOK", passedValidation);
+									if (!passedValidation) {
 										request.setAttribute("lineValidations", lineValidations);
 										okToWrite = false;
 									}
@@ -1944,6 +1973,23 @@ public class GenericUploadServlet extends SavvisServlet {
 														}
 														
 														ruleMap.put("extraCols", extraCols);
+													}
+													
+													// check for dependencyRules
+													List dependencyRuleList = new ArrayList();
+													
+													if(ruleNode.getSimpleNode("{dependencyRuleNames}") != null) {
+														NodeList dependencyRules = ruleNode.getSimpleNode("{dependencyRuleNames}").getChildNodes("{name}");
+														for (int k = 0; k < dependencyRules.getLength(); k++) {
+															String depRuleName = new SimpleNode(dependencyRules.item(k)).getTextContent();
+															if (!ObjectUtil.isEmpty(depRuleName)) {
+																dependencyRuleList.add(depRuleName);
+															}
+														}
+													}
+													
+													if(dependencyRuleList.size() > 0) {
+														ruleMap.put("dependencyRuleList", dependencyRuleList);
 													}
 												}
 

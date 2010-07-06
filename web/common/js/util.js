@@ -159,6 +159,11 @@ function svGetInputValue(fieldName, elements) {
 	return svGetInputValueForInput(svGetInput(fieldName, elements));
 }
 
+//gets the value of an input field by name as an array
+function svGetInputValues(fieldName, elements) {
+	return svGetInputValuesForInput(svGetInput(fieldName, elements));
+}
+
 // gets the value of an input field by name
 function svGetInputValueById(fieldId, elements) {
 	return svGetInputValueForInput(svGetElement(fieldId, elements));
@@ -210,6 +215,45 @@ function svGetInputValueForInput(input) {
 				}
 				return null;
 		}
+}
+
+//gets the value of an input field 
+function svGetInputValuesForInput(input) {
+	if(!input)
+		return null;
+	var values = new Array();
+	if(input.type && (input.type == 'text' || input.type == 'hidden' || input.type == 'textarea')){
+		alert("currently unsupported");
+	}
+
+	if(input.type && input.type == 'select-one') {
+		if(input.selectedIndex == -1)
+				return null;
+		else {
+			values[values.length] = input.options[input.selectedIndex].value;
+		}
+	}
+
+	if(input.type && input.type == 'select-multiple') {
+		var select = input;
+		for( var x = 0 ; x < select.options.length ; x++ ) {
+			if(select.options[x].selected)
+				values[values.length] =  select.options[x].value;
+		}
+	}
+
+	if(input.type && input.type == 'radio') {
+		alert("currently unsupported");
+	}
+
+	if(input.type && input.type == 'checkbox') {
+		alert("currently unsupported");
+	}
+
+	if(!input.type && input[0] && input[0].type == 'radio') {
+		alert("currently unsupported");
+	}
+	return values;
 }
 
 // gets an input field by name
@@ -833,6 +877,23 @@ function svResizeIframeByContentHeight(id) {
 	}
 }
 
+// generic function to resize an iframe based upon its content's width and height
+function svResizeIFrameExact(id) {
+	var myIframe = document.getElementById(id);
+	if (myIframe) {
+		if (myIframe.contentDocument && myIframe.contentDocument.body.offsetHeight) {
+			myIframe.height = myIframe.contentDocument.body.offsetHeight;
+		} else if (myIframe.Document && myIframe.Document.body.scrollHeight) {
+			myIframe.height = myIframe.Document.body.scrollHeight;
+		}
+		if (myIframe.contentDocument && myIframe.contentDocument.body.offsetWidth) {
+			myIframe.width = myIframe.contentDocument.body.offsetWidth;
+		} else if (myIframe.Document && myIframe.Document.body.scrollWidth) {
+			myIframe.width = myIframe.Document.body.scrollWidth;
+		}
+	}
+}
+
 // function to be used within a JS sort command to compare two values
 function svCompareValues(a, b) { 
   var sA = parseInt( a.value, 36 );  
@@ -887,6 +948,36 @@ function svMoveDualList( srcList, destList, moveAll ) {
 	// deselect all elements in both lists
 	srcList.selectedIndex = -1;
 	destList.selectedIndex = -1;
+}
+
+//function to move a value up in a select
+function svMoveOptionUp( list ) {
+
+	// do nothing if nothing is selected
+	if (list.selectedIndex == -1 || list.selectedIndex == 0) {
+		return;
+	}
+	
+	var selectedIndex = list.selectedIndex;
+	var selectedOption = list.options[selectedIndex];
+	list.removeChild(selectedOption);
+	list.insertBefore(selectedOption, list.options[selectedIndex - 1]);
+	list.selectedIndex = selectedIndex - 1;
+}
+
+//function to move a value down in a select
+function svMoveOptionDown( list ) {
+
+	// do nothing if nothing is selected
+	if (list.selectedIndex == -1 || list.selectedIndex == list.options.length-1) {
+		return;
+	}
+	
+	var selectedIndex = list.selectedIndex;
+	var selectedOption = list.options[selectedIndex];
+	list.removeChild(selectedOption);
+	list.insertBefore(selectedOption, list.options[selectedIndex + 1]);
+	list.selectedIndex = selectedIndex + 1;
 }
 
 // function to take the contents of a list and convert them to a single separated string

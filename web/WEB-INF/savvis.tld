@@ -849,6 +849,11 @@
    <type>java.lang.String</type>
   </attribute>
   <attribute>
+   <name>p13nHost</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
    <name>p13nJavaScriptUponSave</name>
    <rtexprvalue>true</rtexprvalue>
    <type>java.lang.String</type>
@@ -1294,6 +1299,11 @@
    <type>boolean</type>
   </attribute>
   <attribute>
+   <name>p13nTitle</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
    <name>comb</name>
    <rtexprvalue>true</rtexprvalue>
    <type>int</type>
@@ -1303,6 +1313,268 @@
 				dates and numbers</description>
    <name>format</name>
    <rtexprvalue>true</rtexprvalue>
+  </attribute>
+  <attribute>
+   <description>if true, the value and titles become nowrap cells</description>
+   <name>nowrap</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+  <attribute>
+   <description>if true, the column always shows and doesn't show up in the personalization column customizer popup</description>
+   <name>alwaysShow</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+ </tag>
+ <tag>
+  <name>dataTableColumnBody</name>
+  <tag-class>com.savvis.it.tags.DataTableColumnBodyTagHandler</tag-class>
+  <body-content>scriptless</body-content>
+  <description>This tag is used in conjunction with the dataTableRows and
+			dataTable tags. Each dataTableColumn specified will be a
+			column in the resulting table. Specify either the key (an
+			item in the row if it's a map), the property (an item in the
+			bean if it's a java object), the index (an item in the
+			array/list) or a static value.</description>
+  <attribute>
+   <name>title</name>
+   <required>true</required>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>linkHref</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>linkTarget</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>linkClass</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <description>A list of custom Button objects that will be appended
+				to the standard buttons displayed in an "action" column
+				of a dataTable grid.</description>
+   <name>extraButtons</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.util.List</type>
+  </attribute>
+  <attribute>
+   <description>HTML that will be appended to the standard buttons
+				displayed in an "action" column of a dataTable grid.</description>
+   <name>extraButtonHtml</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>key</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>property</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>value</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.Object</type>
+  </attribute>
+  <attribute>
+   <name>index</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>int</type>
+  </attribute>
+  <attribute>
+   <name>width</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>height</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>headerStyle</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>headerStyleClass</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>align</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>valign</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>alt</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>styleClass</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>disabled</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>id</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>maxlength</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>int</type>
+  </attribute>
+  <attribute>
+   <name>name</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onblur</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onchange</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onclick</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>ondblclick</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onfocus</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onkeydown</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onkeypress</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onkeyup</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onmousedown</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onmousemove</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onmouseout</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onmouseover</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onmouseup</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>onselect</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>readonly</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+  <attribute>
+   <name>size</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>int</type>
+  </attribute>
+  <attribute>
+   <name>style</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>actionColumn</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+  <attribute>
+   <name>p13nDefaultColumn</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+  <attribute>
+   <name>p13nTitle</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>comb</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>int</type>
+  </attribute>
+  <attribute>
+   <description>Applies a format pattern to the value.  This is used currently with 
+				dates and numbers</description>
+   <name>format</name>
+   <rtexprvalue>true</rtexprvalue>
+  </attribute>
+  <attribute>
+   <description>if true, the value and titles become nowrap cells</description>
+   <name>nowrap</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
+  </attribute>
+  <attribute>
+   <description>if true, the column always shows and doesn't show up in the personalization column customizer popup</description>
+   <name>alwaysShow</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
   </attribute>
  </tag>
  <tag>
@@ -2760,6 +3032,11 @@
    <name>style</name>
    <rtexprvalue>true</rtexprvalue>
    <type>java.lang.String</type>
+  </attribute>
+  <attribute>
+   <name>showUpDownArrows</name>
+   <rtexprvalue>true</rtexprvalue>
+   <type>boolean</type>
   </attribute>
  </tag>
  <tag>
