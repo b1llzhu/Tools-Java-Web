@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.74 2010/07/06 21:50:15 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.75 2010/07/13 20:19:30 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.74 2010/07/06 21:50:15 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.75 2010/07/13 20:19:30 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -602,12 +602,15 @@ public class GenericUploadServlet extends SavvisServlet {
 									}
 
 								}
-
+								
+								File tempFile = null;
+								Map validationsMap = null;
+								
 								// as a file check, validate the file if we have been configured to do so
 								if (okToWrite && !ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
 
-									Map validationsMap = (Map) fileUploadMap.get("validations");
-
+									validationsMap = (Map) fileUploadMap.get("validations");
+									
 									// create a temp file object to write the file to for validation
 									String extension = StringUtil.getLastToken(fileName, '.');
 									
@@ -617,13 +620,22 @@ public class GenericUploadServlet extends SavvisServlet {
 									uploadItem.write(fileToRead);
 									
 									// handle excel files specially
-									File tempFile = null;
+									
 									logger.info("extension: " + extension);
 									if ("xls".equals(extension)) {
-										tempFile = createDelimitedFileFromXls(fileToRead, ".csv", validationsMap.get("delimiter").toString(), 0);
+										try {
+											tempFile = createDelimitedFileFromXls(fileToRead, ".csv", validationsMap.get("delimiter").toString(), 0, fileName);
+										}catch (Exception e) {
+											request.setAttribute("errMessage", e.getMessage());
+											okToWrite = false;
+										}
 									} else {
 										tempFile = fileToRead;
 									}
+								}
+
+								// as a file check, validate the file if we have been configured to do so
+								if (okToWrite && !ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
 
 									NodeList inputs = (NodeList) validationsMap.get("inputs");
 									
@@ -724,6 +736,7 @@ public class GenericUploadServlet extends SavvisServlet {
 											
 											List<Map<String, Object>> rowRules = (List<Map<String, Object>>) validationsMap.get("rowRules");
 											for (Map<String, Object> rule : rowRules) {
+												
 												String code = c.keywordSubstitute(""+rule.get("code"));
 												String cacheKey = c.keywordSubstitute(""+rule.get("name")+rule.get("cacheKey"));
 												String errorText = c.keywordSubstitute(""+rule.get("errorText"));
@@ -733,9 +746,9 @@ public class GenericUploadServlet extends SavvisServlet {
 												if(rule.containsKey("dependencyRuleList")) {
 													List dependencyRuleList = (List)rule.get("dependencyRuleList");
 													for (Object depRuleName : dependencyRuleList) {
+														
 														if(rowDependencyMap.containsKey((String)depRuleName) && Boolean.FALSE.equals(rowDependencyMap.get((String)depRuleName))) {
 															logger.info("Skipping rule " + rule.get("name") + " already failed for dependent rule " + (String)depRuleName);
-															cacheKeys.put(cacheKey, null);
 															depRuleFailed = true;
 															break;
 														}
@@ -1200,6 +1213,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 		} catch (Exception e) {
 			logger.error("", e);
+			request.setAttribute("errMessage", e.getMessage());
 		}
 
 		// put some things into the request
@@ -2148,7 +2162,7 @@ public class GenericUploadServlet extends SavvisServlet {
 		return s2;
 	}
 
-	private File createDelimitedFileFromXls(File file, String extension, String delim, Integer sheetNum) {
+	private File createDelimitedFileFromXls(File file, String extension, String delim, Integer sheetNum, String fileName) throws Exception {
 		File csvFile = null;
 
 		try {
@@ -2190,6 +2204,7 @@ public class GenericUploadServlet extends SavvisServlet {
 			
 		} catch (Exception e) {
 			logger.error("", e);
+			throw new Exception("Invalid XLS file (" + fileName + "). Please save the file as an Excel Workbook");
 		}
 
 		return csvFile;
