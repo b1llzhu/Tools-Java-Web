@@ -66,11 +66,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.76 2010/07/22 14:46:19 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.77 2010/07/22 15:47:20 dmoorhem Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.76 2010/07/22 14:46:19 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.77 2010/07/22 15:47:20 dmoorhem Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -883,12 +883,7 @@ public class GenericUploadServlet extends SavvisServlet {
 											String newLine = "";
 											for (Map<String, Object> output : outputs) {
 												String s = c.keywordSubstitute(""+output.get("value"));
-												//double quote data if it contains our delimiter
-												if(s.indexOf((String)validationsMap.get("delimiter")) != -1) {
-													newLine += '"' + s + '"' + validationsMap.get("delimiter");
-												}else{
-													newLine += s + validationsMap.get("delimiter");
-												}
+												newLine += s + validationsMap.get("delimiter");
 											}
 											outputLines.add(newLine);
 										}
