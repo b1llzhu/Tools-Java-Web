@@ -53,6 +53,30 @@
 			</getAddOnTerm>
 		</sample>
 	</client>
+	<client appl="vantive" config="priceNetworkQuoteWS">
+		<sample operation="generateQuote">
+			<generateQuote>
+				<parameter>
+					<customer>
+						<id>1234</id>
+						<name>Test Customer</name>
+					</customer>
+					<priceRequest>
+						<OptionList>
+							<Option>
+								<code>1234</code>
+								<name>Test Option</name>
+							</Option>
+						</OptionList>
+						<termList>
+							<term>12</term>
+						</termList>
+					</priceRequest>
+					<productList/>
+				</parameter>
+			</generateQuote>
+		</sample>
+	</client>
 	<client appl="finance" config="creditCheckWS">
 		<sample operation="doesAccountHaveGoodCredit">
 			<doesAccountHaveGoodCredit>
@@ -473,69 +497,51 @@
 			<createWorkRequest>
 				<workRequest>
 					<contractTerm>12</contractTerm>
-					<createdBy>SSPortal</createdBy>
+					<createdBy>WSTester</createdBy>
 					<currency>USD</currency>
-					<extId></extId>
-					<holdDate>10/23/08</holdDate>
-					<insightOpportunityId>
-						145679.0
-					</insightOpportunityId>
+					<extId/>
+					<holdDate></holdDate>
+					<insightOpportunityId>145679.0</insightOpportunityId>
 					<orderAction>Add</orderAction>
-					<quote>SO-Portal shopping cart</quote>
+					<quote>Test Order</quote>
 					<siteId>254683.0</siteId>
-					<sourceSystem>Cust_Portal</sourceSystem>
+					<sourceSystem>Test_Admin</sourceSystem>
 					<services>
 						<accountRequests>
 							<accountRequest>
 								<accountId>12255</accountId>
 								<billingSiteId>227822</billingSiteId>
-								<extId />
-								<ownershipCompanyId>
-									168745
-								</ownershipCompanyId>
-								<productType>
-									Service Package
-								</productType>
+								<extId/>
+								<ownershipCompanyId>168745</ownershipCompanyId>
+								<productType>Service Package</productType>
 								<quantity>1</quantity>
 								<requestType>Add</requestType>
 								<salesPackageId>170378</salesPackageId>
-								<accountRequests />
+								<accountRequests/>
 								<options>
 									<option>
-										<optionDefinitionId>
-											193
-										</optionDefinitionId>
+										<optionDefinitionId>193</optionDefinitionId>
 										<value>ZZNJ3</value>
 									</option>
 									<option>
-										<optionDefinitionId>
-											580
-										</optionDefinitionId>
-										<value>
-											0.5 CPU Core / 2 GB RAM
-										</value>
+										<optionDefinitionId>580</optionDefinitionId>
+										<value>0.5 CPU Core / 2 GB RAM</value>
 									</option>
 									<option>
-										<optionDefinitionId>
-											579
-										</optionDefinitionId>
-										<value>
-											Red Hat Enterprise Linux AS v4 32 bit Managed Operating System
-										</value>
+										<optionDefinitionId>579</optionDefinitionId>
+										<value>Red Hat Enterprise Linux AS v4 32 bit Managed Operating System</value>
 										<price>
 											<mrrNet>400</mrrNet>
 											<nrcNet>350</nrcNet>
 										</price>
 									</option>
 									<option>
-										<optionDefinitionId>
-											578
-										</optionDefinitionId>
+										<optionDefinitionId>578</optionDefinitionId>
 										<value>Standard</value>
-										<variableUsageRate>13.5</variableUsageRate>
+										<variableUsageRate></variableUsageRate>
 										<price>
-											<mrrNet>500</mrrNet>
-											<nrcNet>350</nrcNet>
+											<mrrNet></mrrNet>
+											<nrcNet></nrcNet>
 										</price>
 									</option>
 								</options>
@@ -563,39 +569,39 @@
 					<contacts>
 						<authorizingContact>
 							<companyId>174153.0</companyId>
-							<email>jeff.berger@hp.com</email>
-							<firstName>Jeff</firstName>
-							<id>530296</id>
-							<lastName>Berger</lastName>
-							<phoneNumber>+01(916)209-1234</phoneNumber>
-							<siteId>254683.0</siteId>
+							<email></email>
+							<firstName></firstName>
+							<id>566736</id>
+							<lastName></lastName>
+							<phoneNumber></phoneNumber>
+							<siteId></siteId>
 						</authorizingContact>
 						<billingContact>
 							<companyId>174153.0</companyId>
-							<email>jeff.berger@hp.com</email>
-							<firstName>Jeff</firstName>
-							<id>530296</id>
-							<lastName>Berger</lastName>
-							<phoneNumber>+01(916)209-1234</phoneNumber>
-							<siteId>254683.0</siteId>
+							<email></email>
+							<firstName></firstName>
+							<id>566736</id>
+							<lastName></lastName>
+							<phoneNumber></phoneNumber>
+							<siteId></siteId>
 						</billingContact>
 						<commContact>
 							<companyId>174153.0</companyId>
-							<email>jeff.berger@hp.com</email>
-							<firstName>Jeff</firstName>
-							<id>530296</id>
-							<lastName>Berger</lastName>
-							<phoneNumber>+01(916)209-1234</phoneNumber>
-							<siteId>254683.0</siteId>
+							<email></email>
+							<firstName></firstName>
+							<id>566736</id>
+							<lastName></lastName>
+							<phoneNumber></phoneNumber>
+							<siteId></siteId>
 						</commContact>
 						<mainContact>
-							<companyId>174153.0</companyId>
-							<email>jeff.berger@hp.com</email>
-							<firstName>Jeff</firstName>
-							<id>530296</id>
-							<lastName>Berger</lastName>
-							<phoneNumber>+01(916)209-1234</phoneNumber>
-							<siteId>254683.0</siteId>
+							<companyId>.0</companyId>
+							<email></email>
+							<firstName></firstName>
+							<id>566736</id>
+							<lastName></lastName>
+							<phoneNumber></phoneNumber>
+							<siteId></siteId>
 						</mainContact>
 						<projectMgrContact>
 							<companyId>167510</companyId>
@@ -625,17 +631,25 @@
 							<siteId>214435</siteId>
 						</salesLiaisonContact>
 						<techContact>
-							<companyId>174153.0</companyId>
-							<email>jeff.berger@hp.com</email>
-							<firstName>Jeff</firstName>
-							<id>530296</id>
-							<lastName>Berger</lastName>
-							<phoneNumber>+01(916)209-1234</phoneNumber>
-							<siteId>254683.0</siteId>
+							<companyId></companyId>
+							<email></email>
+							<firstName></firstName>
+							<id>566736</id>
+							<lastName></lastName>
+							<phoneNumber></phoneNumber>
+							<siteId></siteId>
 						</techContact>
 					</contacts>
 				</workRequest>
 			</createWorkRequest>
+		</sample>
+	</client>
+	<client appl="hr" config="workdayAuthWS">
+		<sample operation="Authenticate">
+			<AuthenticationRequest>
+				<username>blah.blah</username>
+				<password>blah</password>
+			</AuthenticationRequest>
 		</sample>
 	</client>
 </wsSamples>
