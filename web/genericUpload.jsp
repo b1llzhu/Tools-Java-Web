@@ -6,7 +6,7 @@
 	the user into the application.
 
 	@author David R Young
-	@version $Id: genericUpload.jsp,v 1.26 2009/04/20 14:55:55 dyoung Exp $
+	@version $Id: genericUpload.jsp,v 1.27 2010/11/16 18:41:26 dyoung Exp $
 
 --%>
 
@@ -305,6 +305,21 @@
 											</c:forEach>
 										</td>
 										<td valign="top">
+											<c:if test='${hasFrames eq "1"}'>
+												<c:forEach items="${frames}" var="frame">
+													<table with="100%" cellspacing="2" cellpadding="2" class="listTbl">
+														<span class="fileListHdr">${frame.key}</span>
+														<tr>
+															<td>
+																<iframe frameborder="no" width="100%" height="150" src="${frame.value}"
+																	style="border-collapse: collapse; border: 1px solid #bbb;"></iframe>
+															</td>
+														</tr>
+													</table>
+												</c:forEach>
+												<br/><br/>
+											</c:if>
+											
 											<c:if test='${allowUpload eq "1" and keyMap.pathValid}'>
 												<form method="post" name="frm" enctype="multipart/form-data">
 													<input type="hidden" name="action" value="upload"/>
@@ -536,7 +551,6 @@
 												</div>
 												<br/><br/><br/>
 											</c:if>
-											
 											
 										</td>
 									</tr>

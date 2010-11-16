@@ -67,11 +67,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.78 2010/08/25 21:18:15 dmoorhem Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.79 2010/11/16 18:41:25 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.78 2010/08/25 21:18:15 dmoorhem Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.79 2010/11/16 18:41:25 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -1151,6 +1151,11 @@ public class GenericUploadServlet extends SavvisServlet {
 					request.setAttribute("hasActions", "1");
 					request.setAttribute("actions", keyMap.get("actions"));
 				}
+				
+				if (keyMap.containsKey("framesMap")) {
+					request.setAttribute("hasFrames", "1");
+					request.setAttribute("frames", keyMap.get("framesMap"));
+				}
 
 				// one of the last things we'll do is perform an authorization
 				// check
@@ -1412,6 +1417,33 @@ public class GenericUploadServlet extends SavvisServlet {
 						if (!ObjectUtil.isEmpty(pageMap.get("key"))) {
 							if (!type.equals(pageMap.get("key"))) {
 								continue;
+							}
+						}
+						
+						if (!ObjectUtil.isEmpty(uploadNode.getSimpleNode("{frames}"))) {
+							NodeList framesNode = uploadNode.getSimpleNode("{frames}").getChildNodes("frame");
+							Map<String, String> framesMap = new LinkedHashMap<String, String>();
+
+							try {
+								for (int j = 0; j < framesNode.getLength(); j++) {
+									SimpleNode frameNode = new SimpleNode(framesNode.item(j));
+									
+									String name = frameNode.getAttribute("name");
+									if (ObjectUtil.isEmpty(name)) {
+										name = "[NO TITLE " + j + "]";
+									}
+									
+									String src = frameNode.getAttribute("src");
+									if (ObjectUtil.isEmpty(src)) {
+										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " frame " + j + " src keyword not found");
+									} else {
+										framesMap.put(name, src);
+									}
+								}
+								
+								uploadMap.put("framesMap", framesMap);
+							} catch (Exception e) {
+								logger.error("", e);
 							}
 						}
 
