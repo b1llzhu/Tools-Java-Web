@@ -67,11 +67,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.79 2010/11/16 18:41:25 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.80 2011/01/28 14:20:15 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.79 2010/11/16 18:41:25 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.80 2011/01/28 14:20:15 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -315,7 +315,7 @@ public class GenericUploadServlet extends SavvisServlet {
 
 			if (uploads.size() == 0) {
 				request.setAttribute("errMessage", "Sorry!  You have not been added to the authorization lists for any file utilities.  "
-						+ "Please contact Access Administration and request to be added to the specific authorization list for the action "
+						+ "Please open an ITSD web ticket to request access and request to be added to the specific authorization list for the action "
 						+ "you need to perform.");
 			}
 
