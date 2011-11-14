@@ -40,6 +40,12 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -67,11 +73,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.80 2011/01/28 14:20:15 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.81 2011/11/14 20:14:21 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.80 2011/01/28 14:20:15 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.81 2011/11/14 20:14:21 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -2198,13 +2204,22 @@ public class GenericUploadServlet extends SavvisServlet {
 	private File createDelimitedFileFromXls(File file, String extension, String delim, Integer sheetNum, String fileName) throws Exception {
 		File csvFile = null;
 
+		Sheet sheet = null;
+		
 		try {
-			POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(file));
-			HSSFSheet sheet = new HSSFWorkbook(fs).getSheetAt(sheetNum);
+			if ("xls".equals(extension)) {
+				POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(file));
+				HSSFSheet hssfSheet = new HSSFWorkbook(fs).getSheetAt(sheetNum);
+			    sheet = hssfSheet;
+					
+			} else if ("xlsx".equals(extension)) {
+				Workbook wb = new XSSFWorkbook(new FileInputStream(file));
+			    sheet = wb.getSheetAt(sheetNum);
+			}
 			List<String> rowList = new ArrayList<String>();
 
 			for (int i = 0; i <= sheet.getLastRowNum(); i++) {
-				HSSFRow row = sheet.getRow(i);
+				Row row = sheet.getRow(i);
 				
 				if(ObjectUtil.isEmpty(row)) {
 					continue;
@@ -2243,12 +2258,13 @@ public class GenericUploadServlet extends SavvisServlet {
 		return csvFile;
 	}
 	
-	public static String getCellValue(HSSFSheet sheet, int row, int column) {
+	public static String getCellValue(Sheet sheet, int row, int column) {
 		if(sheet.getRow(row) == null || sheet.getRow(row).getCell((short)column) == null)
-			return "";
+			return null;
 		int type = sheet.getRow(row).getCell((short)column).getCellType();
-		if(type == HSSFCell.CELL_TYPE_NUMERIC) {
-			if(HSSFDateUtil.isCellDateFormatted(sheet.getRow(row).getCell((short)column))) {
+		
+		if(type == Cell.CELL_TYPE_NUMERIC) {
+			if(DateUtil.isCellDateFormatted(sheet.getRow(row).getCell((short)column))) {
 				try{
 					return excelToCSVdateFormat.format(sheet.getRow(row).getCell((short)column).getDateCellValue());
 				}catch(Exception e) {
@@ -2259,27 +2275,62 @@ public class GenericUploadServlet extends SavvisServlet {
 			}else{
 				Double value = sheet.getRow(row).getCell((short)column).getNumericCellValue();
 				try {
-					NumberFormat f = NumberFormat.getInstance();
-					//allow 'any' number of decimals
-					f.setMaximumFractionDigits(100);
-					//do not scientifically format
-					f.setGroupingUsed(false);
-					String returnValue = f.format(value);
-					
+					String returnValue = ""+new Double(value);
 					if (returnValue.endsWith(".0")){ 
 						return StringUtil.removeLastToken(returnValue, '.');
 					}
 					return returnValue;
-				} catch (Exception e) { } // the value apparently wasn't an integer
-				
+				} catch (Exception e) {
+					// the value apparently wasn't an integer
+				}
 				if(value == null)
 					return "";
 				return ""+value;
 			}
 		} 
+		
 		if(sheet.getRow(row).getCell((short)column).getRichStringCellValue() == null)
-			return "";
+			return null;
 		return sheet.getRow(row).getCell((short)column).getRichStringCellValue().getString();
 	}
+	
+//	public static String getCellValue(HSSFSheet sheet, int row, int column) {
+//		if(sheet.getRow(row) == null || sheet.getRow(row).getCell((short)column) == null)
+//			return "";
+//		int type = sheet.getRow(row).getCell((short)column).getCellType();
+//		if(type == HSSFCell.CELL_TYPE_NUMERIC) {
+//			if(HSSFDateUtil.isCellDateFormatted(sheet.getRow(row).getCell((short)column))) {
+//				try{
+//					return excelToCSVdateFormat.format(sheet.getRow(row).getCell((short)column).getDateCellValue());
+//				}catch(Exception e) {
+//					if(sheet.getRow(row).getCell((short)column).getRichStringCellValue() == null)
+//						return "";
+//					return sheet.getRow(row).getCell((short)column).getRichStringCellValue().getString();
+//				}
+//			}else{
+//				Double value = sheet.getRow(row).getCell((short)column).getNumericCellValue();
+//				try {
+//					NumberFormat f = NumberFormat.getInstance();
+//					//allow 'any' number of decimals
+//					f.setMaximumFractionDigits(100);
+//					//do not scientifically format
+//					f.setGroupingUsed(false);
+//					String returnValue = f.format(value);
+//					
+//					if (returnValue.endsWith(".0")){ 
+//						return StringUtil.removeLastToken(returnValue, '.');
+//					}
+//					return returnValue;
+//				} catch (Exception e) { } // the value apparently wasn't an integer
+//				
+//				if(value == null)
+//					return "";
+//				return ""+value;
+//			}
+//		} 
+//		if(sheet.getRow(row).getCell((short)column).getRichStringCellValue() == null)
+//			return "";
+//		return sheet.getRow(row).getCell((short)column).getRichStringCellValue().getString();
+//	}
 
 }
