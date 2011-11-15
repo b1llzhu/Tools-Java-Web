@@ -10,7 +10,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,9 +33,6 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
-import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -73,11 +69,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.81 2011/11/14 20:14:21 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.82 2011/11/15 15:27:22 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.81 2011/11/14 20:14:21 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.82 2011/11/15 15:27:22 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -629,7 +625,7 @@ public class GenericUploadServlet extends SavvisServlet {
 									// handle excel files specially
 									
 									logger.info("extension: " + extension);
-									if ("xls".equals(extension)) {
+									if ("xls".equals(extension) || "xlsx".equals(extension)) {
 										try {
 											tempFile = createDelimitedFileFromXls(fileToRead, ".csv", validationsMap.get("delimiter").toString(), 0, fileName);
 										}catch (Exception e) {
@@ -2205,14 +2201,15 @@ public class GenericUploadServlet extends SavvisServlet {
 		File csvFile = null;
 
 		Sheet sheet = null;
+		String fileExt = StringUtil.getLastToken(file.getName(), '.');
 		
 		try {
-			if ("xls".equals(extension)) {
+			if ("xls".equals(fileExt)) {
 				POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(file));
 				HSSFSheet hssfSheet = new HSSFWorkbook(fs).getSheetAt(sheetNum);
 			    sheet = hssfSheet;
 					
-			} else if ("xlsx".equals(extension)) {
+			} else if ("xlsx".equals(fileExt)) {
 				Workbook wb = new XSSFWorkbook(new FileInputStream(file));
 			    sheet = wb.getSheetAt(sheetNum);
 			}
@@ -2245,7 +2242,7 @@ public class GenericUploadServlet extends SavvisServlet {
 			String csvPath = file.getAbsolutePath().replace(file.getName(), "");
 			if (!csvPath.endsWith("/"))
 				csvPath += "/";
-			String csvFileName = file.getName().replace(".xls", extension);
+			String csvFileName = file.getName().replace("."+ fileExt, extension);
 			
 			csvFile = new File(csvPath + csvFileName);
 			FileUtil.saveFile(csvFile, rowList);
