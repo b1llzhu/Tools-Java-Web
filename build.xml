@@ -17,6 +17,9 @@
 		<copy todir="tmp/lib" overwrite="true">
 			<fileset dir="${it.java.dir}/3rdParty/java/Log4j/1.2.8" includes="*.jar"/>
 			<fileset dir="${it.java.dir}/3rdParty/java/JakartaCommons/1.0" includes="commons-logging-1.0.4.jar"/>
+			
+			<fileset dir="${it.java.dir}/3rdParty/java/POI/3.7" includes="poi*.jar"/>
+			<fileset dir="${it.java.dir}/3rdParty/java/POI/3.7" includes="xmlbeans*.jar"/>
 		</copy>
 	</target>
 	
