@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,11 +70,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.83 2011/12/07 22:46:28 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.84 2011/12/16 18:38:47 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.83 2011/12/07 22:46:28 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.84 2011/12/16 18:38:47 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -2277,6 +2278,10 @@ public class GenericUploadServlet extends SavvisServlet {
 					String returnValue = ""+new Double(value);
 					if (returnValue.endsWith(".0")){ 
 						return StringUtil.removeLastToken(returnValue, '.');
+					}
+					if (value.toString().contains("E")) {
+						DecimalFormat df = new DecimalFormat("#0.#####");
+						return df.format(value);
 					}
 					return returnValue;
 				} catch (Exception e) {
