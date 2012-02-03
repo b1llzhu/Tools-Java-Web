@@ -70,11 +70,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.85 2012/02/03 21:14:06 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.86 2012/02/03 21:38:12 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.85 2012/02/03 21:14:06 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.86 2012/02/03 21:38:12 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -1887,9 +1887,9 @@ public class GenericUploadServlet extends SavvisServlet {
 									
 									if (!ObjectUtil.isEmpty(fileUploadNode.getAttribute("overwrite"))) {
 										if ("1".equals(fileUploadNode.getAttribute("overwrite"))) {
-											fileUploadMap.put("allowOverwrite", true);
+											fileUploadMap.put("overwrite", true);
 										} else {
-											fileUploadMap.put("allowOverwrite", false);
+											fileUploadMap.put("overwrite", false);
 										}
 									}
 
