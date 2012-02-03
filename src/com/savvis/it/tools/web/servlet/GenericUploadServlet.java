@@ -70,11 +70,11 @@ import com.savvis.it.web.util.InputFieldHandler;
  * This class handles the home page functionality
  * 
  * @author David R Young
- * @version $Id: GenericUploadServlet.java,v 1.84 2011/12/16 18:38:47 dyoung Exp $
+ * @version $Id: GenericUploadServlet.java,v 1.85 2012/02/03 21:14:06 dyoung Exp $
  */
 public class GenericUploadServlet extends SavvisServlet {
 	private static Logger logger = Logger.getLogger(GenericUploadServlet.class);
-	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.84 2011/12/16 18:38:47 dyoung Exp $";
+	private static String scVersion = "$Header: /opt/devel/cvsroot/SAVVISRoot/CRM/tools/java/Web/src/com/savvis/it/tools/web/servlet/GenericUploadServlet.java,v 1.85 2012/02/03 21:14:06 dyoung Exp $";
 
 	private static PropertyManager properties = new PropertyManager("/properties/genericUpload.properties");
 	private static Map<String, Thread> threadMap = new HashMap<String, Thread>();
@@ -556,9 +556,14 @@ public class GenericUploadServlet extends SavvisServlet {
 						// we have to use "pending" like we used to
 						String destDir = "";
 						Map fileUploadMap = null;
+						Boolean allowOverwrite = false;
 						if (!ObjectUtil.isEmpty(pageMap.get("uploadName"))) {
 							fileUploadMap = (Map) ((Map) keyMap.get("fileUploads")).get(pageMap.get("uploadName"));
 							destDir = keyMap.get("path").toString() + "/" + fileUploadMap.get("target");
+							
+							if (!ObjectUtil.isEmpty(fileUploadMap.get("overwrite"))) {
+								allowOverwrite = (Boolean)fileUploadMap.get("overwrite");
+							}
 						} else {
 							destDir = (String) directoriesMap.get("pending").get("path");
 						}
@@ -569,9 +574,9 @@ public class GenericUploadServlet extends SavvisServlet {
 
 							File fileToCreate = new File(destDir + fileName);
 							File fileToRead = null;
-
+							
 							// check to see if the file already exists
-							if (fileToCreate.exists()) {
+							if (fileToCreate.exists() && !allowOverwrite) {
 								request.setAttribute("errMessage", "ERROR!  File (" + fileName
 										+ ") already exists and is waiting to be processed!  It was not uploaded again.");
 
@@ -904,6 +909,9 @@ public class GenericUploadServlet extends SavvisServlet {
 								}
 								
 								if (okToWrite) {
+									if (allowOverwrite && fileToCreate.exists()) {
+										fileToCreate.delete();
+									}
 									if (!ObjectUtil.isEmpty(fileUploadMap) && !ObjectUtil.isEmpty(fileUploadMap.get("validations"))) {
 										// if we have output lines, use them to write a new file - otherwise,
 										// we use the file we uploaded with no modifications
@@ -1875,6 +1883,14 @@ public class GenericUploadServlet extends SavvisServlet {
 										messages.add("[Upload #" + uploadCnt + "]" + typeLog + " fileUpload keyword must have a name attribute");
 									} else {
 										fileUploadMap.put("name", fileUploadNode.getAttribute("name").replace(" ", "_"));
+									}
+									
+									if (!ObjectUtil.isEmpty(fileUploadNode.getAttribute("overwrite"))) {
+										if ("1".equals(fileUploadNode.getAttribute("overwrite"))) {
+											fileUploadMap.put("allowOverwrite", true);
+										} else {
+											fileUploadMap.put("allowOverwrite", false);
+										}
 									}
 
 									if (!ObjectUtil.isEmpty(fileUploadNode.getTextContent("{target}"))) {

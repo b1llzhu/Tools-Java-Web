@@ -1,10 +1,10 @@
-#Tue Nov 13 10:16:50 CST 2007
+#Thu Nov 18 11:32:28 CST 2010
 clsCnt=8
 eclipse.preferences.version=1
 locCnt=6567
 pkgCnt=8
 sTime=Nov 01 2006 16\:03\:25
 srcCnt=1
-validator.Checked=web/home.jsp,web/search.jsp,web/login.jsp
+validator.Checked=web/search.jsp,.myeclipse/wsgeneration,web/home.jsp,web/login.jsp
 validator.Revalidate=true
 validator.Unchecked=
