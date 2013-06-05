@@ -45,10 +45,17 @@ import com.savvis.it.ws.GenericWebServiceClient;
 
 /**
  * This class generically calls a web service defined by a config file
+ * 
+ * @deprecated Per Dave Moorhem 5/3/13, we think this class was the original Web Service Invoker (a Savvis
+ * homegrown version of something similar to soapUI), but the Web Service Invoker has been broken out into
+ * a separate project Tools-WebServiceInvoker (CVS location: SAVVISRoot/CRM/tools/java/WebServiceInvoker) with
+ * WebServiceInvokerServlet being the current version of what this class used to be. This class is obsolete
+ * and no longer used.
  *
  * @author theodore.elrick
  * @version $Id$
  */
+@SuppressWarnings("serial")
 public class GenericWSClientServlet extends SavvisServlet {
 	
 	private static Logger logger = Logger.getLogger(GenericWSClientServlet.class);
